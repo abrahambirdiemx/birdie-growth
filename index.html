@@ -1,0 +1,2040 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Birdie — Growth Dashboard · Marzo 2026</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #f4f6fb;
+    --bg2: #eef0f7;
+    --card: #ffffff;
+    --card2: #f7f8fc;
+    --border: #e2e6f0;
+    --border2: #d0d6e8;
+    --accent: #3b6ef8;
+    --accent2: #6c4ef7;
+    --green: #16a34a;
+    --green-bg: #dcfce7;
+    --green-text: #15803d;
+    --yellow: #d97706;
+    --yellow-bg: #fef3c7;
+    --red: #dc2626;
+    --red-bg: #fee2e2;
+    --orange: #ea580c;
+    --orange-bg: #ffedd5;
+    --text: #1e2235;
+    --muted: #64748b;
+    --muted2: #94a3b8;
+    --radius: 14px;
+    --shadow: 0 1px 4px rgba(0,0,0,0.07), 0 4px 16px rgba(0,0,0,0.04);
+    --shadow-md: 0 2px 12px rgba(0,0,0,0.1), 0 8px 32px rgba(0,0,0,0.06);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-size: 14px; min-height: 100vh; }
+  .page { max-width: 1440px; margin: 0 auto; padding: 0 0 60px; }
+
+  /* Live banner */
+  .live-banner { background: linear-gradient(90deg, #052e16, #14532d); color: #bbf7d0; padding: 10px 28px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .live-dot { width: 7px; height: 7px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 6px #4ade80; flex-shrink: 0; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.6;transform:scale(1.3)} }
+  .banner-change { background: rgba(255,255,255,0.1); border-radius: 6px; padding: 2px 9px; font-size: 11px; }
+  .banner-new { background: #1d4ed8; color: #fff; border-radius: 6px; padding: 2px 9px; font-size: 11px; }
+  .banner-win { background: #15803d; color: #fff; border-radius: 6px; padding: 2px 9px; font-size: 11px; font-weight: 700; }
+
+  /* Top Bar */
+  .topbar { background: #fff; border-bottom: 1px solid var(--border); padding: 0 28px; display: flex; align-items: center; justify-content: space-between; height: 60px; position: sticky; top: 0; z-index: 100; gap: 16px; flex-wrap: wrap; }
+  .topbar-left { display: flex; align-items: center; gap: 12px; }
+  .logo { width: 30px; height: 30px; background: linear-gradient(135deg, #3b6ef8, #6c4ef7); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; color: white; font-weight: 800; flex-shrink: 0; }
+  .topbar-title { font-size: 17px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; }
+  .topbar-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .topbar-right { display: flex; align-items: center; gap: 8px; }
+  .health-pill { display: flex; align-items: center; gap: 6px; background: #fef3c7; border: 1px solid #fcd34d; border-radius: 20px; padding: 5px 12px; font-size: 12px; font-weight: 700; color: #92400e; }
+
+  /* Tab Nav */
+  .tab-nav { background: #fff; border-bottom: 1px solid var(--border); padding: 0 28px; display: flex; gap: 0; overflow-x: auto; }
+  .tab-btn { padding: 14px 20px; font-size: 13px; font-weight: 600; color: var(--muted); border: none; background: none; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.15s; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .tab-btn:hover { color: var(--accent); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-content { display: none; padding: 24px 28px; }
+  .tab-content.active { display: block; }
+
+  /* Buttons */
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { background: #2d5eef; }
+  .btn-outline { background: white; color: var(--text); border: 1px solid var(--border2); }
+  .btn-outline:hover { background: var(--bg2); }
+  .btn-green { background: var(--green-bg); color: var(--green-text); border: 1px solid #bbf7d0; }
+  .btn-green:hover { background: #bbf7d0; }
+  .badge-count { border-radius: 10px; padding: 0 6px; font-size: 10px; margin-left: 2px; }
+
+  /* Modal */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 500; display: none; align-items: center; justify-content: center; padding: 20px; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: #fff; border-radius: var(--radius); box-shadow: var(--shadow-md); max-width: 660px; width: 100%; max-height: 82vh; overflow-y: auto; }
+  .modal-header { padding: 20px 24px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: #fff; z-index: 2; }
+  .modal-header h3 { font-size: 16px; font-weight: 700; }
+  .modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--muted); padding: 4px 8px; border-radius: 6px; }
+  .modal-close:hover { background: var(--bg2); }
+  .modal-body { padding: 20px 24px; }
+  .modal-section { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: var(--muted); margin: 16px 0 8px; }
+  .modal-section:first-child { margin-top: 0; }
+  .update-item { display: flex; align-items: flex-start; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border); }
+  .update-item:last-child { border-bottom: none; }
+  .update-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+  .ud-new { background: #3b6ef8; }
+  .ud-stage { background: #16a34a; }
+  .ud-win { background: #d97706; }
+  .ud-risk { background: #dc2626; }
+  .update-text { flex: 1; }
+  .update-title { font-size: 13px; font-weight: 600; }
+  .update-sub { font-size: 11px; color: var(--muted); margin-top: 2px; line-height: 1.4; }
+  .update-date { font-size: 10px; color: var(--muted2); white-space: nowrap; }
+
+  /* Grids */
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 18px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 18px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px; }
+  .grid-2-1 { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; margin-bottom: 18px; }
+
+  /* Cards */
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
+  .card-sm { padding: 16px; }
+  .card-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: var(--muted); margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+  .stat-value { font-size: 30px; font-weight: 800; letter-spacing: -1px; color: var(--text); }
+  .stat-sub { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .stat-delta { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 10px; margin-top: 6px; }
+  .delta-warn { background: var(--yellow-bg); color: var(--yellow); }
+  .delta-ok { background: var(--green-bg); color: var(--green-text); }
+  .delta-bad { background: var(--red-bg); color: var(--red); }
+  .delta-new { background: #dbeafe; color: #1d4ed8; }
+
+  /* Section title */
+  .section-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 14px; margin-top: 6px; display: flex; align-items: center; gap: 10px; }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* Progress */
+  .goal-item { margin-bottom: 14px; }
+  .goal-item:last-child { margin-bottom: 0; }
+  .goal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .goal-label { font-size: 13px; font-weight: 600; color: var(--text); }
+  .goal-nums { font-size: 12px; color: var(--muted); }
+  .goal-nums span { color: var(--text); font-weight: 700; }
+  .progress-track { height: 8px; background: var(--bg2); border-radius: 6px; overflow: hidden; border: 1px solid var(--border); }
+  .progress-fill { height: 100%; border-radius: 6px; transition: width 0.8s ease; }
+  .fill-blue { background: linear-gradient(90deg, #3b6ef8, #6c4ef7); }
+  .fill-green { background: linear-gradient(90deg, #16a34a, #15803d); }
+  .fill-yellow { background: linear-gradient(90deg, #d97706, #b45309); }
+  .fill-red { background: linear-gradient(90deg, #dc2626, #b91c1c); }
+  .fill-purple { background: linear-gradient(90deg, #7c3aed, #6d28d9); }
+
+  /* Funnel */
+  .funnel-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .funnel-row:last-child { border-bottom: none; }
+  .funnel-stage { width: 140px; font-size: 12px; font-weight: 600; color: var(--text); flex-shrink: 0; }
+  .funnel-bar-wrap { flex: 1; }
+  .funnel-bar { height: 20px; border-radius: 4px; display: flex; align-items: center; padding-left: 8px; font-size: 11px; font-weight: 700; color: white; min-width: 28px; position: relative; }
+  .funnel-delta { font-size: 10px; font-weight: 700; margin-left: 6px; padding: 0 5px; border-radius: 6px; }
+  .fd-up { background: #dcfce7; color: #15803d; }
+  .fd-down { background: #fee2e2; color: #dc2626; }
+  .funnel-count { width: 32px; text-align: right; font-size: 13px; font-weight: 700; color: var(--text); }
+  .funnel-acv { width: 76px; text-align: right; font-size: 11px; color: var(--muted); font-weight: 600; }
+
+  /* Deals Table */
+  .table-wrap { overflow-x: auto; }
+  .deals-table { width: 100%; border-collapse: collapse; }
+  .deals-table th { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); padding: 8px 10px; text-align: left; border-bottom: 2px solid var(--border); background: var(--card2); }
+  .deals-table td { padding: 9px 10px; border-bottom: 1px solid var(--border); font-size: 12px; vertical-align: middle; }
+  .deals-table tr:hover td { background: var(--bg2); }
+  .deals-table tr.row-new td { background: #eff6ff; }
+  .deals-table tr.row-new td:first-child { border-left: 3px solid #3b6ef8; }
+  .deals-table tr.row-win td { background: #f0fdf4; }
+  .deals-table tr.row-win td:first-child { border-left: 3px solid #16a34a; }
+  .stage-tag { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 700; }
+  .tag-close { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+  .tag-cerrado { background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; }
+  .tag-pilot { background: #ede9fe; color: #6d28d9; border: 1px solid #ddd6fe; }
+  .tag-propuesta { background: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; }
+  .tag-activo { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+  .tag-demo { background: #faf5ff; color: #6d28d9; border: 1px solid #e9d5ff; }
+  .tag-discovery { background: #f0f9ff; color: #0369a1; border: 1px solid #bae6fd; }
+  .tag-new { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-size: 9px; padding: 1px 5px; border-radius: 6px; margin-left: 4px; }
+  .acv-value { font-weight: 700; color: var(--text); }
+  .owner-chip { background: var(--bg2); border: 1px solid var(--border2); border-radius: 10px; padding: 2px 8px; font-size: 10px; color: var(--muted); white-space: nowrap; font-weight: 600; }
+
+  /* Overdue badge */
+  .overdue { color: var(--red); font-weight: 700; font-size: 11px; }
+  .today-touch { color: var(--green); font-weight: 700; }
+
+  /* Plan */
+  .plan-col { display: flex; flex-direction: column; gap: 8px; }
+  .plan-item { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; display: flex; align-items: flex-start; gap: 10px; box-shadow: var(--shadow); transition: border-color 0.15s; }
+  .plan-item:hover { border-color: var(--accent); }
+  .plan-check { width: 18px; height: 18px; border: 2px solid var(--border2); border-radius: 4px; flex-shrink: 0; margin-top: 1px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; background: white; }
+  .plan-check.done { background: var(--green); border-color: var(--green); }
+  .plan-check.done::after { content: '✓'; color: white; font-size: 11px; font-weight: 700; }
+  .plan-content { flex: 1; }
+  .plan-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+  .plan-desc { font-size: 11px; color: var(--muted); line-height: 1.5; }
+  .plan-meta { display: flex; gap: 5px; margin-top: 6px; flex-wrap: wrap; }
+  .plan-tag { font-size: 10px; padding: 2px 7px; border-radius: 8px; font-weight: 700; }
+  .pt-red { background: var(--red-bg); color: var(--red); }
+  .pt-blue { background: #dbeafe; color: #1d4ed8; }
+  .pt-yellow { background: var(--yellow-bg); color: var(--yellow); }
+  .pt-green { background: var(--green-bg); color: var(--green-text); }
+  .pt-purple { background: #ede9fe; color: #6d28d9; }
+  .owner-tag { font-size: 10px; padding: 2px 7px; border-radius: 8px; background: var(--bg2); color: var(--muted); font-weight: 600; }
+  .day-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: var(--muted); margin-bottom: 8px; margin-top: 14px; }
+  .day-label:first-child { margin-top: 0; }
+
+  /* Risk */
+  .risk-list { display: flex; flex-direction: column; gap: 7px; }
+  .risk-row { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 9px; background: var(--card2); border: 1px solid var(--border); }
+  .risk-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .rd-red { background: var(--red); }
+  .rd-orange { background: var(--orange); }
+  .rd-yellow { background: var(--yellow); }
+  .risk-deal { font-size: 12px; font-weight: 600; flex: 1; }
+  .risk-reason { font-size: 10px; color: var(--muted); }
+  .risk-acv-val { font-size: 12px; font-weight: 700; white-space: nowrap; }
+
+  /* Cerrado */
+  .cerrado-summary { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 16px; }
+  .cerrado-kpi { border-radius: 12px; padding: 18px; color: white; }
+  .cerrado-kpi.blue { background: linear-gradient(135deg, #1d4ed8, #3b6ef8); }
+  .cerrado-kpi.green { background: linear-gradient(135deg, #15803d, #16a34a); }
+  .cerrado-kpi.purple { background: linear-gradient(135deg, #6d28d9, #7c3aed); }
+  .cerrado-kpi-value { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
+  .cerrado-kpi-label { font-size: 11px; opacity: 0.85; margin-top: 4px; font-weight: 600; }
+  .cerrado-kpi-sub { font-size: 10px; opacity: 0.7; margin-top: 2px; }
+  .cerrado-kpi-delta { font-size: 11px; font-weight: 700; background: rgba(255,255,255,0.2); display: inline-block; padding: 2px 8px; border-radius: 8px; margin-top: 6px; }
+
+  .account-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 10px; box-shadow: var(--shadow); overflow: hidden; }
+  .account-card.is-new { border-color: #3b6ef8; }
+  .account-card.is-new .account-header { background: #eff6ff; }
+  .account-header { display: flex; align-items: center; gap: 12px; padding: 14px 18px; cursor: pointer; user-select: none; transition: background 0.15s; }
+  .account-header:hover { background: var(--bg2); }
+  .account-name { font-size: 14px; font-weight: 700; flex: 1; }
+  .account-mrr { font-size: 13px; font-weight: 700; color: var(--green-text); }
+  .account-chevron { font-size: 12px; color: var(--muted); transition: transform 0.2s; }
+  .account-header.open .account-chevron { transform: rotate(180deg); }
+  .account-detail { display: none; padding: 0 18px 16px; border-top: 1px solid var(--border); }
+  .account-detail.open { display: block; padding-top: 14px; }
+  .detail-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 12px; }
+  .detail-item { background: var(--card2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+  .detail-label { font-size: 10px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+  .detail-value { font-size: 14px; font-weight: 700; color: var(--text); margin-top: 2px; }
+  .status-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+  .sb-activacion { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+  .sb-firma { background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; }
+  .sb-onboarding { background: var(--green-bg); color: var(--green-text); border: 1px solid #bbf7d0; }
+  .sb-new { background: #ede9fe; color: #6d28d9; border: 1px solid #ddd6fe; }
+  .account-notes { background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 10px 12px; font-size: 12px; color: #78350f; line-height: 1.5; }
+
+  /* Initiatives */
+  .initiative-board { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+  .initiative-col { background: var(--card2); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+  .initiative-col-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: var(--muted); margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+  .initiative-col-title .col-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .initiative-card { background: white; border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 10px; box-shadow: var(--shadow); }
+  .initiative-card:last-child { margin-bottom: 0; }
+  .initiative-emoji { font-size: 22px; margin-bottom: 8px; }
+  .initiative-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .initiative-desc { font-size: 11px; color: var(--muted); line-height: 1.5; margin-bottom: 10px; }
+  .initiative-field { margin-bottom: 8px; }
+  .initiative-field label { display: block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 4px; }
+  .initiative-field select, .initiative-field input, .initiative-field textarea { width: 100%; padding: 6px 10px; border: 1px solid var(--border2); border-radius: 7px; font-size: 12px; color: var(--text); background: var(--card2); font-family: inherit; resize: vertical; outline: none; transition: border-color 0.15s; }
+  .initiative-field select:focus, .initiative-field input:focus, .initiative-field textarea:focus { border-color: var(--accent); background: white; }
+  .initiative-field textarea { min-height: 64px; }
+  .initiative-priority { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 8px; font-size: 10px; font-weight: 700; margin-bottom: 10px; }
+  .ip-alta { background: var(--red-bg); color: var(--red); }
+  .ip-media { background: var(--yellow-bg); color: var(--yellow); }
+  .add-initiative-btn { width: 100%; padding: 9px; border: 1.5px dashed var(--border2); border-radius: 9px; background: none; cursor: pointer; font-size: 12px; color: var(--muted); font-weight: 600; transition: all 0.15s; margin-top: 4px; }
+  .add-initiative-btn:hover { border-color: var(--accent); color: var(--accent); background: #eff6ff; }
+
+  /* KPI Section */
+  .kpi-filter-bar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:14px 18px; margin-bottom:20px; }
+  .kpi-filter-bar label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--muted); margin-right:4px; }
+  .kpi-filter-bar select { padding:6px 10px; border:1.5px solid var(--border2); border-radius:8px; font-size:12px; color:var(--text); background:white; outline:none; cursor:pointer; font-family:inherit; transition:border-color 0.15s; }
+  .kpi-filter-bar select:focus { border-color:var(--accent); }
+  .kpi-filter-sep { width:1px; height:24px; background:var(--border); margin:0 4px; }
+  .seller-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:20px; }
+  .seller-card { background:var(--card); border:1px solid var(--border); border-radius:14px; overflow:hidden; box-shadow:var(--shadow); }
+  .seller-header { padding:14px 18px; display:flex; align-items:center; gap:10px; border-bottom:1px solid var(--border); }
+  .seller-avatar { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:800; color:white; flex-shrink:0; }
+  .seller-name { font-size:14px; font-weight:700; }
+  .seller-role { font-size:11px; color:var(--muted); }
+  .seller-metrics { padding:12px 18px; display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+  .seller-metric { background:var(--card2); border:1px solid var(--border); border-radius:9px; padding:8px 10px; text-align:center; }
+  .sm-val { font-size:20px; font-weight:800; color:var(--text); }
+  .sm-lbl { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.4px; color:var(--muted); margin-top:2px; }
+  .seller-footer { padding:10px 18px; border-top:1px solid var(--border); display:flex; gap:8px; flex-wrap:wrap; }
+  .sf-tag { font-size:10px; font-weight:700; padding:2px 8px; border-radius:8px; }
+  .sf-acv { background:#dbeafe; color:#1d4ed8; }
+  .sf-mrr { background:#dcfce7; color:#15803d; }
+  .sf-impl { background:#ede9fe; color:#6d28d9; }
+  /* Channel pills */
+  .channel-grid { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:16px; }
+  .channel-pill { display:inline-flex; align-items:center; gap:5px; padding:5px 12px; border-radius:20px; font-size:11px; font-weight:700; background:var(--card2); border:1px solid var(--border2); color:var(--text); }
+  .channel-count { background:var(--accent); color:white; border-radius:8px; padding:0 6px; font-size:10px; }
+  /* Activity log form */
+  .log-form { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px; box-shadow:var(--shadow); }
+  .log-form-title { font-size:14px; font-weight:700; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+  .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; }
+  .form-grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:12px; }
+  .form-field label { display:block; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--muted); margin-bottom:4px; }
+  .form-field input, .form-field select, .form-field textarea { width:100%; padding:8px 12px; border:1.5px solid var(--border2); border-radius:9px; font-size:12px; color:var(--text); background:var(--card2); font-family:inherit; outline:none; transition:border-color 0.15s; }
+  .form-field input:focus, .form-field select:focus, .form-field textarea:focus { border-color:var(--accent); background:white; }
+  .form-field.full { grid-column:1/-1; }
+  .activity-type-row { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:16px; }
+  .atype-btn { padding:7px 14px; border-radius:20px; border:1.5px solid var(--border2); background:white; font-size:11px; font-weight:700; cursor:pointer; color:var(--muted); transition:all 0.15s; display:flex; align-items:center; gap:5px; }
+  .atype-btn.active { border-color:var(--accent); color:var(--accent); background:#eff6ff; }
+  .atype-btn:hover { border-color:var(--accent); }
+  /* Log table */
+  .log-table-wrap { overflow-x:auto; margin-top:20px; }
+  .log-table { width:100%; border-collapse:collapse; font-size:12px; }
+  .log-table th { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--muted); padding:8px 10px; text-align:left; border-bottom:2px solid var(--border); background:var(--card2); }
+  .log-table td { padding:9px 10px; border-bottom:1px solid var(--border); vertical-align:middle; }
+  .log-table tr:hover td { background:var(--bg2); }
+  .log-table .no-data { text-align:center; padding:30px; color:var(--muted); }
+  .act-badge { display:inline-flex; align-items:center; gap:3px; padding:2px 8px; border-radius:8px; font-size:10px; font-weight:700; white-space:nowrap; }
+  .act-lead    { background:#dbeafe; color:#1d4ed8; }
+  .act-disc    { background:#ede9fe; color:#6d28d9; }
+  .act-demo    { background:#faf5ff; color:#7c3aed; }
+  .act-prop    { background:#ffedd5; color:#9a3412; }
+  .act-close   { background:#fef3c7; color:#92400e; }
+  .act-won     { background:#dcfce7; color:#15803d; }
+  .del-btn { background:none; border:none; color:var(--muted2); cursor:pointer; font-size:13px; padding:2px 6px; border-radius:6px; }
+  .del-btn:hover { background:var(--red-bg); color:var(--red); }
+  /* Conditional fields */
+  .cond-field { display:none; }
+  .cond-field.visible { display:block; }
+
+  /* Charts */
+  .chart-wrap { position: relative; height: 210px; }
+
+  /* Sync states */
+  #syncBtn.syncing { opacity: 0.7; cursor: not-allowed; pointer-events: none; }
+  #syncBtn.syncing::after { content: ' …'; }
+  .sync-toast { position: fixed; bottom: 20px; right: 20px; background: #1e2235; color: white; border-radius: 10px; padding: 12px 18px; font-size: 13px; font-weight: 600; z-index: 999; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.25); animation: toast-in 0.3s ease; }
+  .sync-toast.ok { background: #15803d; }
+  .sync-toast.err { background: #dc2626; }
+  @keyframes toast-in { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+  /* Token modal */
+  .token-input { width:100%; padding:10px 12px; border:1.5px solid var(--border2); border-radius:9px; font-size:13px; font-family:monospace; color:var(--text); background:var(--card2); outline:none; transition:border-color 0.15s; }
+  .token-input:focus { border-color:var(--accent); background:white; }
+  .token-hint { font-size:11px; color:var(--muted); margin-top:6px; line-height:1.5; }
+  .token-hint a { color:var(--accent); text-decoration:none; }
+
+  /* Tooltip */
+  [data-tip] { position: relative; cursor: help; }
+  [data-tip]:hover::after { content: attr(data-tip); position: absolute; bottom: 110%; left: 50%; transform: translateX(-50%); background: #1e2235; color: #fff; border-radius: 6px; padding: 5px 10px; font-size: 11px; white-space: nowrap; z-index: 200; pointer-events: none; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+
+  @media (max-width: 1024px) {
+    .grid-4 { grid-template-columns: repeat(2,1fr); }
+    .initiative-board { grid-template-columns: 1fr 1fr; }
+    .cerrado-summary { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 768px) {
+    .grid-4, .grid-3, .grid-2, .grid-2-1 { grid-template-columns: 1fr; }
+    .initiative-board { grid-template-columns: 1fr; }
+    .cerrado-summary { grid-template-columns: 1fr; }
+    .detail-grid { grid-template-columns: 1fr 1fr; }
+    .tab-content { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── MODALS ──────────────────────────────── -->
+<div class="modal-overlay" id="modalUpdates">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>🔄 Cambios de Estatus · 16→20 Mar</h3>
+      <button class="modal-close" onclick="closeModal('modalUpdates')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-section">🏆 Nuevos Cierres (¡2 deals pasaron a Cerrado!)</div>
+      <div class="update-item">
+        <div class="update-dot ud-win"></div>
+        <div class="update-text">
+          <div class="update-title">Lamex → Cerrado 🔓 <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:6px;font-size:10px;font-weight:700">NUEVO CIERRE</span></div>
+          <div class="update-sub">Antes: Close 2 close → Ahora: Cerrado · ACV $16,200 · MRR $1,350/mo · Impl $1,700 · Abraham Lopez</div>
+        </div>
+        <div class="update-date">Mar 17–20</div>
+      </div>
+      <div class="update-item">
+        <div class="update-dot ud-win"></div>
+        <div class="update-text">
+          <div class="update-title">STULZ → Cerrado 🔓 <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:6px;font-size:10px;font-weight:700">NUEVO CIERRE</span></div>
+          <div class="update-sub">Antes: Close 2 close → Ahora: Cerrado · ACV $4,800 · MRR $400/mo · Impl $720 · Abraham Lopez</div>
+        </div>
+        <div class="update-date">Mar 17–20</div>
+      </div>
+
+      <div class="modal-section">📈 Avances de Etapa</div>
+      <div class="update-item">
+        <div class="update-dot ud-stage"></div>
+        <div class="update-text">
+          <div class="update-title">Calificados: 80 → 87 (+7 nuevos calificados)</div>
+          <div class="update-sub">7 deals avanzaron o fueron calificados esta semana</div>
+        </div>
+        <div class="update-date">Esta semana</div>
+      </div>
+      <div class="update-item">
+        <div class="update-dot ud-stage"></div>
+        <div class="update-text">
+          <div class="update-title">Discovery: 18 → 20 (+2)</div>
+          <div class="update-sub">2 deals avanzaron a etapa de Discovery (incl. AXALTA — nuevo hoy)</div>
+        </div>
+        <div class="update-date">Esta semana</div>
+      </div>
+      <div class="update-item">
+        <div class="update-dot ud-stage"></div>
+        <div class="update-text">
+          <div class="update-title">Arista Int — Touchpoint activo</div>
+          <div class="update-sub">Último toque: 13 Mar · Next touch: HOY 20 Mar · ACV $7,020 · Abraham</div>
+        </div>
+        <div class="update-date">Mar 13</div>
+      </div>
+      <div class="update-item">
+        <div class="update-dot ud-stage"></div>
+        <div class="update-text">
+          <div class="update-title">RC+Químicos — Touchpoint reciente</div>
+          <div class="update-sub">Último toque: 13 Mar · ACV $4,800 · Propuesta · Abraham</div>
+        </div>
+        <div class="update-date">Mar 13</div>
+      </div>
+
+      <div class="modal-section">⚠️ Alertas — Next Touches Vencidos</div>
+      <div class="update-item">
+        <div class="update-dot ud-risk"></div>
+        <div class="update-text">
+          <div class="update-title">Sigma Laredo* — Next touch 17 Mar (3 días vencido)</div>
+          <div class="update-sub">Close 2 close · ACV $66,000 · Sin touchpoint registrado · Abraham</div>
+        </div>
+        <div class="update-date">Vencido 3d</div>
+      </div>
+      <div class="update-item">
+        <div class="update-dot ud-risk"></div>
+        <div class="update-text">
+          <div class="update-title">Sigma — Next touch 18 Mar (2 días vencido)</div>
+          <div class="update-sub">Close 2 close · ACV $36,000 · Pilot $12,500 · Abraham</div>
+        </div>
+        <div class="update-date">Vencido 2d</div>
+      </div>
+      <div class="update-item">
+        <div class="update-dot ud-risk"></div>
+        <div class="update-text">
+          <div class="update-title">Grupo Alta / Divine Flavor — 4 días sin seguimiento</div>
+          <div class="update-sub">Close 2 close · ACV $22,560 · Next touch era Mar 16 · Héctor</div>
+        </div>
+        <div class="update-date">Vencido 4d</div>
+      </div>
+      <div class="update-item">
+        <div class="update-dot ud-risk"></div>
+        <div class="update-text">
+          <div class="update-title">Agrosuper* — 10 días desde next touch</div>
+          <div class="update-sub">Propuesta · ACV $21,600 · Next era 10 Mar · Abraham</div>
+        </div>
+        <div class="update-date">Vencido 10d</div>
+      </div>
+      <div class="update-item">
+        <div class="update-dot ud-risk"></div>
+        <div class="update-text">
+          <div class="update-title">VEGUSA — Next touch 17 Mar (3 días vencido)</div>
+          <div class="update-sub">Propuesta · ACV $7,200 · Daniel</div>
+        </div>
+        <div class="update-date">Vencido 3d</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalNew">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>✨ Nuevos Registros · 16–20 Mar (11)</h3>
+      <button class="modal-close" onclick="closeModal('modalNew')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-section">Hoy · 20 Marzo (10 nuevos por Daniel Luna)</div>
+      <div class="update-item">
+        <div class="update-dot ud-new"></div>
+        <div class="update-text"><div class="update-title">AXALTA · Discovery</div><div class="update-sub">Entró directo a Discovery — Daniel Luna</div></div>
+        <div class="update-date">Hoy</div>
+      </div>
+      <div class="update-item">
+        <div class="update-dot ud-new"></div>
+        <div class="update-text"><div class="update-title">ALPURA · Active lead</div><div class="update-sub">Daniel Luna</div></div>
+        <div class="update-date">Hoy</div>
+      </div>
+      <div class="update-item">
+        <div class="update-dot ud-new"></div>
+        <div class="update-text"><div class="update-title">PRISMA · Active lead</div><div class="update-sub">Daniel Luna</div></div>
+        <div class="update-date">Hoy</div>
+      </div>
+      <div class="update-item">
+        <div class="update-dot ud-new"></div>
+        <div class="update-text"><div class="update-title">MOTRIX · Active lead</div><div class="update-sub">Daniel Luna</div></div>
+        <div class="update-date">Hoy</div>
+      </div>
+      <div class="update-item">
+        <div class="update-dot ud-new"></div>
+        <div class="update-text"><div class="update-title">MAARBA LOGISTICS · Active lead</div><div class="update-sub">Daniel Luna</div></div>
+        <div class="update-date">Hoy</div>
+      </div>
+      <div class="update-item">
+        <div class="update-dot ud-new"></div>
+        <div class="update-text"><div class="update-title">LUTHERR · Active lead</div><div class="update-sub">Daniel Luna</div></div>
+        <div class="update-date">Hoy</div>
+      </div>
+      <div class="update-item">
+        <div class="update-dot ud-new"></div>
+        <div class="update-text"><div class="update-title">ZF Frenos y mecanismos · Weekly Hunt</div><div class="update-sub">Daniel Luna</div></div>
+        <div class="update-date">Hoy</div>
+      </div>
+      <div class="update-item">
+        <div class="update-dot ud-new"></div>
+        <div class="update-text"><div class="update-title">IMCD MEXICO · Weekly Hunt</div><div class="update-sub">Daniel Luna</div></div>
+        <div class="update-date">Hoy</div>
+      </div>
+      <div class="update-item">
+        <div class="update-dot ud-new"></div>
+        <div class="update-text"><div class="update-title">HERAEUS ELECTRO NITE · Weekly Hunt</div><div class="update-sub">Daniel Luna</div></div>
+        <div class="update-date">Hoy</div>
+      </div>
+      <div class="update-item">
+        <div class="update-dot ud-new"></div>
+        <div class="update-text"><div class="update-title">ITASA AMERICAS / MATIV · Weekly Hunt</div><div class="update-sub">Daniel Luna</div></div>
+        <div class="update-date">Hoy</div>
+      </div>
+      <div class="modal-section">Jueves 17 Marzo (1 nuevo)</div>
+      <div class="update-item">
+        <div class="update-dot ud-new"></div>
+        <div class="update-text"><div class="update-title">QUIMICOS Y POLIMEROS CORPORATION · Active lead</div><div class="update-sub">Daniel Luna</div></div>
+        <div class="update-date">17 Mar</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── TOKEN CONFIG MODAL ──────────────────── -->
+<div class="modal-overlay" id="modalToken">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <h3>⚙️ Configurar Airtable Sync</h3>
+      <button class="modal-close" onclick="closeModal('modalToken')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="margin-bottom:16px">
+        <label style="display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:6px">Personal Access Token</label>
+        <input type="password" class="token-input" id="tokenInput" placeholder="patXXXXXXXXXXXXXXXX.XXXXXXXX…" autocomplete="off">
+        <div class="token-hint">
+          Tu token se guarda <strong>solo en este navegador</strong> (localStorage), nunca se envía a ningún servidor.<br>
+          Puedes generar uno en <a href="https://airtable.com/create/tokens" target="_blank">airtable.com/create/tokens</a> con el scope <code>data.records:read</code> y acceso al base <em>Growth</em>.
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn btn-outline" onclick="closeModal('modalToken')">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveToken()">💾 Guardar y Sincronizar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── LIVE BANNER ──────────────────────────── -->
+<div class="live-banner">
+  <div class="live-dot"></div>
+  <span style="font-weight:700">Actualizado: Viernes 20 Marzo 2026</span>
+  <span class="banner-win">🏆 +2 Cierres: Lamex + STULZ</span>
+  <span class="banner-change">MRR confirmado: $7,560 → $9,310/mo (+$1,750)</span>
+  <span class="banner-change">Total registros: 715 → 726</span>
+  <span class="banner-new">+11 nuevos hoy</span>
+  <span class="banner-change">Calificados: 80 → 87</span>
+  <span class="banner-change">Close 2 close: 7 → 5</span>
+  <span class="banner-change">Cerrado: 4 → 6</span>
+</div>
+
+<!-- ── TOP BAR ──────────────────────────────── -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="logo">B</div>
+    <div>
+      <div class="topbar-title">Growth Dashboard</div>
+      <div class="topbar-sub" id="topbar-sub">Viernes 20 de Marzo, 2026 · Actualizado desde Airtable hace unos momentos</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <button class="btn btn-outline" onclick="openModal('modalNew')">✨ Nuevos registros <span class="badge-count" style="background:#3b6ef8;color:#fff">11</span></button>
+    <button class="btn btn-primary" onclick="openModal('modalUpdates')">🔄 Actualizaciones <span class="badge-count" style="background:rgba(255,255,255,0.25)">9</span></button>
+    <button class="btn btn-green" id="syncBtn" onclick="syncAirtable()" title="Sincronizar datos con Airtable">⚡ Sync</button>
+    <button class="btn btn-outline" onclick="openModal('modalToken')" title="Configurar token" style="padding:8px 11px;font-size:15px">⚙️</button>
+    <div class="health-pill" id="health-pill">⚠ Health: 38/100</div>
+  </div>
+</div>
+
+<!-- ── TABS ─────────────────────────────────── -->
+<div class="tab-nav">
+  <button class="tab-btn active" onclick="switchTab('pipeline',this)">📊 Pipeline</button>
+  <button class="tab-btn" onclick="switchTab('cerrados',this)">🔓 Cerrados & MRR <span style="background:#dcfce7;color:#15803d;border-radius:8px;padding:0 6px;font-size:10px;font-weight:700;margin-left:3px">133%</span></button>
+  <button class="tab-btn" onclick="switchTab('plan',this)">📋 Plan Semanal</button>
+  <button class="tab-btn" onclick="switchTab('iniciativas',this)">🚀 Iniciativas Clave</button>
+  <button class="tab-btn" onclick="switchTab('kpis',this)">🎯 KPIs por Vendedor</button>
+</div>
+
+<!-- ══════════════════════════════════════
+     TAB: PIPELINE
+══════════════════════════════════════ -->
+<div class="tab-content active" id="tab-pipeline">
+
+  <!-- KPIs (updated numbers) -->
+  <div class="grid-4">
+    <div class="card card-sm">
+      <div class="card-title">ACV Total Activo</div>
+      <div class="stat-value" style="color:#3b6ef8" id="kpi-acv">$603K</div>
+      <div class="stat-sub" id="kpi-acv-sub">43 deals con valor</div>
+      <div class="stat-delta delta-new">↑ +11 registros nuevos</div>
+    </div>
+    <div class="card card-sm">
+      <div class="card-title">MRR Pipeline</div>
+      <div class="stat-value" style="color:#6c4ef7">$50.2K</div>
+      <div class="stat-sub">/mes en deals activos</div>
+      <div class="stat-delta delta-ok">✓ Meta $7K superada (133%)</div>
+    </div>
+    <div class="card card-sm">
+      <div class="card-title">Deals Activos</div>
+      <div class="stat-value" style="color:#d97706" id="kpi-activos">366</div>
+      <div class="stat-sub" id="kpi-activos-sub">de 726 registros totales</div>
+      <div class="stat-delta delta-new">↑ +11 vs mar 16</div>
+    </div>
+    <div class="card card-sm">
+      <div class="card-title">MRR Confirmado</div>
+      <div class="stat-value" style="color:#16a34a" id="kpi-mrr-confirmed">$9,310</div>
+      <div class="stat-sub" id="kpi-mrr-confirmed-sub">/mes · 6 cuentas cerradas</div>
+      <div class="stat-delta delta-ok">↑ +$1,750 esta semana 🏆</div>
+    </div>
+  </div>
+
+  <!-- Funnel + Metas -->
+  <div class="section-title">Embudo & Metas de Marzo</div>
+  <div class="grid-2-1">
+    <div class="card">
+      <div class="card-title">Embudo · Actualizado 20 Mar <span style="font-size:10px;color:var(--green-text);background:var(--green-bg);padding:1px 6px;border-radius:6px">vs 16 Mar</span></div>
+      <div style="padding:4px 0" id="funnel-rows">
+
+        <div class="funnel-row">
+          <div class="funnel-stage" style="color:#64748b">🌐 Weekly Hunt</div>
+          <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:100%;background:#3b6ef8">101 <span class="funnel-delta fd-down">-1</span></div></div>
+          <div class="funnel-count">101</div><div class="funnel-acv">—</div>
+        </div>
+        <div class="funnel-row">
+          <div class="funnel-stage">🎯 Active lead</div>
+          <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:67%;background:#2563eb">69 <span class="funnel-delta fd-up">+3</span></div></div>
+          <div class="funnel-count">69</div><div class="funnel-acv">—</div>
+        </div>
+        <div class="funnel-row">
+          <div class="funnel-stage" style="color:#3b6ef8">✅ Calificado</div>
+          <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:85%;background:linear-gradient(90deg,#3b6ef8,#6c4ef7)">87 <span class="funnel-delta fd-up">+7</span></div></div>
+          <div class="funnel-count">87</div><div class="funnel-acv">$18K</div>
+        </div>
+        <div class="funnel-row">
+          <div class="funnel-stage" style="color:#7c3aed">🔭 Discovery</div>
+          <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:20%;background:#7c3aed">20 <span class="funnel-delta fd-up">+2</span></div></div>
+          <div class="funnel-count">20</div><div class="funnel-acv">—</div>
+        </div>
+        <div class="funnel-row">
+          <div class="funnel-stage" style="color:#6d28d9">💻 Demo</div>
+          <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:9%;background:#5b21b6">9</div></div>
+          <div class="funnel-count">9</div><div class="funnel-acv">$10.8K</div>
+        </div>
+        <div class="funnel-row">
+          <div class="funnel-stage" style="color:#ea580c">💰 Propuesta</div>
+          <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:10%;background:#c2410c">10</div></div>
+          <div class="funnel-count">10</div><div class="funnel-acv">$62.6K</div>
+        </div>
+        <div class="funnel-row">
+          <div class="funnel-stage" style="color:#15803d">🤝 Close 2 close</div>
+          <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:5%;background:#15803d">5 <span class="funnel-delta fd-down">-2→Cerrado</span></div></div>
+          <div class="funnel-count">5</div><div class="funnel-acv">$130K</div>
+        </div>
+        <div class="funnel-row">
+          <div class="funnel-stage" style="color:#1d4ed8">🔓 Cerrado</div>
+          <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:6%;background:#1d4ed8;min-width:36px">6 <span class="funnel-delta fd-up">+2 🏆</span></div></div>
+          <div class="funnel-count">6</div><div class="funnel-acv">$111.7K</div>
+        </div>
+        <div class="funnel-row">
+          <div class="funnel-stage" style="color:#6d28d9">🚀 Piloto</div>
+          <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:1%;background:#4338ca;min-width:28px">1</div></div>
+          <div class="funnel-count">1</div><div class="funnel-acv">$120K</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Metas Marzo · Progreso</div>
+      <div class="goal-item">
+        <div class="goal-header"><div class="goal-label">Leads Calificados</div><div class="goal-nums"><span id="g-calificado">87</span> / 150</div></div>
+        <div class="progress-track"><div class="progress-fill fill-blue" id="gf-calificado" style="width:58%"></div></div>
+        <div style="font-size:10px;color:var(--muted);margin-top:3px" id="gs-calificado">58% · +7 esta semana · faltan 63</div>
+      </div>
+      <div class="goal-item">
+        <div class="goal-header"><div class="goal-label">Discovery</div><div class="goal-nums"><span id="g-discovery">20</span> / 50</div></div>
+        <div class="progress-track"><div class="progress-fill fill-purple" id="gf-discovery" style="width:40%"></div></div>
+        <div style="font-size:10px;color:var(--muted);margin-top:3px" id="gs-discovery">40% · +2 esta semana · faltan 30</div>
+      </div>
+      <div class="goal-item">
+        <div class="goal-header"><div class="goal-label">Demos</div><div class="goal-nums"><span id="g-demo">9</span> / 25</div></div>
+        <div class="progress-track"><div class="progress-fill fill-yellow" id="gf-demo" style="width:36%"></div></div>
+        <div style="font-size:10px;color:var(--muted);margin-top:3px" id="gs-demo">36% · faltan 16</div>
+      </div>
+      <div class="goal-item">
+        <div class="goal-header"><div class="goal-label">Propuestas</div><div class="goal-nums"><span id="g-propuesta">10</span> / 25</div></div>
+        <div class="progress-track"><div class="progress-fill fill-red" id="gf-propuesta" style="width:40%"></div></div>
+        <div style="font-size:10px;color:var(--muted);margin-top:3px" id="gs-propuesta">40% · faltan 15</div>
+      </div>
+      <div class="goal-item">
+        <div class="goal-header"><div class="goal-label">🎯 Nuevo MRR Cerrado</div><div class="goal-nums"><span id="g-mrr">$9,310</span> / $7,000</div></div>
+        <div class="progress-track"><div class="progress-fill fill-green" id="gf-mrr" style="width:100%"></div></div>
+        <div style="font-size:10px;color:var(--green-text);margin-top:3px;font-weight:700" id="gs-mrr">✅ META SUPERADA · 133%</div>
+      </div>
+      <div style="margin-top:14px;background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #bbf7d0;border-radius:10px;padding:12px 14px;">
+        <div style="font-size:10px;font-weight:700;color:#15803d;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">🏆 Lamex + STULZ cerraron esta semana</div>
+        <div style="font-size:18px;font-weight:800;color:#15803d">+$1,750/mo nuevos <span style="font-size:11px;font-weight:600">en 4 días</span></div>
+        <div style="font-size:10px;color:#16a34a;margin-top:2px">Total acumulado: $9,310/mo confirmados</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">ACV por Etapa (actualizado)</div>
+      <div class="chart-wrap"><canvas id="chartACV"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">ACV por Owner</div>
+      <div class="chart-wrap"><canvas id="chartOwner"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Top Deals -->
+  <div class="section-title">Top Deals · Estado Actual 20 Mar</div>
+  <div class="card">
+    <div class="table-wrap">
+      <table class="deals-table">
+        <thead>
+          <tr><th>Deal</th><th>Etapa</th><th>Owner</th><th>ACV</th><th>MRR</th><th>Días Pipe</th><th>Próximo Toque</th><th>⚡</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Coppel</strong></td><td><span class="stage-tag tag-pilot">🚀 Piloto</span></td><td><span class="owner-chip">Abraham</span></td><td><span class="acv-value">$120,000</span></td><td>$10,000</td><td><span style="color:var(--orange)">364d</span></td><td><span class="overdue">Sin registrar ⚠</span></td><td data-tip="364d en Piloto, sin touchpoint ni close date">🔴</td></tr>
+          <tr><td><strong>Sigma Laredo*</strong></td><td><span class="stage-tag tag-close">🤝 Close 2 close</span></td><td><span class="owner-chip">Abraham</span></td><td><span class="acv-value">$66,000</span></td><td>$5,500</td><td>—</td><td><span class="overdue">17 Mar (3d vencido)</span></td><td data-tip="Next touch vencido hace 3 días">🔴</td></tr>
+          <tr><td><strong>GEA ANDINA</strong></td><td><span class="stage-tag tag-cerrado">🔓 Cerrado</span></td><td><span class="owner-chip">Daniel</span></td><td><span class="acv-value">$36,000</span></td><td>$3,000</td><td>17d</td><td><span class="overdue">17 Mar (3d vencido)</span></td><td data-tip="Cerrado pero next touch vencido — confirmar CS">🟡</td></tr>
+          <tr><td><strong>Sigma</strong></td><td><span class="stage-tag tag-close">🤝 Close 2 close</span></td><td><span class="owner-chip">Abraham</span></td><td><span class="acv-value">$36,000</span></td><td>$3,000</td><td>—</td><td><span class="overdue">18 Mar (2d vencido)</span></td><td data-tip="Next touch vencido, Pilot $12.5K">🟡</td></tr>
+          <tr><td><strong>RADEC*</strong></td><td><span class="stage-tag tag-cerrado">🔓 Cerrado</span></td><td><span class="owner-chip">Daniel</span></td><td><span class="acv-value">$30,000</span></td><td>$2,500</td><td>192d</td><td><span class="overdue">Sin registrar ⚠</span></td><td data-tip="192d cerrado sin follow-up">🔴</td></tr>
+          <tr><td><strong>Grupo Alta / Divine Flavor</strong></td><td><span class="stage-tag tag-close">🤝 Close 2 close</span></td><td><span class="owner-chip">Héctor</span></td><td><span class="acv-value">$22,560</span></td><td>$1,880</td><td>—</td><td><span class="overdue">16 Mar (4d vencido)</span></td><td data-tip="Next touch era ayer — urgente">🔴</td></tr>
+          <tr><td><strong>Agrosuper*</strong></td><td><span class="stage-tag tag-propuesta">💰 Propuesta</span></td><td><span class="owner-chip">Abraham</span></td><td><span class="acv-value">$21,600</span></td><td>$1,800</td><td>3d</td><td><span class="overdue">10 Mar (10d vencido)</span></td><td data-tip="10 días sin seguimiento tras próximo toque">🟡</td></tr>
+          <tr><td><strong>Arista Int</strong></td><td><span class="stage-tag tag-propuesta">💰 Propuesta</span></td><td><span class="owner-chip">Abraham</span></td><td><span class="acv-value">$7,020</span></td><td>$585</td><td>123d</td><td><span class="today-touch">Hoy 20 Mar ✅</span></td><td data-tip="Toque programado HOY — activo">🟢</td></tr>
+          <tr class="row-win"><td><strong>Lamex</strong> <span class="tag-new">CERRADO</span></td><td><span class="stage-tag tag-cerrado">🔓 Cerrado</span></td><td><span class="owner-chip">Abraham</span></td><td><span class="acv-value">$16,200</span></td><td>$1,350</td><td>198d</td><td><span style="color:var(--muted)">Impl $1,700</span></td><td data-tip="Nuevo cierre esta semana 🏆">🏆</td></tr>
+          <tr class="row-win"><td><strong>STULZ</strong> <span class="tag-new">CERRADO</span></td><td><span class="stage-tag tag-cerrado">🔓 Cerrado</span></td><td><span class="owner-chip">Abraham</span></td><td><span class="acv-value">$4,800</span></td><td>$400</td><td>106d</td><td><span style="color:var(--muted)">Impl $720</span></td><td data-tip="Nuevo cierre esta semana 🏆">🏆</td></tr>
+          <tr class="row-new"><td><strong>AXALTA</strong> <span class="tag-new">NUEVO</span></td><td><span class="stage-tag tag-discovery">🔭 Discovery</span></td><td><span class="owner-chip">Daniel</span></td><td><span class="acv-value">—</span></td><td>—</td><td>0d</td><td><span style="color:var(--muted)">Por agendar</span></td><td data-tip="Nuevo hoy, entró directo a Discovery">🆕</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top:10px;font-size:11px;color:var(--muted);padding:0 4px">
+      <span style="display:inline-flex;align-items:center;gap:4px;margin-right:12px"><span style="width:10px;height:10px;background:#f0fdf4;border:1px solid #16a34a;border-radius:2px;display:inline-block"></span> Nuevo cierre esta semana</span>
+      <span style="display:inline-flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:#eff6ff;border:1px solid #3b6ef8;border-radius:2px;display:inline-block"></span> Nuevo registro</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     TAB: CERRADOS
+══════════════════════════════════════ -->
+<div class="tab-content" id="tab-cerrados">
+  <div style="margin-bottom:20px;">
+    <div style="font-size:15px;font-weight:700;margin-bottom:4px">🔓 Cerrados — MRR Confirmado en Activación</div>
+    <div style="font-size:13px;color:var(--muted)">Cuentas en proceso de firma, alta e implementación. Haz clic para ver el detalle de cada una.</div>
+  </div>
+
+  <div class="cerrado-summary" id="cerrado-kpis">
+    <div class="cerrado-kpi green">
+      <div class="cerrado-kpi-value">$9,310</div>
+      <div class="cerrado-kpi-label">MRR Confirmado / mes</div>
+      <div class="cerrado-kpi-sub">6 cuentas · En activación</div>
+      <div class="cerrado-kpi-delta">↑ +$1,750 esta semana</div>
+    </div>
+    <div class="cerrado-kpi blue">
+      <div class="cerrado-kpi-value">$111,720</div>
+      <div class="cerrado-kpi-label">ACV Total Cerrado</div>
+      <div class="cerrado-kpi-sub">Valor anual combinado</div>
+      <div class="cerrado-kpi-delta">↑ +$21,000 vs sem. pasada</div>
+    </div>
+    <div class="cerrado-kpi purple">
+      <div class="cerrado-kpi-value">$11,640</div>
+      <div class="cerrado-kpi-label">Ingresos por Implementación</div>
+      <div class="cerrado-kpi-sub">Setup + Onboarding</div>
+      <div class="cerrado-kpi-delta">↑ +$2,420 nuevos</div>
+    </div>
+  </div>
+
+  <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 16px;margin-bottom:20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+    <span style="font-size:20px">🎯</span>
+    <div>
+      <div style="font-size:13px;font-weight:700;color:#15803d">¡Meta de $7K MRR superada! · $9,310/mo confirmados = <strong>133%</strong></div>
+      <div style="font-size:11px;color:#16a34a;margin-top:2px">Lamex ($1,350/mo) y STULZ ($400/mo) cerraron esta semana gracias a Abraham Lopez.</div>
+    </div>
+  </div>
+
+  <div id="cerrado-accounts">
+  <!-- GEA ANDINA -->
+  <div class="account-card">
+    <div class="account-header" onclick="toggleAccount(this)">
+      <div style="font-size:20px">🏭</div>
+      <div class="account-name">GEA ANDINA</div>
+      <span class="status-badge sb-firma">📝 Proceso de Firma</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span class="owner-chip">Daniel Luna</span>
+        <div style="text-align:right"><div class="account-mrr">$3,000/mo</div><div style="font-size:10px;color:var(--muted)">$36K ACV</div></div>
+      </div>
+      <div class="account-chevron">▼</div>
+    </div>
+    <div class="account-detail">
+      <div class="detail-grid">
+        <div class="detail-item"><div class="detail-label">MRR Mensual</div><div class="detail-value" style="color:#16a34a">$3,000</div></div>
+        <div class="detail-item"><div class="detail-label">ACV Anual</div><div class="detail-value">$36,000</div></div>
+        <div class="detail-item"><div class="detail-label">Fee Implementación</div><div class="detail-value" style="color:#7c3aed">$5,400</div></div>
+        <div class="detail-item"><div class="detail-label">Días en Pipe</div><div class="detail-value">17 días</div></div>
+        <div class="detail-item"><div class="detail-label">Próximo Toque</div><div class="detail-value overdue">17 Mar (3d vencido)</div></div>
+        <div class="detail-item"><div class="detail-label">Solución</div><div class="detail-value">Birdie Platform</div></div>
+      </div>
+      <div class="account-notes">⚠️ <strong>Alerta:</strong> Next touch era el 17 Mar (3 días vencido). Confirmar firma y hacer handoff a CS esta semana.</div>
+    </div>
+  </div>
+
+  <!-- RADEC* -->
+  <div class="account-card">
+    <div class="account-header" onclick="toggleAccount(this)">
+      <div style="font-size:20px">🚢</div>
+      <div class="account-name">RADEC*</div>
+      <span class="status-badge sb-activacion">⚡ En Activación</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span class="owner-chip">Daniel Luna</span>
+        <div style="text-align:right"><div class="account-mrr">$2,500/mo</div><div style="font-size:10px;color:var(--muted)">$30K ACV</div></div>
+      </div>
+      <div class="account-chevron">▼</div>
+    </div>
+    <div class="account-detail">
+      <div class="detail-grid">
+        <div class="detail-item"><div class="detail-label">MRR Mensual</div><div class="detail-value" style="color:#16a34a">$2,500</div></div>
+        <div class="detail-item"><div class="detail-label">ACV Anual</div><div class="detail-value">$30,000</div></div>
+        <div class="detail-item"><div class="detail-label">Fee Implementación</div><div class="detail-value" style="color:var(--muted)">$0 (incluido)</div></div>
+        <div class="detail-item"><div class="detail-label">Días en Pipe</div><div class="detail-value" style="color:var(--orange)">192 días</div></div>
+        <div class="detail-item"><div class="detail-label">Próximo Toque</div><div class="detail-value overdue">Sin registrar ⚠</div></div>
+        <div class="detail-item"><div class="detail-label">Solución</div><div class="detail-value">Birdie AI</div></div>
+      </div>
+      <div class="account-notes">⚠️ <strong>Alerta:</strong> 192 días en pipe sin touchpoint registrado. Confirmar con CS el status de activación urgente.</div>
+    </div>
+  </div>
+
+  <!-- IB Group -->
+  <div class="account-card">
+    <div class="account-header" onclick="toggleAccount(this)">
+      <div style="font-size:20px">🏢</div>
+      <div class="account-name">IB Group</div>
+      <span class="status-badge sb-onboarding">✅ Onboarding</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span class="owner-chip">Abraham Lopez</span>
+        <div style="text-align:right"><div class="account-mrr">$1,250/mo</div><div style="font-size:10px;color:var(--muted)">$15K ACV</div></div>
+      </div>
+      <div class="account-chevron">▼</div>
+    </div>
+    <div class="account-detail">
+      <div class="detail-grid">
+        <div class="detail-item"><div class="detail-label">MRR Mensual</div><div class="detail-value" style="color:#16a34a">$1,250</div></div>
+        <div class="detail-item"><div class="detail-label">ACV Anual</div><div class="detail-value">$15,000</div></div>
+        <div class="detail-item"><div class="detail-label">Fee Implementación</div><div class="detail-value" style="color:var(--muted)">$0</div></div>
+        <div class="detail-item"><div class="detail-label">Estado CS</div><div class="detail-value" style="color:#16a34a">Onboarding activo</div></div>
+        <div class="detail-item"><div class="detail-label">Próximo Toque</div><div class="detail-value" style="color:var(--muted)">—</div></div>
+        <div class="detail-item"><div class="detail-label">Solución</div><div class="detail-value">Birdie Platform</div></div>
+      </div>
+      <div class="account-notes">✅ En onboarding. Coordinar con CS para timeline de arranque operativo.</div>
+    </div>
+  </div>
+
+  <!-- LANTIA -->
+  <div class="account-card">
+    <div class="account-header" onclick="toggleAccount(this)">
+      <div style="font-size:20px">⚓</div>
+      <div class="account-name">LANTIA MARITIMA</div>
+      <span class="status-badge sb-firma">📝 Firma Completada</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span class="owner-chip">Daniel Luna</span>
+        <div style="text-align:right"><div class="account-mrr">$810/mo</div><div style="font-size:10px;color:var(--muted)">$9.7K ACV</div></div>
+      </div>
+      <div class="account-chevron">▼</div>
+    </div>
+    <div class="account-detail">
+      <div class="detail-grid">
+        <div class="detail-item"><div class="detail-label">MRR Mensual</div><div class="detail-value" style="color:#16a34a">$810</div></div>
+        <div class="detail-item"><div class="detail-label">ACV Anual</div><div class="detail-value">$9,720</div></div>
+        <div class="detail-item"><div class="detail-label">Fee Implementación</div><div class="detail-value" style="color:#7c3aed">$1,400</div></div>
+        <div class="detail-item"><div class="detail-label">Días desde Cierre</div><div class="detail-value" style="color:var(--orange)">53 días</div></div>
+        <div class="detail-item"><div class="detail-label">Close date</div><div class="detail-value">26 Ene 2026</div></div>
+        <div class="detail-item"><div class="detail-label">Solución</div><div class="detail-value">Birdie Platform</div></div>
+      </div>
+      <div class="account-notes">📌 Cerrado hace 53 días. Verificar que CS completó el onboarding y la cuenta está activa.</div>
+    </div>
+  </div>
+
+  <!-- LAMEX — NUEVO CIERRE -->
+  <div class="account-card is-new">
+    <div class="account-header" onclick="toggleAccount(this)">
+      <div style="font-size:20px">🚛</div>
+      <div class="account-name">Lamex <span class="tag-new" style="font-size:11px;padding:2px 8px">🏆 NUEVO CIERRE</span></div>
+      <span class="status-badge sb-new">🆕 Recién Cerrado</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span class="owner-chip">Abraham Lopez</span>
+        <div style="text-align:right"><div class="account-mrr">$1,350/mo</div><div style="font-size:10px;color:var(--muted)">$16.2K ACV</div></div>
+      </div>
+      <div class="account-chevron">▼</div>
+    </div>
+    <div class="account-detail">
+      <div class="detail-grid">
+        <div class="detail-item"><div class="detail-label">MRR Mensual</div><div class="detail-value" style="color:#16a34a">$1,350</div></div>
+        <div class="detail-item"><div class="detail-label">ACV Anual</div><div class="detail-value">$16,200</div></div>
+        <div class="detail-item"><div class="detail-label">Fee Implementación</div><div class="detail-value" style="color:#7c3aed">$1,700</div></div>
+        <div class="detail-item"><div class="detail-label">Días en Pipe</div><div class="detail-value">198 días</div></div>
+        <div class="detail-item"><div class="detail-label">Cerrado esta semana</div><div class="detail-value" style="color:#16a34a">17–20 Mar ✓</div></div>
+        <div class="detail-item"><div class="detail-label">Responsable</div><div class="detail-value">Abraham Lopez</div></div>
+      </div>
+      <div class="account-notes">🏆 <strong>Nuevo cierre esta semana.</strong> Antes en Close 2 close (198 días). Iniciar proceso de alta y onboarding inmediatamente. Coordinación con CS urgente.</div>
+    </div>
+  </div>
+
+  <!-- STULZ — NUEVO CIERRE -->
+  <div class="account-card is-new">
+    <div class="account-header" onclick="toggleAccount(this)">
+      <div style="font-size:20px">❄️</div>
+      <div class="account-name">STULZ <span class="tag-new" style="font-size:11px;padding:2px 8px">🏆 NUEVO CIERRE</span></div>
+      <span class="status-badge sb-new">🆕 Recién Cerrado</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span class="owner-chip">Abraham Lopez</span>
+        <div style="text-align:right"><div class="account-mrr">$400/mo</div><div style="font-size:10px;color:var(--muted)">$4.8K ACV</div></div>
+      </div>
+      <div class="account-chevron">▼</div>
+    </div>
+    <div class="account-detail">
+      <div class="detail-grid">
+        <div class="detail-item"><div class="detail-label">MRR Mensual</div><div class="detail-value" style="color:#16a34a">$400</div></div>
+        <div class="detail-item"><div class="detail-label">ACV Anual</div><div class="detail-value">$4,800</div></div>
+        <div class="detail-item"><div class="detail-label">Fee Implementación</div><div class="detail-value" style="color:#7c3aed">$720</div></div>
+        <div class="detail-item"><div class="detail-label">Días en Pipe</div><div class="detail-value">106 días</div></div>
+        <div class="detail-item"><div class="detail-label">Cerrado esta semana</div><div class="detail-value" style="color:#16a34a">17–20 Mar ✓</div></div>
+        <div class="detail-item"><div class="detail-label">Responsable</div><div class="detail-value">Abraham Lopez</div></div>
+      </div>
+      <div class="account-notes">🏆 <strong>Nuevo cierre esta semana.</strong> 106 días en pipe. Iniciar onboarding y coordinación con CS.</div>
+    </div>
+  </div>
+  </div><!-- /cerrado-accounts -->
+
+  <!-- Footer -->
+  <div style="margin-top:20px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:16px 20px;display:flex;gap:24px;flex-wrap:wrap;align-items:center;">
+    <div><div style="font-size:11px;color:#16a34a;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Total MRR Confirmado</div><div style="font-size:24px;font-weight:800;color:#15803d">$9,310 / mes</div></div>
+    <div style="width:1px;height:40px;background:#bbf7d0"></div>
+    <div><div style="font-size:11px;color:#16a34a;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Total Implementaciones</div><div style="font-size:24px;font-weight:800;color:#15803d">$11,640</div></div>
+    <div style="width:1px;height:40px;background:#bbf7d0"></div>
+    <div><div style="font-size:11px;color:#16a34a;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">ACV Combinado</div><div style="font-size:24px;font-weight:800;color:#15803d">$111,720</div></div>
+    <div style="margin-left:auto;background:white;border:2px solid #16a34a;border-radius:10px;padding:10px 16px;text-align:center;">
+      <div style="font-size:11px;color:#16a34a;font-weight:700">Meta $7K MRR</div>
+      <div style="font-size:22px;font-weight:800;color:#15803d">133% ✅</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     TAB: PLAN SEMANAL
+══════════════════════════════════════ -->
+<div class="tab-content" id="tab-plan">
+  <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 16px;margin-bottom:18px;font-size:13px;color:#1d4ed8;">
+    📅 <strong>Semana del 20–24 Marzo.</strong> Hoy (viernes) hay touchpoints para Qualtia y Arista Int. La semana que viene: seguimiento de todos los overdue críticos.
+  </div>
+  <div class="grid-2">
+    <div>
+      <div class="day-label">HOY · Viernes 20 Marzo</div>
+      <div class="plan-col">
+        <div class="plan-item">
+          <div class="plan-check" onclick="this.classList.toggle('done')"></div>
+          <div class="plan-content">
+            <div class="plan-title">Qualtia — Discovery follow-up</div>
+            <div class="plan-desc">Toque programado HOY. Último contacto fue el 11 Mar. Mantener momentum y avanzar a Demo.</div>
+            <div class="plan-meta"><span class="plan-tag pt-blue">Discovery</span><span class="owner-tag">Héctor</span><span class="plan-tag pt-red">Hoy ✅</span></div>
+          </div>
+        </div>
+        <div class="plan-item">
+          <div class="plan-check" onclick="this.classList.toggle('done')"></div>
+          <div class="plan-content">
+            <div class="plan-title">Arista Int — Propuesta activa ($7,020)</div>
+            <div class="plan-desc">Next touch HOY. Tocado el 13 Mar. Llevar propuesta actualizada y buscar cierre.</div>
+            <div class="plan-meta"><span class="plan-tag pt-green">$7,020 ACV</span><span class="owner-tag">Abraham</span><span class="plan-tag pt-red">Hoy ✅</span></div>
+          </div>
+        </div>
+        <div class="plan-item">
+          <div class="plan-check" onclick="this.classList.toggle('done')"></div>
+          <div class="plan-content">
+            <div class="plan-title">Iniciar onboarding: Lamex + STULZ</div>
+            <div class="plan-desc">Dos nuevos cierres esta semana. Hacer handoff a CS hoy mismo para no perder momentum post-firma.</div>
+            <div class="plan-meta"><span class="plan-tag pt-green">🏆 Cierres nuevos</span><span class="owner-tag">Abraham → CS</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="day-label" style="margin-top:16px">SEMANA QUE ENTRA · 23–27 Marzo</div>
+      <div class="plan-col">
+        <div class="plan-item">
+          <div class="plan-check" onclick="this.classList.toggle('done')"></div>
+          <div class="plan-content">
+            <div class="plan-title">Sigma Laredo* + Sigma — Urgente ($102K ACV)</div>
+            <div class="plan-desc">Ambos con next touch vencido (17 y 18 Mar). Los 2 deals más valiosos después de Coppel. Sin touchpoint registrado — acción inmediata el lunes.</div>
+            <div class="plan-meta"><span class="plan-tag pt-red">🚨 Vencido 2–3d</span><span class="owner-tag">Abraham</span><span class="plan-tag pt-green">$102K ACV</span></div>
+          </div>
+        </div>
+        <div class="plan-item">
+          <div class="plan-check" onclick="this.classList.toggle('done')"></div>
+          <div class="plan-content">
+            <div class="plan-title">Grupo Alta / Divine Flavor — Cierre pendiente</div>
+            <div class="plan-desc">Next touch era 16 Mar (4 días vencido). Close 2 close, Pilot $4K entregado. Contactar lunes para formalizar firma.</div>
+            <div class="plan-meta"><span class="plan-tag pt-red">Vencido 4d</span><span class="owner-tag">Héctor</span><span class="plan-tag pt-green">$22,560</span></div>
+          </div>
+        </div>
+        <div class="plan-item">
+          <div class="plan-check" onclick="this.classList.toggle('done')"></div>
+          <div class="plan-content">
+            <div class="plan-title">GEA ANDINA — Confirmar firma y handoff CS</div>
+            <div class="plan-desc">Cerrado, next touch vencido 3 días. Coordinación con CS para inicio de implementación ($5,400 impl).</div>
+            <div class="plan-meta"><span class="plan-tag pt-yellow">Next vencido 3d</span><span class="owner-tag">Daniel</span><span class="plan-tag pt-green">$36K</span></div>
+          </div>
+        </div>
+        <div class="plan-item">
+          <div class="plan-check" onclick="this.classList.toggle('done')"></div>
+          <div class="plan-content">
+            <div class="plan-title">Helvex + *L'Oréal — Discovery (24 Mar)</div>
+            <div class="plan-desc">Ambos con next touch el 24 Mar. Preparar deck de discovery personalizado.</div>
+            <div class="plan-meta"><span class="plan-tag pt-blue">Discovery</span><span class="owner-tag">Abraham</span></div>
+          </div>
+        </div>
+        <div class="plan-item">
+          <div class="plan-check" onclick="this.classList.toggle('done')"></div>
+          <div class="plan-content">
+            <div class="plan-title">Agrosuper* — Retomar propuesta (10d de retraso)</div>
+            <div class="plan-desc">$21,600 ACV. Next touch era 10 Mar. Llamar esta semana o el deal se enfría definitivamente.</div>
+            <div class="plan-meta"><span class="plan-tag pt-yellow">10d sin follow-up</span><span class="owner-tag">Abraham</span><span class="plan-tag pt-green">$21,600</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="day-label">REGISTROS NUEVOS HOY (10 de Daniel)</div>
+      <div style="background:var(--card);border:1px solid #bfdbfe;border-radius:10px;padding:14px;margin-bottom:12px;box-shadow:var(--shadow);">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Daniel agregó 10 nuevos prospectos hoy. Todos sin ACV aún — primer contacto pendiente.</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;background:#eff6ff;border-radius:7px;border:1px solid #bfdbfe;">
+            <span style="font-size:12px;font-weight:600">AXALTA</span><span class="stage-tag tag-discovery" style="font-size:9px">🔭 Discovery</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;background:var(--bg2);border-radius:7px;">
+            <span style="font-size:12px">ALPURA</span><span class="stage-tag tag-activo" style="font-size:9px">Active lead</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;background:var(--bg2);border-radius:7px;">
+            <span style="font-size:12px">PRISMA</span><span class="stage-tag tag-activo" style="font-size:9px">Active lead</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;background:var(--bg2);border-radius:7px;">
+            <span style="font-size:12px">MOTRIX</span><span class="stage-tag tag-activo" style="font-size:9px">Active lead</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;background:var(--bg2);border-radius:7px;">
+            <span style="font-size:12px">MAARBA LOGISTICS</span><span class="stage-tag tag-activo" style="font-size:9px">Active lead</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;background:var(--bg2);border-radius:7px;">
+            <span style="font-size:12px">LUTHERR</span><span class="stage-tag tag-activo" style="font-size:9px">Active lead</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;background:var(--bg2);border-radius:7px;">
+            <span style="font-size:12px">ZF Frenos y mecanismos</span><span class="stage-tag" style="font-size:9px;background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd">Weekly Hunt</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;background:var(--bg2);border-radius:7px;">
+            <span style="font-size:12px">IMCD MEXICO</span><span class="stage-tag" style="font-size:9px;background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd">Weekly Hunt</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;background:var(--bg2);border-radius:7px;">
+            <span style="font-size:12px">HERAEUS ELECTRO NITE</span><span class="stage-tag" style="font-size:9px;background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd">Weekly Hunt</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;background:var(--bg2);border-radius:7px;">
+            <span style="font-size:12px">ITASA AMERICAS / MATIV</span><span class="stage-tag" style="font-size:9px;background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd">Weekly Hunt</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="day-label">TOP OVERDUE · Semana que entra</div>
+      <div class="risk-list">
+        <div class="risk-row"><div class="risk-dot rd-red"></div><div><div class="risk-deal">Sigma Laredo*</div><div class="risk-reason">Next 17 Mar · Close 2 close · 3d vencido</div></div><div class="risk-acv-val" style="color:var(--red)">$66K</div></div>
+        <div class="risk-row"><div class="risk-dot rd-red"></div><div><div class="risk-deal">Grupo Alta / Divine Flavor</div><div class="risk-reason">Next 16 Mar · Close 2 close · 4d vencido</div></div><div class="risk-acv-val" style="color:var(--red)">$22.5K</div></div>
+        <div class="risk-row"><div class="risk-dot rd-red"></div><div><div class="risk-deal">Sigma</div><div class="risk-reason">Next 18 Mar · Close 2 close · 2d vencido</div></div><div class="risk-acv-val" style="color:var(--orange)">$36K</div></div>
+        <div class="risk-row"><div class="risk-dot rd-orange"></div><div><div class="risk-deal">Agrosuper*</div><div class="risk-reason">Next 10 Mar · Propuesta · 10d vencido</div></div><div class="risk-acv-val" style="color:var(--orange)">$21.6K</div></div>
+        <div class="risk-row"><div class="risk-dot rd-orange"></div><div><div class="risk-deal">VEGUSA</div><div class="risk-reason">Next 17 Mar · Propuesta · 3d vencido</div></div><div class="risk-acv-val">$7.2K</div></div>
+        <div class="risk-row"><div class="risk-dot rd-orange"></div><div><div class="risk-deal">SCI CHIHUAHUA</div><div class="risk-reason">Next 17 Mar · Propuesta · 3d vencido</div></div><div class="risk-acv-val">$6K</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     TAB: INICIATIVAS
+══════════════════════════════════════ -->
+<div class="tab-content" id="tab-iniciativas">
+  <div style="margin-bottom:20px;">
+    <div style="font-size:15px;font-weight:700;margin-bottom:4px">🚀 Iniciativas Clave · Marzo 2026</div>
+    <div style="font-size:13px;color:var(--muted)">Seguimiento de proyectos estratégicos de Growth. Asigna responsable, status y notas en cada tarjeta.</div>
+  </div>
+  <div class="initiative-board">
+    <!-- En Progreso -->
+    <div class="initiative-col" id="col-progreso">
+      <div class="initiative-col-title"><span class="col-dot" style="background:#d97706"></span>En Progreso</div>
+      <div class="initiative-card">
+        <div class="initiative-emoji">🎬</div>
+        <div class="initiative-title">Videos para Redes Sociales</div>
+        <div class="initiative-desc">Contenido de video para LinkedIn, Instagram y YouTube. Demos del producto, casos de éxito y thought leadership.</div>
+        <span class="initiative-priority ip-alta">🔴 Prioridad Alta</span>
+        <div class="initiative-field"><label>Responsable</label><select onchange="saveInit('video-owner',this.value)"><option value="">— Asignar —</option><option>Abraham Lopez</option><option>Héctor Nícola</option><option>Daniel Luna</option><option>Equipo Marketing</option><option>Agencia / Freelancer</option></select></div>
+        <div class="initiative-field"><label>Status</label><select onchange="saveInit('video-status',this.value)"><option>En progreso</option><option>Planeación</option><option>En revisión</option><option>Listo para publicar</option><option>Publicado ✓</option></select></div>
+        <div class="initiative-field"><label>Fecha límite</label><input type="date" value="2026-03-28" onchange="saveInit('video-date',this.value)"></div>
+        <div class="initiative-field"><label>Notas</label><textarea onchange="saveInit('video-notes',this.value)">Script inicial pendiente. Coordinar con diseño para branding.</textarea></div>
+      </div>
+      <div class="initiative-card">
+        <div class="initiative-emoji">📣</div>
+        <div class="initiative-title">Lanzamiento Campaña Promocional</div>
+        <div class="initiative-desc">Nueva campaña de adquisición. Paid Ads, email y LinkedIn. Audiencia: importadoras y distribuidoras con +200 ops/mes.</div>
+        <span class="initiative-priority ip-alta">🔴 Prioridad Alta</span>
+        <div class="initiative-field"><label>Responsable</label><select onchange="saveInit('campana-owner',this.value)"><option value="">— Asignar —</option><option>Abraham Lopez</option><option>Héctor Nícola</option><option>Daniel Luna</option><option>Equipo Marketing</option><option>Agencia / Freelancer</option></select></div>
+        <div class="initiative-field"><label>Status</label><select onchange="saveInit('campana-status',this.value)"><option>En progreso</option><option>Planeación</option><option>Creativos en revisión</option><option>Aprobada — pendiente lanzar</option><option>Activa ✓</option></select></div>
+        <div class="initiative-field"><label>Fecha de lanzamiento</label><input type="date" value="2026-03-24" onchange="saveInit('campana-fecha',this.value)"></div>
+        <div class="initiative-field"><label>Notas</label><textarea onchange="saveInit('campana-notes',this.value)">Definir oferta de descuento o trial. Creativos en revisión con agencia.</textarea></div>
+      </div>
+      <button class="add-initiative-btn" onclick="addCard('col-progreso')">+ Agregar iniciativa</button>
+    </div>
+    <!-- Planeación -->
+    <div class="initiative-col" id="col-planeacion">
+      <div class="initiative-col-title"><span class="col-dot" style="background:#3b6ef8"></span>Planeación</div>
+      <div class="initiative-card">
+        <div class="initiative-emoji">🧮</div>
+        <div class="initiative-title">Lead Magnet: Calculadora de Eficiencia</div>
+        <div class="initiative-desc">Herramienta interactiva que muestra ROI y horas ahorradas al implementar Birdie. Inputs: ops/mes, equipo, horas de seguimiento.</div>
+        <span class="initiative-priority ip-media">🟡 Prioridad Media</span>
+        <div class="initiative-field"><label>Responsable</label><select onchange="saveInit('lm-owner',this.value)"><option value="">— Asignar —</option><option>Abraham Lopez</option><option>Héctor Nícola</option><option>Daniel Luna</option><option>Equipo Marketing</option><option>Dev</option></select></div>
+        <div class="initiative-field"><label>Status</label><select onchange="saveInit('lm-status',this.value)"><option>Planeación</option><option>Diseño UX</option><option>Desarrollo</option><option>Testing</option><option>Publicado ✓</option></select></div>
+        <div class="initiative-field"><label>Fecha objetivo</label><input type="date" value="2026-04-15" onchange="saveInit('lm-fecha',this.value)"></div>
+        <div class="initiative-field"><label>Notas</label><textarea onchange="saveInit('lm-notes',this.value)">Output: $ ahorrado + ROI proyectado. Distribuir en cold outreach y LinkedIn para calificar leads.</textarea></div>
+      </div>
+      <button class="add-initiative-btn" onclick="addCard('col-planeacion')">+ Agregar iniciativa</button>
+    </div>
+    <!-- Completado -->
+    <div class="initiative-col" id="col-completado">
+      <div class="initiative-col-title"><span class="col-dot" style="background:#16a34a"></span>Completado</div>
+      <div style="text-align:center;padding:30px 16px;color:var(--muted2);font-size:13px;"><div style="font-size:28px;margin-bottom:8px">🎯</div><div>Las iniciativas completadas<br>aparecerán aquí</div></div>
+      <button class="add-initiative-btn" onclick="addCard('col-completado')">+ Agregar iniciativa</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     TAB: KPIs POR VENDEDOR
+══════════════════════════════════════ -->
+<div class="tab-content" id="tab-kpis">
+
+  <!-- Filter Bar -->
+  <div class="kpi-filter-bar">
+    <label>Vendedor</label>
+    <select id="kpi-seller-filter" onchange="renderKPITab()">
+      <option value="all">Todos los vendedores</option>
+      <option value="Abraham Lopez">Abraham Lopez</option>
+      <option value="Héctor Nícola">Héctor Nícola</option>
+      <option value="Daniel Luna">Daniel Luna</option>
+    </select>
+    <div class="kpi-filter-sep"></div>
+    <label>Período</label>
+    <select id="kpi-period-filter" onchange="renderKPITab()">
+      <option value="week">Esta semana</option>
+      <option value="month" selected>Este mes (Marzo)</option>
+      <option value="all">Todo el tiempo</option>
+    </select>
+    <div class="kpi-filter-sep"></div>
+    <span style="font-size:11px;color:var(--muted)">Datos de Airtable + registros locales · <button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="syncAirtable()">⚡ Actualizar</button></span>
+    <span style="margin-left:auto"><button class="btn btn-outline" style="padding:5px 12px;font-size:11px" onclick="exportKPILog()">⬇ Exportar CSV</button></span>
+  </div>
+
+  <!-- Seller Cards (from Airtable data) -->
+  <div class="section-title" style="margin-bottom:14px">📈 Métricas por Vendedor <span style="font-size:11px;font-weight:400;color:var(--muted)">(del pipeline activo en Airtable)</span></div>
+  <div class="seller-grid" id="seller-cards-grid">
+    <!-- Rendered by JS -->
+    <div class="seller-card">
+      <div class="seller-header">
+        <div class="seller-avatar" style="background:linear-gradient(135deg,#3b6ef8,#6c4ef7)">A</div>
+        <div><div class="seller-name">Abraham Lopez</div><div class="seller-role">Sales Lead</div></div>
+      </div>
+      <div class="seller-metrics">
+        <div class="seller-metric"><div class="sm-val" style="color:#3b6ef8">—</div><div class="sm-lbl">Calificados</div></div>
+        <div class="seller-metric"><div class="sm-val" style="color:#7c3aed">—</div><div class="sm-lbl">Discovery</div></div>
+        <div class="seller-metric"><div class="sm-val" style="color:#16a34a">—</div><div class="sm-lbl">Cerrados</div></div>
+        <div class="seller-metric"><div class="sm-val" style="color:#ea580c">—</div><div class="sm-lbl">Propuestas</div></div>
+        <div class="seller-metric"><div class="sm-val" style="color:#15803d">—</div><div class="sm-lbl">Close 2c</div></div>
+        <div class="seller-metric"><div class="sm-val" style="color:#6d28d9">—</div><div class="sm-lbl">Demos</div></div>
+      </div>
+      <div class="seller-footer"><span class="sf-tag sf-acv">ACV: —</span><span class="sf-tag sf-mrr">MRR: —</span><span class="sf-tag sf-impl">Impl: —</span></div>
+    </div>
+    <div class="seller-card">
+      <div class="seller-header">
+        <div class="seller-avatar" style="background:linear-gradient(135deg,#6c4ef7,#7c3aed)">H</div>
+        <div><div class="seller-name">Héctor Nícola</div><div class="seller-role">Account Executive</div></div>
+      </div>
+      <div class="seller-metrics">
+        <div class="seller-metric"><div class="sm-val" style="color:#3b6ef8">—</div><div class="sm-lbl">Calificados</div></div>
+        <div class="seller-metric"><div class="sm-val" style="color:#7c3aed">—</div><div class="sm-lbl">Discovery</div></div>
+        <div class="seller-metric"><div class="sm-val" style="color:#16a34a">—</div><div class="sm-lbl">Cerrados</div></div>
+        <div class="seller-metric"><div class="sm-val" style="color:#ea580c">—</div><div class="sm-lbl">Propuestas</div></div>
+        <div class="seller-metric"><div class="sm-val" style="color:#15803d">—</div><div class="sm-lbl">Close 2c</div></div>
+        <div class="seller-metric"><div class="sm-val" style="color:#6d28d9">—</div><div class="sm-lbl">Demos</div></div>
+      </div>
+      <div class="seller-footer"><span class="sf-tag sf-acv">ACV: —</span><span class="sf-tag sf-mrr">MRR: —</span></div>
+    </div>
+    <div class="seller-card">
+      <div class="seller-header">
+        <div class="seller-avatar" style="background:linear-gradient(135deg,#16a34a,#15803d)">D</div>
+        <div><div class="seller-name">Daniel Luna</div><div class="seller-role">Sales Development</div></div>
+      </div>
+      <div class="seller-metrics">
+        <div class="seller-metric"><div class="sm-val" style="color:#3b6ef8">—</div><div class="sm-lbl">Calificados</div></div>
+        <div class="seller-metric"><div class="sm-val" style="color:#7c3aed">—</div><div class="sm-lbl">Discovery</div></div>
+        <div class="seller-metric"><div class="sm-val" style="color:#16a34a">—</div><div class="sm-lbl">Cerrados</div></div>
+        <div class="seller-metric"><div class="sm-val" style="color:#ea580c">—</div><div class="sm-lbl">Propuestas</div></div>
+        <div class="seller-metric"><div class="sm-val" style="color:#15803d">—</div><div class="sm-lbl">Close 2c</div></div>
+        <div class="seller-metric"><div class="sm-val" style="color:#6d28d9">—</div><div class="sm-lbl">Demos</div></div>
+      </div>
+      <div class="seller-footer"><span class="sf-tag sf-acv">ACV: —</span><span class="sf-tag sf-mrr">MRR: —</span></div>
+    </div>
+  </div>
+
+  <!-- Channel breakdown -->
+  <div class="section-title" style="margin-bottom:12px">🌐 Canales de Adquisición <span style="font-size:11px;font-weight:400;color:var(--muted)">(de registros manuales)</span></div>
+  <div class="card" style="margin-bottom:20px;padding:16px 18px">
+    <div class="channel-grid" id="channel-breakdown">
+      <span style="color:var(--muted);font-size:12px">Sin registros de canal aún — usa el formulario abajo para comenzar a rastrear.</span>
+    </div>
+  </div>
+
+  <!-- Quick Log Form -->
+  <div class="section-title" style="margin-bottom:14px">✏️ Registro Rápido de Actividad</div>
+  <div class="log-form">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+      <div class="form-field" style="flex:1;min-width:160px">
+        <label>Vendedor</label>
+        <select id="log-seller">
+          <option value="">— Selecciona —</option>
+          <option>Abraham Lopez</option>
+          <option>Héctor Nícola</option>
+          <option>Daniel Luna</option>
+        </select>
+      </div>
+      <div class="form-field" style="flex:0 0 140px">
+        <label>Fecha</label>
+        <input type="date" id="log-date">
+      </div>
+    </div>
+
+    <div style="margin-bottom:12px">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:8px">Tipo de Actividad</div>
+      <div class="activity-type-row">
+        <button class="atype-btn" onclick="setActType('lead',this)"    >🎯 Lead Calificado</button>
+        <button class="atype-btn" onclick="setActType('discovery',this)">🔭 Discovery</button>
+        <button class="atype-btn" onclick="setActType('demo',this)"     >💻 Demo</button>
+        <button class="atype-btn" onclick="setActType('propuesta',this)">💰 Propuesta</button>
+        <button class="atype-btn" onclick="setActType('close',this)"    >🤝 Próximo a Cerrar</button>
+        <button class="atype-btn" onclick="setActType('won',this)"      >🏆 Deal Ganado</button>
+      </div>
+    </div>
+
+    <div class="form-grid">
+      <div class="form-field">
+        <label>Empresa / Deal</label>
+        <input type="text" id="log-company" placeholder="Nombre de la empresa">
+      </div>
+      <div class="form-field cond-field" id="field-canal">
+        <label>Canal de Adquisición</label>
+        <select id="log-canal">
+          <option value="">— Selecciona canal —</option>
+          <option>LinkedIn</option>
+          <option>Referido</option>
+          <option>Outbound (email/llamada)</option>
+          <option>Inbound (web/form)</option>
+          <option>Evento / Feria</option>
+          <option>Partnership</option>
+          <option>Otro</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-grid-3 cond-field" id="field-valores">
+      <div class="form-field">
+        <label>ACV ($)</label>
+        <input type="number" id="log-acv" placeholder="0" min="0">
+      </div>
+      <div class="form-field">
+        <label>MRR ($/mes)</label>
+        <input type="number" id="log-mrr" placeholder="0" min="0">
+      </div>
+      <div class="form-field cond-field" id="field-impl">
+        <label>Implementación ($)</label>
+        <input type="number" id="log-impl" placeholder="0" min="0">
+      </div>
+    </div>
+
+    <div class="form-grid">
+      <div class="form-field full">
+        <label>Notas</label>
+        <textarea id="log-notes" rows="2" placeholder="Contexto del deal, siguiente paso, decisor, objeción…"></textarea>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:4px">
+      <button class="btn btn-outline" onclick="clearLogForm()">Limpiar</button>
+      <button class="btn btn-primary" onclick="submitLogEntry()">✓ Registrar Actividad</button>
+    </div>
+  </div>
+
+  <!-- Log History -->
+  <div class="section-title" style="margin:20px 0 14px">📋 Historial de Actividades <span style="font-size:11px;font-weight:400;color:var(--muted)">(guardado localmente en este navegador)</span></div>
+  <div class="card">
+    <div class="log-table-wrap">
+      <table class="log-table">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Vendedor</th>
+            <th>Tipo</th>
+            <th>Empresa</th>
+            <th>Canal</th>
+            <th>ACV</th>
+            <th>MRR</th>
+            <th>Impl.</th>
+            <th>Notas</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="log-table-body">
+          <tr><td colspan="10" class="no-data">Sin registros aún — usa el formulario de arriba para comenzar.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+<!-- /tab-kpis -->
+
+<div style="text-align:center;padding:20px;border-top:1px solid var(--border);color:var(--muted2);font-size:11px;background:var(--card);margin-top:20px;" id="footer-text">
+  Birdie Growth Dashboard · Última actualización: Viernes 20 Marzo 2026 · Fuente: Airtable Growth (726 registros)
+</div>
+
+<script>
+// Charts
+const ctxACV = document.getElementById('chartACV').getContext('2d');
+new Chart(ctxACV, {
+  type: 'bar',
+  data: {
+    labels: ['Piloto🚀','Close 2c','Cerrado 🔓','Propuesta','Activo','Demo','Calificado'],
+    datasets: [{
+      data: [120000, 130000, 111720, 62580, 117000, 10800, 18000],
+      backgroundColor: ['#6d28d9','#15803d','#1d4ed8','#ea580c','#0369a1','#7c3aed','#3b6ef8'],
+      borderRadius: 6, borderSkipped: false,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` $${c.raw.toLocaleString()}` } } },
+    scales: {
+      x: { grid: { color: '#e2e6f0' }, ticks: { color: '#64748b', font: { size: 9 } } },
+      y: { grid: { color: '#e2e6f0' }, ticks: { color: '#64748b', font: { size: 10 }, callback: v => '$'+(v/1000).toFixed(0)+'K' } }
+    }
+  }
+});
+
+const ctxOwner = document.getElementById('chartOwner').getContext('2d');
+new Chart(ctxOwner, {
+  type: 'doughnut',
+  data: {
+    labels: ['Abraham Lopez','Héctor Nícola','Daniel Luna'],
+    datasets: [{ data: [372156, 171144, 65292], backgroundColor: ['#3b6ef8','#6c4ef7','#16a34a'], borderColor: '#ffffff', borderWidth: 3, hoverOffset: 8 }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'right', labels: { color: '#1e2235', font: { size: 11 }, padding: 14,
+        generateLabels: c => c.data.labels.map((l,i) => ({
+          text: `${l.split(' ')[0]}  $${(c.data.datasets[0].data[i]/1000).toFixed(0)}K`,
+          fillStyle: c.data.datasets[0].backgroundColor[i], strokeStyle: '#fff', lineWidth: 2, index: i
+        }))
+      }},
+      tooltip: { callbacks: { label: c => ` $${c.raw.toLocaleString()} ACV` } }
+    }
+  }
+});
+
+// Tabs
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// Accordion
+function toggleAccount(h) {
+  const d = h.nextElementSibling;
+  h.classList.toggle('open'); d.classList.toggle('open');
+}
+
+// Modals
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('click', e => { if(e.target===m) m.classList.remove('open'); }));
+
+// Initiatives persist
+function saveInit(key, val) { try { sessionStorage.setItem('init_'+key, val); } catch(e) {} }
+function loadInits() {
+  document.querySelectorAll('[onchange^="saveInit"]').forEach(el => {
+    const m = el.getAttribute('onchange').match(/saveInit\('([^']+)'/);
+    if(m) { const v = sessionStorage.getItem('init_'+m[1]); if(v) el.value = v; }
+  });
+}
+loadInits();
+
+// ─── KPI TAB ──────────────────────────────────────────────────────────────
+const SELLERS = [
+  { name:'Abraham Lopez',  initial:'A', color:'linear-gradient(135deg,#3b6ef8,#6c4ef7)' },
+  { name:'Héctor Nícola',  initial:'H', color:'linear-gradient(135deg,#6c4ef7,#7c3aed)' },
+  { name:'Daniel Luna',    initial:'D', color:'linear-gradient(135deg,#16a34a,#15803d)' },
+];
+
+let _kpiAirtableData = null; // stored after sync
+let _currentActType  = '';
+
+// Set today's date in the log form on load
+document.addEventListener('DOMContentLoaded', () => {
+  const d = document.getElementById('log-date');
+  if (d) d.value = new Date().toISOString().slice(0,10);
+  renderLogTable();
+});
+
+function setActType(type, btn) {
+  _currentActType = type;
+  document.querySelectorAll('.atype-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  // Show/hide conditional fields
+  const showCanal   = type === 'lead';
+  const showValues  = ['propuesta','close','won'].includes(type);
+  const showImpl    = type === 'won';
+  document.getElementById('field-canal').classList.toggle('visible', showCanal);
+  document.getElementById('field-valores').classList.toggle('visible', showValues);
+  document.getElementById('field-impl').classList.toggle('visible', showImpl);
+}
+
+function clearLogForm() {
+  _currentActType = '';
+  document.querySelectorAll('.atype-btn').forEach(b => b.classList.remove('active'));
+  ['log-seller','log-company','log-canal','log-acv','log-mrr','log-impl','log-notes'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('log-date').value = new Date().toISOString().slice(0,10);
+  ['field-canal','field-valores','field-impl'].forEach(id =>
+    document.getElementById(id).classList.remove('visible')
+  );
+}
+
+function submitLogEntry() {
+  const seller  = document.getElementById('log-seller').value;
+  const date    = document.getElementById('log-date').value;
+  const company = document.getElementById('log-company').value.trim();
+  if (!seller)  { showToast('⚠ Selecciona un vendedor','err'); return; }
+  if (!date)    { showToast('⚠ Selecciona una fecha','err'); return; }
+  if (!_currentActType) { showToast('⚠ Selecciona el tipo de actividad','err'); return; }
+  if (!company) { showToast('⚠ Ingresa el nombre de la empresa','err'); return; }
+  const entry = {
+    id:      Date.now(),
+    date,
+    seller,
+    type:    _currentActType,
+    company,
+    canal:   document.getElementById('log-canal').value || '',
+    acv:     Number(document.getElementById('log-acv').value)  || 0,
+    mrr:     Number(document.getElementById('log-mrr').value)  || 0,
+    impl:    Number(document.getElementById('log-impl').value) || 0,
+    notes:   document.getElementById('log-notes').value.trim(),
+  };
+  const logs = getKPILogs();
+  logs.unshift(entry);
+  localStorage.setItem('kpi_log', JSON.stringify(logs));
+  showToast('✅ Actividad registrada — ' + company, 'ok');
+  clearLogForm();
+  renderLogTable();
+  renderKPITab();
+}
+
+function getKPILogs() {
+  try { return JSON.parse(localStorage.getItem('kpi_log') || '[]'); } catch { return []; }
+}
+
+function deleteLogEntry(id) {
+  const logs = getKPILogs().filter(e => e.id !== id);
+  localStorage.setItem('kpi_log', JSON.stringify(logs));
+  renderLogTable();
+  renderKPITab();
+}
+
+const ACT_CONFIG = {
+  lead:      { label:'🎯 Lead Calificado', cls:'act-lead'  },
+  discovery: { label:'🔭 Discovery',       cls:'act-disc'  },
+  demo:      { label:'💻 Demo',            cls:'act-demo'  },
+  propuesta: { label:'💰 Propuesta',       cls:'act-prop'  },
+  close:     { label:'🤝 Próx. a Cerrar',  cls:'act-close' },
+  won:       { label:'🏆 Deal Ganado',     cls:'act-won'   },
+};
+
+function renderLogTable() {
+  const tbody = document.getElementById('log-table-body');
+  if (!tbody) return;
+  const sellerF = document.getElementById('kpi-seller-filter');
+  const periodF = document.getElementById('kpi-period-filter');
+  const seller  = sellerF ? sellerF.value : 'all';
+  const period  = periodF ? periodF.value : 'month';
+  let logs = getKPILogs();
+  if (seller !== 'all') logs = logs.filter(e => e.seller === seller);
+  logs = filterByPeriod(logs, period);
+  if (!logs.length) {
+    tbody.innerHTML = '<tr><td colspan="10" class="no-data">Sin registros para este filtro.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = logs.map(e => {
+    const cfg = ACT_CONFIG[e.type] || { label: e.type, cls:'' };
+    return `<tr>
+      <td style="white-space:nowrap">${e.date}</td>
+      <td><span class="owner-chip">${e.seller.split(' ')[0]}</span></td>
+      <td><span class="act-badge ${cfg.cls}">${cfg.label}</span></td>
+      <td style="font-weight:600">${e.company}</td>
+      <td style="color:var(--muted)">${e.canal || '—'}</td>
+      <td style="font-weight:700">${e.acv ? '$'+e.acv.toLocaleString() : '—'}</td>
+      <td style="color:var(--green-text);font-weight:700">${e.mrr ? '$'+e.mrr.toLocaleString()+'/mo' : '—'}</td>
+      <td style="color:#7c3aed;font-weight:700">${e.impl ? '$'+e.impl.toLocaleString() : '—'}</td>
+      <td style="color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${e.notes}">${e.notes || '—'}</td>
+      <td><button class="del-btn" onclick="deleteLogEntry(${e.id})" title="Eliminar">✕</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function filterByPeriod(arr, period) {
+  if (period === 'all') return arr;
+  const now = new Date();
+  if (period === 'month') {
+    const y = now.getFullYear(), m = String(now.getMonth()+1).padStart(2,'0');
+    const prefix = y+'-'+m;
+    return arr.filter(e => e.date && e.date.startsWith(prefix));
+  }
+  if (period === 'week') {
+    const day = now.getDay() || 7;
+    const mon = new Date(now); mon.setDate(now.getDate() - day + 1); mon.setHours(0,0,0,0);
+    const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+    return arr.filter(e => { const d = new Date(e.date); return d >= mon && d <= sun; });
+  }
+  return arr;
+}
+
+function renderKPITab() {
+  renderSellerCards();
+  renderChannelBreakdown();
+  renderLogTable();
+  updateGoalsFromLogs();
+}
+
+function updateGoalsFromLogs() {
+  // Update goal progress bars from the KPI activity log (month-to-date)
+  const logs = filterByPeriod(getKPILogs(), 'month');
+  const MAP = [
+    { id: 'calificado', type: 'lead',      goal: 150 },
+    { id: 'discovery',  type: 'discovery', goal: 50  },
+    { id: 'demo',       type: 'demo',      goal: 25  },
+    { id: 'propuesta',  type: 'propuesta', goal: 25  },
+  ];
+  MAP.forEach(m => {
+    const count = logs.filter(e => e.type === m.type).length;
+    if (count === 0) return; // don't overwrite if no log entries yet
+    const pct = Math.min(Math.round(count / m.goal * 100), 100);
+    const el   = document.getElementById('g-' + m.id);
+    const fill = document.getElementById('gf-' + m.id);
+    const sub  = document.getElementById('gs-' + m.id);
+    if (el)   el.textContent = count;
+    if (fill) fill.style.width = pct + '%';
+    if (sub)  sub.textContent = pct + '% de meta ' + m.goal + ' · faltan ' + Math.max(m.goal - count, 0);
+  });
+}
+
+function renderSellerCards() {
+  const grid = document.getElementById('seller-cards-grid');
+  if (!grid) return;
+  const sellerF = document.getElementById('kpi-seller-filter');
+  const periodF = document.getElementById('kpi-period-filter');
+  const sellerFilter = sellerF ? sellerF.value : 'all';
+  const period = periodF ? periodF.value : 'month';
+
+  const logs = filterByPeriod(getKPILogs(), period);
+  const sellers = sellerFilter === 'all' ? SELLERS : SELLERS.filter(s => s.name === sellerFilter);
+
+  grid.innerHTML = sellers.map(s => {
+    // Airtable-derived metrics
+    let at = { cal:0, disc:0, demo:0, prop:0, c2c:0, cerrado:0, acv:0, mrr:0, impl:0 };
+    if (_kpiAirtableData) {
+      const recs = _kpiAirtableData.filter(r => {
+        const ownerObj = r.fields && r.fields['fldXjzAcmaBZXJlwC'];
+        const ownerName = ownerObj && ownerObj.name ? ownerObj.name : (typeof ownerObj === 'string' ? ownerObj : '');
+        return ownerName === s.name;
+      });
+      recs.forEach(r => {
+        const f = r.fields || {};
+        const statusObj = f['fldPyqmORLljl1Agn'];
+        const status = typeof statusObj === 'object' && statusObj ? statusObj.name : (statusObj || '');
+        const acvArr = f['fldLLbYrnX2a0aCnP'];
+        const acv = Array.isArray(acvArr) ? (Number(acvArr[0])||0) : (Number(acvArr)||0);
+        const mrrArr = f['fldPFakv6gUHvrDl2'];
+        const mrr = Array.isArray(mrrArr) ? (Number(mrrArr[0])||0) : (Number(mrrArr)||0);
+        const impl = Number(f['fldQgJNwbAWnfey4l'])||0;
+        if (status==='Calificado')     { at.cal++;    at.acv+=acv; }
+        if (status==='Discovery')      { at.disc++;   at.acv+=acv; }
+        if (status==='Demo')           { at.demo++;   at.acv+=acv; }
+        if (status==='Propuesta')      { at.prop++;   at.acv+=acv; }
+        if (status==='Close 2 close')  { at.c2c++;    at.acv+=acv; }
+        if (status==='Cerrado')        { at.cerrado++;at.mrr+=mrr; at.impl+=impl; at.acv+=acv; }
+      });
+    }
+    // Manual log totals for this seller
+    const sLogs = logs.filter(e => e.seller === s.name);
+    const wonLogs = sLogs.filter(e => e.type === 'won');
+    const logWonACV = wonLogs.reduce((a,e) => a+e.acv, 0);
+    const logWonMRR = wonLogs.reduce((a,e) => a+e.mrr, 0);
+    const logWonImpl = wonLogs.reduce((a,e) => a+e.impl, 0);
+
+    const displayACV  = at.acv  || logWonACV  || 0;
+    const displayMRR  = at.mrr  || logWonMRR  || 0;
+    const displayImpl = at.impl || logWonImpl || 0;
+
+    return `<div class="seller-card">
+      <div class="seller-header">
+        <div class="seller-avatar" style="background:${s.color}">${s.initial}</div>
+        <div>
+          <div class="seller-name">${s.name}</div>
+          <div class="seller-role">${at.acv ? 'Pipeline desde Airtable' : 'Sin datos sync — usa ⚡ Sync'}</div>
+        </div>
+      </div>
+      <div class="seller-metrics">
+        <div class="seller-metric"><div class="sm-val" style="color:#3b6ef8">${at.cal || sLogs.filter(e=>e.type==='lead').length || '—'}</div><div class="sm-lbl">Calificados</div></div>
+        <div class="seller-metric"><div class="sm-val" style="color:#7c3aed">${at.disc || sLogs.filter(e=>e.type==='discovery').length || '—'}</div><div class="sm-lbl">Discovery</div></div>
+        <div class="seller-metric"><div class="sm-val" style="color:#16a34a">${at.cerrado || sLogs.filter(e=>e.type==='won').length || '—'}</div><div class="sm-lbl">Cerrados</div></div>
+        <div class="seller-metric"><div class="sm-val" style="color:#ea580c">${at.prop || sLogs.filter(e=>e.type==='propuesta').length || '—'}</div><div class="sm-lbl">Propuestas</div></div>
+        <div class="seller-metric"><div class="sm-val" style="color:#15803d">${at.c2c || sLogs.filter(e=>e.type==='close').length || '—'}</div><div class="sm-lbl">Close 2c</div></div>
+        <div class="seller-metric"><div class="sm-val" style="color:#6d28d9">${at.demo || sLogs.filter(e=>e.type==='demo').length || '—'}</div><div class="sm-lbl">Demos</div></div>
+      </div>
+      <div class="seller-footer">
+        ${displayACV  ? `<span class="sf-tag sf-acv">ACV: $${displayACV.toLocaleString()}</span>` : ''}
+        ${displayMRR  ? `<span class="sf-tag sf-mrr">MRR: $${displayMRR.toLocaleString()}/mo</span>` : ''}
+        ${displayImpl ? `<span class="sf-tag sf-impl">Impl: $${displayImpl.toLocaleString()}</span>` : ''}
+        ${!displayACV && !displayMRR ? '<span style="font-size:10px;color:var(--muted)">Sincroniza Airtable para ver valores</span>' : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderChannelBreakdown() {
+  const el = document.getElementById('channel-breakdown');
+  if (!el) return;
+  const sellerF = document.getElementById('kpi-seller-filter');
+  const periodF = document.getElementById('kpi-period-filter');
+  const seller = sellerF ? sellerF.value : 'all';
+  const period = periodF ? periodF.value : 'month';
+  let logs = getKPILogs().filter(e => e.type === 'lead' && e.canal);
+  if (seller !== 'all') logs = logs.filter(e => e.seller === seller);
+  logs = filterByPeriod(logs, period);
+  if (!logs.length) {
+    el.innerHTML = '<span style="color:var(--muted);font-size:12px">Sin registros de canal aún — registra leads para ver el desglose.</span>';
+    return;
+  }
+  const counts = {};
+  logs.forEach(e => { counts[e.canal] = (counts[e.canal]||0)+1; });
+  const CANAL_EMOJIS = {
+    'LinkedIn':'💼','Referido':'🤝','Outbound (email/llamada)':'📧',
+    'Inbound (web/form)':'🌐','Evento / Feria':'🎪','Partnership':'🔗','Otro':'📌'
+  };
+  const total = logs.length;
+  el.innerHTML = Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(([canal,cnt]) =>
+    `<span class="channel-pill">${CANAL_EMOJIS[canal]||'📌'} ${canal} <span class="channel-count">${cnt}</span> <span style="font-size:10px;color:var(--muted)">${Math.round(cnt/total*100)}%</span></span>`
+  ).join('') + `<span style="margin-left:auto;font-size:11px;color:var(--muted);align-self:center">Total: <strong>${total}</strong> leads</span>`;
+}
+
+function exportKPILog() {
+  const logs = getKPILogs();
+  if (!logs.length) { showToast('Sin datos para exportar','err'); return; }
+  const header = ['Fecha','Vendedor','Tipo','Empresa','Canal','ACV','MRR','Implementación','Notas'];
+  const rows = logs.map(e => [
+    e.date, e.seller,
+    ACT_CONFIG[e.type]?.label || e.type,
+    e.company, e.canal, e.acv||'', e.mrr||'', e.impl||'', e.notes
+  ].map(v => '"'+String(v||'').replace(/"/g,'""')+'"').join(','));
+  const csv = [header.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url;
+  a.download = 'birdie-kpi-log-' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click(); URL.revokeObjectURL(url);
+}
+
+// ─── AIRTABLE LIVE SYNC ────────────────────────────────────────────────────
+const AT_BASE = 'appurk5Re1bExl6Ng';
+const AT_TABLE = 'tblvG86weEcFQYYxb';
+const AT_FIELDS = [
+  'fldpkdTytHRe40gjI', // Opportunity name
+  'fldXjzAcmaBZXJlwC', // Owner
+  'fldPyqmORLljl1Agn', // Status
+  'fldPFakv6gUHvrDl2', // MRR
+  'fldLLbYrnX2a0aCnP', // ACV
+  'fldQgJNwbAWnfey4l', // Implementaciones
+  'fldUj9KdfqTd0LcTJ', // Piloto
+  'fldHgpRGZbp8PVOuw', // Next touchpoint
+  'fldQu9nW6qTkOvBLo', // Latest touchpoint
+  'flddOKGGJopAl0ABn', // Close date
+  'fldLZi9yQhGzyxQ09', // Días en pipe
+];
+
+function getToken() {
+  return localStorage.getItem('at_token') || '';
+}
+
+function saveToken() {
+  const t = document.getElementById('tokenInput').value.trim();
+  if (!t) { showToast('Ingresa un token válido', 'err'); return; }
+  localStorage.setItem('at_token', t);
+  closeModal('modalToken');
+  syncAirtable();
+}
+
+function showToast(msg, type='') {
+  const old = document.querySelector('.sync-toast');
+  if (old) old.remove();
+  const el = document.createElement('div');
+  el.className = 'sync-toast ' + type;
+  el.innerHTML = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+}
+
+async function fetchAllRecords(token) {
+  let records = [], offset = null;
+  const fieldParams = AT_FIELDS.map(f => `fields[]=${f}`).join('&');
+  do {
+    const url = `https://api.airtable.com/v0/${AT_BASE}/${AT_TABLE}?pageSize=100&${fieldParams}${offset ? '&offset=' + offset : ''}`;
+    const res = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
+    if (!res.ok) throw new Error('Error ' + res.status + ': ' + await res.text());
+    const data = await res.json();
+    records = records.concat(data.records || []);
+    offset = data.offset || null;
+  } while (offset);
+  return records;
+}
+
+function parseRecords(records) {
+  // Field IDs
+  const FID = {
+    name:   'fldpkdTytHRe40gjI',
+    owner:  'fldXjzAcmaBZXJlwC',
+    status: 'fldPyqmORLljl1Agn',
+    mrr:    'fldPFakv6gUHvrDl2',
+    acv:    'fldLLbYrnX2a0aCnP',
+    impl:   'fldQgJNwbAWnfey4l',
+    piloto: 'fldUj9KdfqTd0LcTJ',
+    nextT:  'fldHgpRGZbp8PVOuw',
+    lastT:  'fldQu9nW6qTkOvBLo',
+    close:  'flddOKGGJopAl0ABn',
+    dias:   'fldLZi9yQhGzyxQ09',
+  };
+
+  const stageCounts = {};
+  const stageACV    = {};
+  let totalACV = 0, totalMRR = 0, cerradoMRR = 0, cerradoACV = 0, cerradoImpl = 0;
+  const ACTIVE_STAGES = new Set(['Weekly Hunt','Active lead','Calificado','Discovery','Demo','Propuesta','Close 2 close','Cerrado','Piloto']);
+  let activeCount = 0;
+  const cerradoAccounts = [];
+
+  for (const r of records) {
+    const f = r.fields || {};
+    const statusObj = f[FID.status];
+    const statusName = typeof statusObj === 'object' && statusObj ? statusObj.name : (typeof statusObj === 'string' ? statusObj : '');
+    if (!statusName) continue;
+
+    stageCounts[statusName] = (stageCounts[statusName] || 0) + 1;
+
+    // ACV: multipleLookupValues returns array
+    let acv = 0;
+    const acvRaw = f[FID.acv];
+    if (Array.isArray(acvRaw) && acvRaw.length) acv = Number(acvRaw[0]) || 0;
+    else if (typeof acvRaw === 'number') acv = acvRaw;
+
+    // MRR: multipleLookupValues
+    let mrr = 0;
+    const mrrRaw = f[FID.mrr];
+    if (Array.isArray(mrrRaw) && mrrRaw.length) mrr = Number(mrrRaw[0]) || 0;
+    else if (typeof mrrRaw === 'number') mrr = mrrRaw;
+
+    stageACV[statusName] = (stageACV[statusName] || 0) + acv;
+
+    if (ACTIVE_STAGES.has(statusName)) {
+      activeCount++;
+      totalACV += acv;
+      totalMRR += mrr;
+    }
+
+    if (statusName === 'Cerrado') {
+      const impl = f[FID.impl] || 0;
+      cerradoMRR  += mrr;
+      cerradoACV  += acv;
+      cerradoImpl += impl;
+      const ownerObj = f[FID.owner];
+      const owner = ownerObj && ownerObj.name ? ownerObj.name : (typeof ownerObj === 'string' ? ownerObj : '—');
+      cerradoAccounts.push({
+        name:  f[FID.name] || '(sin nombre)',
+        mrr, acv, impl, owner,
+        nextT: f[FID.nextT] || null,
+        dias:  f[FID.dias]  || null,
+      });
+    }
+  }
+
+  return {
+    total: records.length,
+    activeCount,
+    totalACV, totalMRR,
+    cerradoMRR, cerradoACV, cerradoImpl,
+    stageCounts, stageACV,
+    cerradoAccounts: cerradoAccounts.sort((a,b) => b.mrr - a.mrr),
+  };
+}
+
+function fmt$(n) {
+  if (n >= 1000000) return '$' + (n/1000000).toFixed(1) + 'M';
+  if (n >= 1000)    return '$' + Math.round(n/1000) + 'K';
+  return '$' + n.toLocaleString();
+}
+function fmtMRR(n) { return '$' + n.toLocaleString() + '/mo'; }
+
+function renderDashboard(d, rawRecords) {
+  // Store raw records for KPI tab
+  if (rawRecords) _kpiAirtableData = rawRecords;
+  // ── KPIs
+  if (document.getElementById('kpi-acv'))
+    document.getElementById('kpi-acv').textContent = fmt$(d.totalACV);
+  if (document.getElementById('kpi-acv-sub'))
+    document.getElementById('kpi-acv-sub').textContent = d.activeCount + ' deals con valor';
+  if (document.getElementById('kpi-activos'))
+    document.getElementById('kpi-activos').textContent = d.activeCount;
+  if (document.getElementById('kpi-activos-sub'))
+    document.getElementById('kpi-activos-sub').textContent = 'de ' + d.total + ' registros totales';
+  if (document.getElementById('kpi-mrr-confirmed'))
+    document.getElementById('kpi-mrr-confirmed').textContent = '$' + d.cerradoMRR.toLocaleString();
+  if (document.getElementById('kpi-mrr-confirmed-sub'))
+    document.getElementById('kpi-mrr-confirmed-sub').textContent = '/mes · ' + (d.stageCounts['Cerrado'] || 0) + ' cuentas cerradas';
+
+  // ── Goals (Metas de Marzo)
+  // Las metas miden avance acumulado del mes, no el snapshot actual por etapa.
+  // Solo se actualiza el MRR confirmado (dato exacto desde Cerrado).
+  // Los conteos de leads/discovery/demo/propuesta se deben actualizar manualmente
+  // desde la pestaña KPIs → Registro de Actividad.
+  const mrrPct = Math.min(Math.round(d.cerradoMRR / 7000 * 100), 133);
+  const gMrr = document.getElementById('g-mrr');
+  const gfMrr = document.getElementById('gf-mrr');
+  const gsMrr = document.getElementById('gs-mrr');
+  if (gMrr) gMrr.textContent = '$' + d.cerradoMRR.toLocaleString();
+  if (gfMrr) gfMrr.style.width = Math.min(mrrPct, 100) + '%';
+  if (gsMrr) {
+    const cerradoCnt = d.stageCounts['Cerrado'] || 0;
+    gsMrr.textContent = mrrPct >= 100
+      ? '✅ META SUPERADA · ' + mrrPct + '% · ' + cerradoCnt + ' cuentas'
+      : mrrPct + '% · ' + cerradoCnt + ' cuentas · faltan $' + Math.max(7000 - d.cerradoMRR, 0).toLocaleString();
+    gsMrr.style.color = mrrPct >= 100 ? 'var(--green-text)' : '';
+    gsMrr.style.fontWeight = mrrPct >= 100 ? '700' : '';
+  }
+
+  // ── Funnel rows
+  const STAGE_ORDER = [
+    { key:'Weekly Hunt',    label:'🌐 Weekly Hunt',   color:'#3b6ef8', textColor:'#64748b' },
+    { key:'Active lead',    label:'🎯 Active lead',    color:'#2563eb', textColor:'var(--text)' },
+    { key:'Calificado',     label:'✅ Calificado',     color:'linear-gradient(90deg,#3b6ef8,#6c4ef7)', textColor:'#3b6ef8' },
+    { key:'Discovery',      label:'🔭 Discovery',      color:'#7c3aed', textColor:'#7c3aed' },
+    { key:'Demo',           label:'💻 Demo',           color:'#5b21b6', textColor:'#6d28d9' },
+    { key:'Propuesta',      label:'💰 Propuesta',      color:'#c2410c', textColor:'#ea580c' },
+    { key:'Close 2 close',  label:'🤝 Close 2 close', color:'#15803d', textColor:'#15803d' },
+    { key:'Cerrado',        label:'🔓 Cerrado',        color:'#1d4ed8', textColor:'#1d4ed8' },
+    { key:'Piloto',         label:'🚀 Piloto',         color:'#4338ca', textColor:'#6d28d9' },
+  ];
+  const maxCount = Math.max(...STAGE_ORDER.map(s => d.stageCounts[s.key] || 0), 1);
+  const fr = document.getElementById('funnel-rows');
+  if (fr) {
+    fr.innerHTML = STAGE_ORDER.map(s => {
+      const cnt = d.stageCounts[s.key] || 0;
+      const acv = d.stageACV[s.key] || 0;
+      const pct = Math.max(Math.round(cnt / maxCount * 100), 2);
+      const acvStr = acv > 0 ? fmt$(acv) : '—';
+      const bg = s.color.startsWith('linear') ? s.color : s.color;
+      return `
+        <div class="funnel-row">
+          <div class="funnel-stage" style="color:${s.textColor}">${s.label}</div>
+          <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:${pct}%;background:${bg}">${cnt}</div></div>
+          <div class="funnel-count">${cnt}</div><div class="funnel-acv">${acvStr}</div>
+        </div>`;
+    }).join('');
+  }
+
+  // ── Cerrado KPIs
+  const ck = document.getElementById('cerrado-kpis');
+  if (ck) {
+    const cerradoCnt = d.stageCounts['Cerrado'] || 0;
+    const mrrGoalPct = Math.round(d.cerradoMRR / 7000 * 100);
+    ck.innerHTML = `
+      <div class="cerrado-kpi green">
+        <div class="cerrado-kpi-value">$${d.cerradoMRR.toLocaleString()}</div>
+        <div class="cerrado-kpi-label">MRR Confirmado / mes</div>
+        <div class="cerrado-kpi-sub">${cerradoCnt} cuentas · En activación</div>
+        <div class="cerrado-kpi-delta">✓ ${mrrGoalPct}% de meta $7K</div>
+      </div>
+      <div class="cerrado-kpi blue">
+        <div class="cerrado-kpi-value">${fmt$(d.cerradoACV)}</div>
+        <div class="cerrado-kpi-label">ACV Total Cerrado</div>
+        <div class="cerrado-kpi-sub">Valor anual combinado</div>
+      </div>
+      <div class="cerrado-kpi purple">
+        <div class="cerrado-kpi-value">$${d.cerradoImpl.toLocaleString()}</div>
+        <div class="cerrado-kpi-label">Ingresos por Implementación</div>
+        <div class="cerrado-kpi-sub">Setup + Onboarding</div>
+      </div>`;
+  }
+
+  // ── Cerrado accounts
+  const ca = document.getElementById('cerrado-accounts');
+  if (ca) {
+    if (d.cerradoAccounts.length === 0) {
+      ca.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">Sin cuentas cerradas aún</div>';
+    } else {
+      ca.innerHTML = d.cerradoAccounts.map((acc, i) => {
+        const today = new Date().toISOString().slice(0,10);
+        const nextLabel = !acc.nextT ? '<span class="overdue">Sin registrar ⚠</span>'
+          : acc.nextT < today ? `<span class="overdue">${acc.nextT} (vencido)</span>`
+          : `<span style="color:var(--green-text)">${acc.nextT}</span>`;
+        return `
+          <div class="account-card${i < 2 ? ' is-new' : ''}">
+            <div class="account-header" onclick="toggleAccount(this)">
+              <div style="font-size:20px">🏢</div>
+              <div class="account-name">${acc.name}</div>
+              <span class="status-badge sb-activacion">⚡ Cerrado</span>
+              <div style="display:flex;gap:8px;align-items:center">
+                <span class="owner-chip">${acc.owner}</span>
+                <div style="text-align:right">
+                  <div class="account-mrr">$${acc.mrr.toLocaleString()}/mo</div>
+                  <div style="font-size:10px;color:var(--muted)">${acc.acv ? '$'+acc.acv.toLocaleString()+' ACV' : '—'}</div>
+                </div>
+              </div>
+              <div class="account-chevron">▼</div>
+            </div>
+            <div class="account-detail">
+              <div class="detail-grid">
+                <div class="detail-item"><div class="detail-label">MRR Mensual</div><div class="detail-value" style="color:#16a34a">$${acc.mrr.toLocaleString()}</div></div>
+                <div class="detail-item"><div class="detail-label">ACV Anual</div><div class="detail-value">${acc.acv ? '$'+acc.acv.toLocaleString() : '—'}</div></div>
+                <div class="detail-item"><div class="detail-label">Fee Implementación</div><div class="detail-value" style="color:#7c3aed">${acc.impl ? '$'+acc.impl.toLocaleString() : '—'}</div></div>
+                <div class="detail-item"><div class="detail-label">Días en Pipe</div><div class="detail-value">${acc.dias ? acc.dias+'d' : '—'}</div></div>
+                <div class="detail-item"><div class="detail-label">Próximo Toque</div><div class="detail-value">${nextLabel}</div></div>
+                <div class="detail-item"><div class="detail-label">Responsable</div><div class="detail-value">${acc.owner}</div></div>
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+  }
+
+  // ── Topbar + footer
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('es-MX', {hour:'2-digit',minute:'2-digit'});
+  const dateStr = now.toLocaleDateString('es-MX', {weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const sub = document.getElementById('topbar-sub');
+  if (sub) sub.textContent = dateStr + ' · Sincronizado con Airtable ' + timeStr;
+  const ft = document.getElementById('footer-text');
+  if (ft) ft.textContent = 'Birdie Growth Dashboard · Última sincronización: ' + dateStr + ' ' + timeStr + ' · Fuente: Airtable Growth (' + d.total + ' registros)';
+}
+
+async function syncAirtable() {
+  const token = getToken();
+  if (!token) {
+    // Pre-fill modal input if empty and open it
+    document.getElementById('tokenInput').value = '';
+    openModal('modalToken');
+    showToast('⚙️ Ingresa tu token para sincronizar', '');
+    return;
+  }
+  const btn = document.getElementById('syncBtn');
+  btn.classList.add('syncing');
+  btn.textContent = '⏳ Sincronizando';
+  showToast('⏳ Obteniendo datos de Airtable…');
+  try {
+    const records = await fetchAllRecords(token);
+    const data = parseRecords(records);
+    renderDashboard(data, records);
+    renderKPITab();
+    showToast('✅ Sincronizado · ' + data.total + ' registros · ' + (data.stageCounts['Cerrado'] || 0) + ' cerrados', 'ok');
+  } catch (e) {
+    console.error(e);
+    showToast('❌ Error: ' + e.message, 'err');
+  } finally {
+    btn.classList.remove('syncing');
+    btn.textContent = '⚡ Sync';
+  }
+}
+
+// Init token modal input from storage + refresh goals from log on load
+window.addEventListener('DOMContentLoaded', () => {
+  const t = getToken();
+  if (t) document.getElementById('tokenInput').value = t;
+  updateGoalsFromLogs();
+});
+// ─────────────────────────────────────────────────────────────────────────────
+
+function addCard(colId) {
+  const col = document.getElementById(colId);
+  const btn = col.querySelector('.add-initiative-btn');
+  const ph = col.querySelector('div[style*="text-align:center"]');
+  if(ph) ph.remove();
+  const card = document.createElement('div');
+  card.className = 'initiative-card';
+  card.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <input style="font-size:20px;width:40px;border:1px solid var(--border2);border-radius:6px;padding:2px;background:var(--card2)" value="📌">
+      <input style="flex:1;border:1px solid var(--border2);border-radius:7px;padding:6px 10px;font-size:13px;font-weight:700;background:var(--card2)" placeholder="Nombre de la iniciativa">
+    </div>
+    <div class="initiative-field"><label>Responsable</label><select><option value="">— Asignar —</option><option>Abraham Lopez</option><option>Héctor Nícola</option><option>Daniel Luna</option><option>Equipo Marketing</option></select></div>
+    <div class="initiative-field"><label>Status</label><select><option>Planeación</option><option>En progreso</option><option>En revisión</option><option>Completado ✓</option></select></div>
+    <div class="initiative-field"><label>Fecha límite</label><input type="date"></div>
+    <div class="initiative-field"><label>Notas</label><textarea placeholder="Notas, links, blockers..."></textarea></div>
+    <button onclick="this.closest('.initiative-card').remove()" style="width:100%;padding:6px;border:1px solid #fecaca;background:#fef2f2;color:#dc2626;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;margin-top:6px">🗑 Eliminar</button>`;
+  col.insertBefore(card, btn);
+}
+</script>
+</body>
+</html>
