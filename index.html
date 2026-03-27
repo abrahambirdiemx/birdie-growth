@@ -596,25 +596,25 @@
       <div class="card-title">ACV Total Activo</div>
       <div class="stat-value" style="color:#3b6ef8" id="kpi-acv">$603K</div>
       <div class="stat-sub" id="kpi-acv-sub">43 deals con valor</div>
-      <div class="stat-delta delta-new">↑ +11 registros nuevos</div>
+      <div class="stat-delta delta-new" id="kpi-acv-delta">↑ Sincroniza para actualizar</div>
     </div>
     <div class="card card-sm">
       <div class="card-title">MRR Pipeline</div>
-      <div class="stat-value" style="color:#6c4ef7">$50.2K</div>
-      <div class="stat-sub">/mes en deals activos</div>
-      <div class="stat-delta delta-ok">✓ Meta $7K superada (133%)</div>
+      <div class="stat-value" style="color:#6c4ef7" id="kpi-mrr-pipeline">$50.2K</div>
+      <div class="stat-sub" id="kpi-mrr-pipeline-sub">/mes en deals activos</div>
+      <div class="stat-delta delta-ok" id="kpi-mrr-pipeline-delta">✓ Meta $7K superada (133%)</div>
     </div>
     <div class="card card-sm">
       <div class="card-title">Deals Activos</div>
       <div class="stat-value" style="color:#d97706" id="kpi-activos">366</div>
       <div class="stat-sub" id="kpi-activos-sub">de 726 registros totales</div>
-      <div class="stat-delta delta-new">↑ +11 vs mar 16</div>
+      <div class="stat-delta delta-new" id="kpi-activos-delta">↑ Sincroniza para actualizar</div>
     </div>
     <div class="card card-sm">
       <div class="card-title">MRR Confirmado</div>
       <div class="stat-value" style="color:#16a34a" id="kpi-mrr-confirmed">$9,310</div>
       <div class="stat-sub" id="kpi-mrr-confirmed-sub">/mes · 6 cuentas cerradas</div>
-      <div class="stat-delta delta-ok">↑ +$1,750 esta semana 🏆</div>
+      <div class="stat-delta delta-ok" id="kpi-mrr-confirmed-delta">↑ +$1,750 esta semana 🏆</div>
     </div>
   </div>
 
@@ -1841,19 +1841,36 @@ function fmtMRR(n) { return '$' + n.toLocaleString() + '/mo'; }
 function renderDashboard(d, rawRecords) {
   // Store raw records for KPI tab
   if (rawRecords) _kpiAirtableData = rawRecords;
-  // ── KPIs
-  if (document.getElementById('kpi-acv'))
-    document.getElementById('kpi-acv').textContent = fmt$(d.totalACV);
-  if (document.getElementById('kpi-acv-sub'))
-    document.getElementById('kpi-acv-sub').textContent = d.activeCount + ' deals con valor';
-  if (document.getElementById('kpi-activos'))
-    document.getElementById('kpi-activos').textContent = d.activeCount;
-  if (document.getElementById('kpi-activos-sub'))
-    document.getElementById('kpi-activos-sub').textContent = 'de ' + d.total + ' registros totales';
-  if (document.getElementById('kpi-mrr-confirmed'))
-    document.getElementById('kpi-mrr-confirmed').textContent = '$' + d.cerradoMRR.toLocaleString();
-  if (document.getElementById('kpi-mrr-confirmed-sub'))
-    document.getElementById('kpi-mrr-confirmed-sub').textContent = '/mes · ' + (d.stageCounts['Cerrado'] || 0) + ' cuentas cerradas';
+  // ── KPIs — todos los 4 cards
+  const cerradoCnt = d.stageCounts['Cerrado'] || 0;
+  const mrrGoalPct = Math.round(d.cerradoMRR / 7000 * 100);
+
+  function setEl(id, val) { const e = document.getElementById(id); if (e) e.textContent = val; }
+  function setClass(id, cls) { const e = document.getElementById(id); if (e) { e.className = 'stat-delta ' + cls; } }
+
+  // ACV Total
+  setEl('kpi-acv',       fmt$(d.totalACV));
+  setEl('kpi-acv-sub',   d.activeCount + ' deals con valor');
+  setEl('kpi-acv-delta', '↑ ' + d.activeCount + ' deals activos · ' + d.total + ' totales');
+  setClass('kpi-acv-delta', 'delta-new');
+
+  // MRR Pipeline
+  setEl('kpi-mrr-pipeline',       fmt$(d.totalMRR));
+  setEl('kpi-mrr-pipeline-sub',   '/mes en deals activos');
+  setEl('kpi-mrr-pipeline-delta', mrrGoalPct >= 100 ? '✅ Meta $7K superada · ' + mrrGoalPct + '%' : mrrGoalPct + '% de meta $7K');
+  setClass('kpi-mrr-pipeline-delta', mrrGoalPct >= 100 ? 'delta-ok' : 'delta-warn');
+
+  // Deals Activos
+  setEl('kpi-activos',       d.activeCount);
+  setEl('kpi-activos-sub',   'de ' + d.total + ' registros totales');
+  setEl('kpi-activos-delta', '📊 ' + Object.keys(d.stageCounts).length + ' etapas · última sync ahora');
+  setClass('kpi-activos-delta', 'delta-new');
+
+  // MRR Confirmado
+  setEl('kpi-mrr-confirmed',       '$' + d.cerradoMRR.toLocaleString());
+  setEl('kpi-mrr-confirmed-sub',   '/mes · ' + cerradoCnt + ' cuenta' + (cerradoCnt !== 1 ? 's' : '') + ' cerrada' + (cerradoCnt !== 1 ? 's' : ''));
+  setEl('kpi-mrr-confirmed-delta', mrrGoalPct >= 100 ? '🏆 META SUPERADA · ' + mrrGoalPct + '%' : '→ ' + mrrGoalPct + '% de meta $7K');
+  setClass('kpi-mrr-confirmed-delta', mrrGoalPct >= 100 ? 'delta-ok' : 'delta-warn');
 
   // ── Goals (Metas de Marzo)
   // Las metas miden avance acumulado del mes, no el snapshot actual por etapa.
