@@ -619,29 +619,7 @@
   </div>
 </div>
 
-<!-- ── TOKEN CONFIG MODAL ──────────────────── -->
-<div class="modal-overlay" id="modalToken">
-  <div class="modal" style="max-width:480px">
-    <div class="modal-header">
-      <h3>⚙️ Configurar Airtable Sync</h3>
-      <button class="modal-close" onclick="closeModal('modalToken')">✕</button>
-    </div>
-    <div class="modal-body">
-      <div style="margin-bottom:16px">
-        <label style="display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:6px">Personal Access Token</label>
-        <input type="password" class="token-input" id="tokenInput" placeholder="patXXXXXXXXXXXXXXXX.XXXXXXXX…" autocomplete="off">
-        <div class="token-hint">
-          Tu token se guarda <strong>solo en este navegador</strong> (localStorage), nunca se envía a ningún servidor.<br>
-          Puedes generar uno en <a href="https://airtable.com/create/tokens" target="_blank">airtable.com/create/tokens</a> con el scope <code>data.records:read</code> y acceso al base <em>Growth</em>.
-        </div>
-      </div>
-      <div style="display:flex;gap:8px;justify-content:flex-end">
-        <button class="btn btn-outline" onclick="closeModal('modalToken')">Cancelar</button>
-        <button class="btn btn-primary" onclick="saveToken()">💾 Guardar y Sincronizar</button>
-      </div>
-    </div>
-  </div>
-</div>
+<!-- Airtable modal removed — data now served from Supabase -->
 
 <!-- ── LIVE BANNER ──────────────────────────── -->
 <div class="live-banner">
@@ -662,14 +640,13 @@
     <div class="logo">B</div>
     <div>
       <div class="topbar-title">Growth Dashboard</div>
-      <div class="topbar-sub" id="topbar-sub">Viernes 20 de Marzo, 2026 · Actualizado desde Airtable hace unos momentos</div>
+      <div class="topbar-sub" id="topbar-sub">Cargando datos…</div>
     </div>
   </div>
   <div class="topbar-right">
     <button class="btn btn-outline" onclick="openModal('modalNew')">✨ Nuevos registros <span class="badge-count" style="background:#3b6ef8;color:#fff">11</span></button>
     <button class="btn btn-primary" onclick="openModal('modalUpdates')">🔄 Actualizaciones <span class="badge-count" style="background:rgba(255,255,255,0.25)">9</span></button>
-    <button class="btn btn-green" id="syncBtn" onclick="syncAirtable()" title="Sincronizar datos con Airtable">⚡ Sync</button>
-    <button class="btn btn-outline" onclick="openModal('modalToken')" title="Configurar token" style="padding:8px 11px;font-size:15px">⚙️</button>
+    <button class="btn btn-green" id="syncBtn" onclick="pipeLoad()" title="Recargar datos de Supabase">🔄 Sync</button>
     <div class="health-pill" id="health-pill">⚠ Health: 38/100</div>
   </div>
 </div>
@@ -1267,12 +1244,12 @@
       <option value="all">Todo el tiempo</option>
     </select>
     <div class="kpi-filter-sep"></div>
-    <span style="font-size:11px;color:var(--muted)">Datos de Airtable + registros locales · <button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="syncAirtable()">⚡ Actualizar</button></span>
+    <span style="font-size:11px;color:var(--muted)">Datos de Supabase · <button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="pipeLoad()">🔄 Actualizar</button></span>
     <span style="margin-left:auto"><button class="btn btn-outline" style="padding:5px 12px;font-size:11px" onclick="exportKPILog()">⬇ Exportar CSV</button></span>
   </div>
 
-  <!-- Seller Cards (from Airtable data) -->
-  <div class="section-title" style="margin-bottom:14px">📈 Métricas por Vendedor <span style="font-size:11px;font-weight:400;color:var(--muted)">(del pipeline activo en Airtable)</span></div>
+  <!-- Seller Cards (from Supabase pipeline) -->
+  <div class="section-title" style="margin-bottom:14px">📈 Métricas por Vendedor <span style="font-size:11px;font-weight:400;color:var(--muted)">(del pipeline activo en Supabase)</span></div>
   <div class="seller-grid" id="seller-cards-grid">
     <!-- Rendered by JS -->
     <div class="seller-card">
@@ -1498,6 +1475,7 @@
     </select>
     <button class="btn btn-primary" onclick="pipeNewDeal()">+ Nuevo Deal</button>
     <button class="btn btn-outline" onclick="pipeExport()">⬇ CSV</button>
+    <button class="btn btn-outline" id="groupByBtn" onclick="pipeToggleGroup()" title="Agrupar por etapa">☰ Agrupar</button>
   </div>
 
   <!-- Grid -->
@@ -1517,11 +1495,12 @@
           <th class="col-touch" onclick="pipeSort('next_touchpoint')">Próx. Touch ↕</th>
           <th class="col-date" style="color:#15803d">Cierre est.</th>
           <th class="col-canal">Canal</th>
+          <th style="width:70px" onclick="pipeSort('size')">Tamaño ↕</th>
           <th style="width:80px">Días pipe</th>
         </tr>
       </thead>
       <tbody id="pipe-tbody">
-        <tr><td colspan="13" style="text-align:center;padding:40px;color:var(--muted)">Conecta Supabase para ver el pipeline en vivo →</td></tr>
+        <tr><td colspan="14" style="text-align:center;padding:40px;color:var(--muted)">Conecta Supabase para ver el pipeline en vivo →</td></tr>
       </tbody>
     </table>
     <div class="pipe-pagination" id="pipe-pagination"></div>
@@ -1558,6 +1537,13 @@
     </div>
     <div class="modal-body">
       <input type="hidden" id="pipe-edit-id">
+      <!-- CRM search (only shown for new deals) -->
+      <div id="crm-search-section" style="margin-bottom:16px;padding:12px 14px;background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:10px">
+        <label style="font-size:12px;font-weight:700;color:#0369a1;text-transform:uppercase;letter-spacing:.5px">🔍 Buscar cuenta en CRM <span style="font-weight:400;color:#64748b">(auto-completa campos)</span></label>
+        <input type="text" id="crm-deal-search" placeholder="Escribe el nombre de la empresa…" oninput="crmDealSearch()" autocomplete="off"
+          style="width:100%;box-sizing:border-box;margin-top:8px;padding:9px 12px;border:1.5px solid #bae6fd;border-radius:8px;font-size:13px;outline:none">
+        <div id="crm-deal-results" style="display:none;margin-top:6px;border:1px solid #e2e8f0;border-radius:8px;background:#fff;max-height:160px;overflow-y:auto;font-size:13px"></div>
+      </div>
       <div class="crm-form-grid">
         <div class="crm-field full"><label>Oportunidad / Empresa *</label><input type="text" id="pf-name" placeholder="Nombre de la oportunidad"></div>
         <div class="crm-field"><label>Owner *</label>
@@ -1820,7 +1806,7 @@
 </div>
 
 <div style="text-align:center;padding:20px;border-top:1px solid var(--border);color:var(--muted2);font-size:11px;background:var(--card);margin-top:20px;" id="footer-text">
-  Birdie Growth Dashboard · Última actualización: Viernes 20 Marzo 2026 · Fuente: Airtable Growth (726 registros)
+  Birdie Growth Dashboard · Datos en tiempo real · Fuente: Supabase Pipeline
 </div>
 
 <script>
@@ -1898,8 +1884,11 @@ function loadInits() {
   });
 }
 loadInits();
-// Auto-load pipeline on page start
-window.addEventListener('DOMContentLoaded', () => { pipeLoad(); });
+// Auto-load pipeline on page start + init goals from log
+window.addEventListener('DOMContentLoaded', () => {
+  pipeLoad();
+  updateGoalsFromLogs();
+});
 
 // ─── PIPELINE (Supabase) ─────────────────────────────────────────────────
 const SB_URL  = 'https://xjrgqborwhvyqgrczetq.supabase.co';
@@ -1936,15 +1925,21 @@ async function sbFetch(method, path, body) {
 }
 
 async function pipeLoad() {
+  const btn = document.getElementById('syncBtn');
+  if (btn) { btn.classList.add('syncing'); btn.textContent='⏳ Sync'; }
   try {
     const data = await sbFetch('GET','pipeline?order=created_at.desc&limit=2000');
     _pipeData = Array.isArray(data) ? data : [];
     pipeRender();
+    renderDashboard(parseSupabaseData(_pipeData));
+    updateGoalsFromLogs();
     updateSbStatus(true, _pipeData.length + ' deals');
     showToast('✅ Pipeline sincronizado — '+_pipeData.length+' deals','ok');
   } catch(e) {
     updateSbStatus(false, 'Error: '+e.message);
     showToast('❌ Supabase: '+e.message,'err');
+  } finally {
+    if (btn) { btn.classList.remove('syncing'); btn.textContent='🔄 Sync'; }
   }
 }
 
@@ -2009,19 +2004,11 @@ function pipeRender() {
   document.getElementById('pk-mrr').textContent    = totMRR ? '$'+Math.round(totMRR).toLocaleString()+'/mo' : '—';
   document.getElementById('pk-acv').textContent    = totACV ? '$'+Math.round(totACV/1000)+'K' : '—';
 
-  // Pagination
   const tot = filt.length;
-  const totPages = Math.ceil(tot/PIPE_PAGE)||1;
-  if (pipePage>totPages) pipePage=totPages;
-  const start=(pipePage-1)*PIPE_PAGE;
-  const page=filt.slice(start,start+PIPE_PAGE);
-
   const today = new Date().toISOString().slice(0,10);
   const tbody = document.getElementById('pipe-tbody');
-  if (!page.length) {
-    tbody.innerHTML='<tr><td colspan="13" style="text-align:center;padding:40px;color:var(--muted)">Sin deals para este filtro.</td></tr>';
-  } else {
-    tbody.innerHTML = page.map(r => {
+
+  function buildRow(r) {
       const col = STAGE_COLORS[r.status]||'#64748b';
       const dias = daysBetween(r.ingreso_lead);
       const nextT = r.next_touchpoint;
@@ -2029,7 +2016,7 @@ function pipeRender() {
       const mrr = parsePipeMoney(r.mrr);
       const acv = parsePipeMoney(r.acv);
       return `<tr>
-        <td><span class="cell cell-name" title="${(r.opportunity_name||'').replace(/"/g,'')}">${r.opportunity_name||'—'}</span></td>
+        <td><span class="cell cell-name" title="Clic para editar" style="cursor:pointer" onclick="pipeOpenEdit(${r.id})">${r.opportunity_name||'—'}</span></td>
         <td class="cell-select">
           <select onchange="pipeUpdateField(${r.id},'owner',this.value)">
             <option ${r.owner==='Abraham Lopez'?'selected':''}>Abraham Lopez</option>
@@ -2051,21 +2038,51 @@ function pipeRender() {
         <td class="cell-date"><input type="date" value="${nextT||''}" onchange="pipeUpdateField(${r.id},'next_touchpoint',this.value)" ${nextClass} title="Próx. touchpoint"></td>
         <td class="cell-date">${r.cierre_date ? `<input type="date" value="${r.cierre_date}" onchange="pipeUpdateField(${r.id},'cierre_date',this.value)" style="color:#15803d">` : `<span class="date-missing" onclick="promptDateEvent(${r.id},'cierre_date','Cierre')" style="cursor:pointer;padding:8px 6px;display:block">+ Agregar</span>`}</td>
         <td><span class="cell" style="color:var(--muted);font-size:11px">${r.estrategia||'—'}</span></td>
+        <td><span class="cell" style="font-size:11px;color:#64748b">${r.size||'—'}</span></td>
         <td><span class="cell" style="color:${dias&&dias>120?'var(--orange)':dias&&dias>60?'var(--yellow)':'var(--muted)'};font-size:11px">${dias!=null?dias+'d':'—'}</span></td>
       </tr>`;
-    }).join('');
   }
 
-  // Pagination bar
   const pag = document.getElementById('pipe-pagination');
-  const totP = Math.ceil(tot/PIPE_PAGE)||1;
-  let btns='';
-  for (let i=1;i<=totP;i++) {
-    if (totP>8&&i>3&&i<totP-1&&Math.abs(i-pipePage)>1){if(i===4)btns+='<span style="padding:4px 6px;color:var(--muted)">…</span>';continue;}
-    btns+=`<button class="pipe-page-btn${i===pipePage?' active':''}" onclick="pipeGoPage(${i})">${i}</button>`;
+
+  if (_pipeGroupBy) {
+    // ── Group-by-stage mode ─────────────────────────────────────────────────
+    const STAGE_ORDER = ['Weekly Hunt','Active Lead','Calificado','Discovery','Demo','Propuesta','Close 2 close','Piloto','Cerrado','Cool Off','Churn'];
+    let html = '';
+    for (const stage of STAGE_ORDER) {
+      const group = filt.filter(r=>r.status===stage);
+      if (!group.length) continue;
+      const col = STAGE_COLORS[stage]||'#64748b';
+      const groupMRR = group.reduce((s,r)=>s+parsePipeMoney(r.mrr),0);
+      const groupACV = group.reduce((s,r)=>s+parsePipeMoney(r.acv),0);
+      html += `<tr style="background:${col}18;border-top:2px solid ${col}40">
+        <td colspan="14" style="padding:8px 12px;font-weight:700;font-size:12px;color:${col}">
+          ${stage} <span style="font-weight:400;color:var(--muted);margin-left:8px">${group.length} deal${group.length!==1?'s':''}</span>
+          ${groupMRR?`<span style="margin-left:16px;color:#16a34a">MRR $${Math.round(groupMRR).toLocaleString()}/mo</span>`:''}
+          ${groupACV?`<span style="margin-left:8px;color:#3b6ef8">ACV $${Math.round(groupACV/1000)}K</span>`:''}
+        </td></tr>`;
+      html += group.map(r=>buildRow(r)).join('');
+    }
+    tbody.innerHTML = html || '<tr><td colspan="14" style="text-align:center;padding:40px;color:var(--muted)">Sin deals para este filtro.</td></tr>';
+    pag.innerHTML = `<span>${tot} deals en ${Object.values(STAGE_ORDER.reduce((a,s)=>{const g=filt.filter(r=>r.status===s);if(g.length)a[s]=1;return a},{})).length} etapas</span>`;
+  } else {
+    // ── Flat paginated mode ─────────────────────────────────────────────────
+    const totPages = Math.ceil(tot/PIPE_PAGE)||1;
+    if (pipePage>totPages) pipePage=totPages;
+    const start=(pipePage-1)*PIPE_PAGE;
+    const page=filt.slice(start,start+PIPE_PAGE);
+    tbody.innerHTML = page.length
+      ? page.map(r=>buildRow(r)).join('')
+      : '<tr><td colspan="14" style="text-align:center;padding:40px;color:var(--muted)">Sin deals para este filtro.</td></tr>';
+    const totP = Math.ceil(tot/PIPE_PAGE)||1;
+    let btns='';
+    for (let i=1;i<=totP;i++) {
+      if (totP>8&&i>3&&i<totP-1&&Math.abs(i-pipePage)>1){if(i===4)btns+='<span style="padding:4px 6px;color:var(--muted)">…</span>';continue;}
+      btns+=`<button class="pipe-page-btn${i===pipePage?' active':''}" onclick="pipeGoPage(${i})">${i}</button>`;
+    }
+    pag.innerHTML=`<span>${start+1}–${Math.min(start+PIPE_PAGE,tot)} de <strong>${tot}</strong> deals</span>
+      <div class="pipe-page-btns"><button class="pipe-page-btn" onclick="pipeGoPage(${pipePage-1})" ${pipePage<=1?'disabled':''}>‹</button>${btns}<button class="pipe-page-btn" onclick="pipeGoPage(${pipePage+1})" ${pipePage>=totP?'disabled':''}>›</button></div>`;
   }
-  pag.innerHTML=`<span>${start+1}–${Math.min(start+PIPE_PAGE,tot)} de <strong>${tot}</strong> deals</span>
-    <div class="pipe-page-btns"><button class="pipe-page-btn" onclick="pipeGoPage(${pipePage-1})" ${pipePage<=1?'disabled':''}>‹</button>${btns}<button class="pipe-page-btn" onclick="pipeGoPage(${pipePage+1})" ${pipePage>=totP?'disabled':''}>›</button></div>`;
 }
 
 function pipeGoPage(p){const t=Math.ceil(_pipeFiltered.length/PIPE_PAGE)||1;pipePage=Math.max(1,Math.min(p,t));pipeRender();}
@@ -2108,11 +2125,92 @@ async function saveDateEvent() {
   showToast('✅ Fecha guardada','ok');
 }
 
+function pipeOpenEdit(id) {
+  const r = _pipeData.find(x=>x.id===id); if(!r) return;
+  document.getElementById('pipe-modal-title').textContent='✏️ Editar Deal';
+  document.getElementById('pipe-edit-id').value=id;
+  document.getElementById('pipe-delete-btn').style.display='block';
+  // Hide CRM search section (only for new deals)
+  const css = document.getElementById('crm-search-section');
+  if (css) css.style.display='none';
+  const setV = (elId, val) => { const e=document.getElementById(elId); if(e) e.value=val||''; };
+  setV('pf-name',        r.opportunity_name);
+  setV('pf-owner-f',     r.owner);
+  setV('pf-status-f',    r.status);
+  setV('pf-canal-f',     r.estrategia);
+  setV('pf-size-f',      r.size);
+  setV('pf-mrr-f',       r.mrr||'');
+  setV('pf-acv-f',       r.acv||'');
+  setV('pf-impl-f',      r.implementaciones||'');
+  setV('pf-piloto-f',    r.piloto||'');
+  setV('pf-ingreso-f',   r.ingreso_lead);
+  setV('pf-discovery-f', r.discovery_date);
+  setV('pf-demo-f',      r.demo_date);
+  setV('pf-proposal-f',  r.proposal_date);
+  setV('pf-touch-f',     r.next_touchpoint);
+  setV('pf-close-f',     r.cierre_date);
+  setV('pf-product-f',   r.product_interest);
+  setV('pf-feedback-f',  r.feedback);
+  openModal('modalPipeDeal');
+}
+
+// ── Group-by-stage toggle ───────────────────────────────────────────────────
+let _pipeGroupBy = false;
+function pipeToggleGroup() {
+  _pipeGroupBy = !_pipeGroupBy;
+  const btn = document.getElementById('groupByBtn');
+  if (btn) { btn.style.background = _pipeGroupBy ? '#3b6ef8' : ''; btn.style.color = _pipeGroupBy ? '#fff' : ''; }
+  pipeRender();
+}
+
+// ── CRM lookup for new deal modal ───────────────────────────────────────────
+function crmDealSearch() {
+  const q = (document.getElementById('crm-deal-search')?.value||'').toLowerCase().trim();
+  const res = document.getElementById('crm-deal-results');
+  if (!q || q.length < 2) { res.style.display='none'; return; }
+  const crm = crmGet();
+  const matches = crm.filter(r=>(r.n||'').toLowerCase().includes(q)).slice(0,8);
+  if (!matches.length) { res.style.display='none'; return; }
+  res.style.display='block';
+  res.innerHTML = matches.map(r=>`
+    <div onclick="crmDealSelect(${r.id})" style="padding:10px 14px;cursor:pointer;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:10px" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
+      <span style="font-size:18px">🏢</span>
+      <div>
+        <div style="font-weight:600;color:#0f172a;font-size:13px">${r.n}</div>
+        <div style="font-size:11px;color:#64748b">${r.e||''}${r.sz?' · '+r.sz:''}${r.r?' · '+r.r:''}</div>
+      </div>
+    </div>`).join('');
+}
+
+function crmDealSelect(crmId) {
+  const crm = crmGet();
+  const rec = crm.find(r=>r.id===crmId);
+  if (!rec) return;
+  const setVal = (id, val) => { const e=document.getElementById(id); if(e&&val) e.value=val; };
+  setVal('pf-name',    rec.n);
+  setVal('pf-canal-f', rec.e);
+  setVal('pf-size-f',  rec.sz);
+  // Try to match owner
+  const ownerMap = {'Abraham Lopez':'Abraham Lopez','Héctor Nícola':'Héctor Nícola','Daniel Luna':'Daniel Luna'};
+  const ownerEl = document.getElementById('pf-owner-f');
+  if (ownerEl && rec.r && ownerMap[rec.r]) ownerEl.value = ownerMap[rec.r];
+  // Hide search
+  document.getElementById('crm-deal-results').style.display='none';
+  document.getElementById('crm-deal-search').value=rec.n;
+  showToast('✅ Datos de '+rec.n+' cargados desde CRM','ok');
+}
+
 function pipeNewDeal() {
   document.getElementById('pipe-modal-title').textContent='🔥 Nuevo Deal';
   document.getElementById('pipe-edit-id').value='';
   document.getElementById('pipe-delete-btn').style.display='none';
+  // Show CRM search section
+  const css = document.getElementById('crm-search-section');
+  if (css) { css.style.display='block'; }
+  document.getElementById('crm-deal-search').value='';
+  document.getElementById('crm-deal-results').style.display='none';
   ['pf-name','pf-mrr-f','pf-acv-f','pf-impl-f','pf-piloto-f','pf-ingreso-f','pf-discovery-f','pf-demo-f','pf-proposal-f','pf-touch-f','pf-close-f','pf-product-f','pf-feedback-f'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  ['pf-owner-f','pf-status-f','pf-canal-f','pf-size-f'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
   document.getElementById('pf-status-f').value='Weekly Hunt';
   document.getElementById('pf-ingreso-f').value=new Date().toISOString().slice(0,10);
   openModal('modalPipeDeal');
@@ -2155,6 +2253,7 @@ async function pipeSave() {
     }
     closeModal('modalPipeDeal');
     pipeRender();
+    renderDashboard(parseSupabaseData(_pipeData));
     showToast((editId?'✅ Deal actualizado — ':'✅ Deal creado — ')+name,'ok');
   } catch(e){ showToast('Error: '+e.message,'err'); }
 }
@@ -2168,6 +2267,7 @@ async function pipeDeleteCurrent() {
     _pipeData=_pipeData.filter(r=>r.id!==id);
     closeModal('modalPipeDeal');
     pipeRender();
+    renderDashboard(parseSupabaseData(_pipeData));
     showToast('Deal eliminado','');
   } catch(e){ showToast('Error: '+e.message,'err'); }
 }
@@ -2457,7 +2557,7 @@ const SELLERS = [
   { name:'Daniel Luna',    initial:'D', color:'linear-gradient(135deg,#16a34a,#15803d)' },
 ];
 
-let _kpiAirtableData = null; // stored after sync
+// KPI per-seller data now comes from _pipeData (Supabase)
 let _currentActType  = '';
 
 // Set today's date in the log form on load
@@ -2631,31 +2731,20 @@ function renderSellerCards() {
   const sellers = sellerFilter === 'all' ? SELLERS : SELLERS.filter(s => s.name === sellerFilter);
 
   grid.innerHTML = sellers.map(s => {
-    // Airtable-derived metrics
+    // Pipeline metrics from Supabase (_pipeData)
     let at = { cal:0, disc:0, demo:0, prop:0, c2c:0, cerrado:0, acv:0, mrr:0, impl:0 };
-    if (_kpiAirtableData) {
-      const recs = _kpiAirtableData.filter(r => {
-        const ownerObj = r.fields && r.fields['fldXjzAcmaBZXJlwC'];
-        const ownerName = ownerObj && ownerObj.name ? ownerObj.name : (typeof ownerObj === 'string' ? ownerObj : '');
-        return ownerName === s.name;
-      });
-      recs.forEach(r => {
-        const f = r.fields || {};
-        const statusObj = f['fldPyqmORLljl1Agn'];
-        const status = typeof statusObj === 'object' && statusObj ? statusObj.name : (statusObj || '');
-        const acvArr = f['fldLLbYrnX2a0aCnP'];
-        const acv = Array.isArray(acvArr) ? (Number(acvArr[0])||0) : (Number(acvArr)||0);
-        const mrrArr = f['fldPFakv6gUHvrDl2'];
-        const mrr = Array.isArray(mrrArr) ? (Number(mrrArr[0])||0) : (Number(mrrArr)||0);
-        const impl = Number(f['fldQgJNwbAWnfey4l'])||0;
-        if (status==='Calificado')     { at.cal++;    at.acv+=acv; }
-        if (status==='Discovery')      { at.disc++;   at.acv+=acv; }
-        if (status==='Demo')           { at.demo++;   at.acv+=acv; }
-        if (status==='Propuesta')      { at.prop++;   at.acv+=acv; }
-        if (status==='Close 2 close')  { at.c2c++;    at.acv+=acv; }
-        if (status==='Cerrado')        { at.cerrado++;at.mrr+=mrr; at.impl+=impl; at.acv+=acv; }
-      });
-    }
+    (_pipeData||[]).filter(r=>r.owner===s.name).forEach(r => {
+      const status = r.status||'';
+      const acv  = parseFloat(r.acv)||0;
+      const mrr  = parseFloat(r.mrr)||0;
+      const impl = parseFloat(r.implementaciones)||0;
+      if (status==='Calificado')    { at.cal++;     at.acv+=acv; }
+      if (status==='Discovery')     { at.disc++;    at.acv+=acv; }
+      if (status==='Demo')          { at.demo++;    at.acv+=acv; }
+      if (status==='Propuesta')     { at.prop++;    at.acv+=acv; }
+      if (status==='Close 2 close') { at.c2c++;     at.acv+=acv; }
+      if (status==='Cerrado')       { at.cerrado++; at.mrr+=mrr; at.impl+=impl; at.acv+=acv; }
+    });
     // Manual log totals for this seller
     const sLogs = logs.filter(e => e.seller === s.name);
     const wonLogs = sLogs.filter(e => e.type === 'won');
@@ -2672,7 +2761,7 @@ function renderSellerCards() {
         <div class="seller-avatar" style="background:${s.color}">${s.initial}</div>
         <div>
           <div class="seller-name">${s.name}</div>
-          <div class="seller-role">${at.acv ? 'Pipeline desde Airtable' : 'Sin datos sync — usa ⚡ Sync'}</div>
+          <div class="seller-role">${at.acv ? 'Pipeline desde Supabase' : 'Sin datos sync — usa ⚡ Sync'}</div>
         </div>
       </div>
       <div class="seller-metrics">
@@ -2687,7 +2776,7 @@ function renderSellerCards() {
         ${displayACV  ? `<span class="sf-tag sf-acv">ACV: $${displayACV.toLocaleString()}</span>` : ''}
         ${displayMRR  ? `<span class="sf-tag sf-mrr">MRR: $${displayMRR.toLocaleString()}/mo</span>` : ''}
         ${displayImpl ? `<span class="sf-tag sf-impl">Impl: $${displayImpl.toLocaleString()}</span>` : ''}
-        ${!displayACV && !displayMRR ? '<span style="font-size:10px;color:var(--muted)">Sincroniza Airtable para ver valores</span>' : ''}
+        ${!displayACV && !displayMRR ? '<span style="font-size:10px;color:var(--muted)">Carga el pipeline para ver valores</span>' : ''}
       </div>
     </div>`;
   }).join('');
@@ -2736,35 +2825,7 @@ function exportKPILog() {
   a.click(); URL.revokeObjectURL(url);
 }
 
-// ─── AIRTABLE LIVE SYNC ────────────────────────────────────────────────────
-const AT_BASE = 'appurk5Re1bExl6Ng';
-const AT_TABLE = 'tblvG86weEcFQYYxb';
-const AT_FIELDS = [
-  'fldpkdTytHRe40gjI', // Opportunity name
-  'fldXjzAcmaBZXJlwC', // Owner
-  'fldPyqmORLljl1Agn', // Status
-  'fldPFakv6gUHvrDl2', // MRR
-  'fldLLbYrnX2a0aCnP', // ACV
-  'fldQgJNwbAWnfey4l', // Implementaciones
-  'fldUj9KdfqTd0LcTJ', // Piloto
-  'fldHgpRGZbp8PVOuw', // Next touchpoint
-  'fldQu9nW6qTkOvBLo', // Latest touchpoint
-  'flddOKGGJopAl0ABn', // Close date
-  'fldLZi9yQhGzyxQ09', // Días en pipe
-];
-
-function getToken() {
-  return localStorage.getItem('at_token') || '';
-}
-
-function saveToken() {
-  const t = document.getElementById('tokenInput').value.trim();
-  if (!t) { showToast('Ingresa un token válido', 'err'); return; }
-  localStorage.setItem('at_token', t);
-  closeModal('modalToken');
-  syncAirtable();
-}
-
+// ─── SUPABASE → DASHBOARD BRIDGE ──────────────────────────────────────────
 function showToast(msg, type='') {
   const old = document.querySelector('.sync-toast');
   if (old) old.remove();
@@ -2775,94 +2836,40 @@ function showToast(msg, type='') {
   setTimeout(() => el.remove(), 4000);
 }
 
-async function fetchAllRecords(token) {
-  let records = [], offset = null;
-  const fieldParams = AT_FIELDS.map(f => `fields[]=${f}`).join('&');
-  do {
-    const url = `https://api.airtable.com/v0/${AT_BASE}/${AT_TABLE}?pageSize=100&${fieldParams}${offset ? '&offset=' + offset : ''}`;
-    const res = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
-    if (!res.ok) throw new Error('Error ' + res.status + ': ' + await res.text());
-    const data = await res.json();
-    records = records.concat(data.records || []);
-    offset = data.offset || null;
-  } while (offset);
-  return records;
-}
-
-function parseRecords(records) {
-  // Field IDs
-  const FID = {
-    name:   'fldpkdTytHRe40gjI',
-    owner:  'fldXjzAcmaBZXJlwC',
-    status: 'fldPyqmORLljl1Agn',
-    mrr:    'fldPFakv6gUHvrDl2',
-    acv:    'fldLLbYrnX2a0aCnP',
-    impl:   'fldQgJNwbAWnfey4l',
-    piloto: 'fldUj9KdfqTd0LcTJ',
-    nextT:  'fldHgpRGZbp8PVOuw',
-    lastT:  'fldQu9nW6qTkOvBLo',
-    close:  'flddOKGGJopAl0ABn',
-    dias:   'fldLZi9yQhGzyxQ09',
-  };
-
-  const stageCounts = {};
-  const stageACV    = {};
-  let totalACV = 0, totalMRR = 0, cerradoMRR = 0, cerradoACV = 0, cerradoImpl = 0;
-  const ACTIVE_STAGES = new Set(['Weekly Hunt','Active lead','Calificado','Discovery','Demo','Propuesta','Close 2 close','Cerrado','Piloto']);
-  let activeCount = 0;
-  const cerradoAccounts = [];
-
-  for (const r of records) {
-    const f = r.fields || {};
-    const statusObj = f[FID.status];
-    const statusName = typeof statusObj === 'object' && statusObj ? statusObj.name : (typeof statusObj === 'string' ? statusObj : '');
-    if (!statusName) continue;
-
-    stageCounts[statusName] = (stageCounts[statusName] || 0) + 1;
-
-    // ACV: multipleLookupValues returns array
-    let acv = 0;
-    const acvRaw = f[FID.acv];
-    if (Array.isArray(acvRaw) && acvRaw.length) acv = Number(acvRaw[0]) || 0;
-    else if (typeof acvRaw === 'number') acv = acvRaw;
-
-    // MRR: multipleLookupValues
-    let mrr = 0;
-    const mrrRaw = f[FID.mrr];
-    if (Array.isArray(mrrRaw) && mrrRaw.length) mrr = Number(mrrRaw[0]) || 0;
-    else if (typeof mrrRaw === 'number') mrr = mrrRaw;
-
-    stageACV[statusName] = (stageACV[statusName] || 0) + acv;
-
-    if (ACTIVE_STAGES.has(statusName)) {
-      activeCount++;
-      totalACV += acv;
-      totalMRR += mrr;
-    }
-
-    if (statusName === 'Cerrado') {
-      const impl = f[FID.impl] || 0;
-      cerradoMRR  += mrr;
-      cerradoACV  += acv;
-      cerradoImpl += impl;
-      const ownerObj = f[FID.owner];
-      const owner = ownerObj && ownerObj.name ? ownerObj.name : (typeof ownerObj === 'string' ? ownerObj : '—');
+// Derive dashboard metrics directly from Supabase pipeline data
+function parseSupabaseData(data) {
+  const ACTIVE = new Set(['Weekly Hunt','Active Lead','Active lead','Calificado','Discovery','Demo','Propuesta','Close 2 close','Piloto']);
+  const stageCounts = {}, stageACV = {};
+  let totalACV=0, totalMRR=0, cerradoMRR=0, cerradoACV=0, cerradoImpl=0;
+  let activeCount=0;
+  const cerradoAccounts=[];
+  for (const r of data) {
+    const status = r.status||'';
+    if (!status) continue;
+    stageCounts[status] = (stageCounts[status]||0)+1;
+    const acv  = parseFloat(r.acv)||0;
+    const mrr  = parseFloat(r.mrr)||0;
+    stageACV[status] = (stageACV[status]||0)+acv;
+    if (ACTIVE.has(status)) { activeCount++; totalACV+=acv; totalMRR+=mrr; }
+    if (status==='Cerrado') {
+      const impl = parseFloat(r.implementaciones)||0;
+      cerradoMRR+=mrr; cerradoACV+=acv; cerradoImpl+=impl;
       cerradoAccounts.push({
-        name:  f[FID.name] || '(sin nombre)',
-        mrr, acv, impl, owner,
-        nextT: f[FID.nextT] || null,
-        dias:  f[FID.dias]  || null,
+        name:  r.opportunity_name||'(sin nombre)',
+        mrr, acv, impl,
+        owner: r.owner||'—',
+        nextT: r.next_touchpoint||null,
+        dias:  r.ingreso_lead ? daysBetween(r.ingreso_lead) : null,
+        cierre: r.cierre_date||null,
       });
     }
   }
-
   return {
-    total: records.length,
-    activeCount,
+    total: data.length, activeCount,
     totalACV, totalMRR,
     cerradoMRR, cerradoACV, cerradoImpl,
     stageCounts, stageACV,
-    cerradoAccounts: cerradoAccounts.sort((a,b) => b.mrr - a.mrr),
+    cerradoAccounts: cerradoAccounts.sort((a,b)=>b.mrr-a.mrr),
   };
 }
 
@@ -2873,9 +2880,7 @@ function fmt$(n) {
 }
 function fmtMRR(n) { return '$' + n.toLocaleString() + '/mo'; }
 
-function renderDashboard(d, rawRecords) {
-  // Store raw records for KPI tab
-  if (rawRecords) _kpiAirtableData = rawRecords;
+function renderDashboard(d) {
   // ── KPIs — todos los 4 cards
   const cerradoCnt = d.stageCounts['Cerrado'] || 0;
   const mrrGoalPct = Math.round(d.cerradoMRR / 7000 * 100);
@@ -3027,45 +3032,11 @@ function renderDashboard(d, rawRecords) {
   const timeStr = now.toLocaleTimeString('es-MX', {hour:'2-digit',minute:'2-digit'});
   const dateStr = now.toLocaleDateString('es-MX', {weekday:'long',day:'numeric',month:'long',year:'numeric'});
   const sub = document.getElementById('topbar-sub');
-  if (sub) sub.textContent = dateStr + ' · Sincronizado con Airtable ' + timeStr;
+  if (sub) sub.textContent = dateStr + ' · Sincronizado con Supabase ' + timeStr;
   const ft = document.getElementById('footer-text');
-  if (ft) ft.textContent = 'Birdie Growth Dashboard · Última sincronización: ' + dateStr + ' ' + timeStr + ' · Fuente: Airtable Growth (' + d.total + ' registros)';
+  if (ft) ft.textContent = 'Birdie Growth Dashboard · Última sincronización: ' + dateStr + ' ' + timeStr + ' · Fuente: Supabase Pipeline (' + d.total + ' registros)';
 }
 
-async function syncAirtable() {
-  const token = getToken();
-  if (!token) {
-    // Pre-fill modal input if empty and open it
-    document.getElementById('tokenInput').value = '';
-    openModal('modalToken');
-    showToast('⚙️ Ingresa tu token para sincronizar', '');
-    return;
-  }
-  const btn = document.getElementById('syncBtn');
-  btn.classList.add('syncing');
-  btn.textContent = '⏳ Sincronizando';
-  showToast('⏳ Obteniendo datos de Airtable…');
-  try {
-    const records = await fetchAllRecords(token);
-    const data = parseRecords(records);
-    renderDashboard(data, records);
-    renderKPITab();
-    showToast('✅ Sincronizado · ' + data.total + ' registros · ' + (data.stageCounts['Cerrado'] || 0) + ' cerrados', 'ok');
-  } catch (e) {
-    console.error(e);
-    showToast('❌ Error: ' + e.message, 'err');
-  } finally {
-    btn.classList.remove('syncing');
-    btn.textContent = '⚡ Sync';
-  }
-}
-
-// Init token modal input from storage + refresh goals from log on load
-window.addEventListener('DOMContentLoaded', () => {
-  const t = getToken();
-  if (t) document.getElementById('tokenInput').value = t;
-  updateGoalsFromLogs();
-});
 // ─────────────────────────────────────────────────────────────────────────────
 
 function addCard(colId) {
