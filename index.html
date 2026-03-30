@@ -254,6 +254,61 @@
   .add-initiative-btn { width: 100%; padding: 9px; border: 1.5px dashed var(--border2); border-radius: 9px; background: none; cursor: pointer; font-size: 12px; color: var(--muted); font-weight: 600; transition: all 0.15s; margin-top: 4px; }
   .add-initiative-btn:hover { border-color: var(--accent); color: var(--accent); background: #eff6ff; }
 
+  /* ── Pipeline Grid ── */
+  .pipe-header { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:16px; }
+  .pipe-search { flex:1; min-width:200px; padding:9px 14px; border:1.5px solid var(--border2); border-radius:9px; font-size:13px; outline:none; font-family:inherit; transition:border-color .15s; background:white; }
+  .pipe-search:focus { border-color:var(--accent); }
+  .pipe-sel { padding:8px 10px; border:1.5px solid var(--border2); border-radius:9px; font-size:12px; color:var(--text); background:white; outline:none; cursor:pointer; font-family:inherit; }
+  .pipe-kpi-row { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:16px; }
+  .pipe-kpi { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px 14px; box-shadow:var(--shadow); }
+  .pipe-kpi-v { font-size:22px; font-weight:800; letter-spacing:-.5px; }
+  .pipe-kpi-l { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); margin-top:2px; }
+  /* Grid table */
+  .grid-wrap { overflow-x:auto; border:1px solid var(--border); border-radius:12px; background:var(--card); box-shadow:var(--shadow); }
+  .grid-table { width:100%; border-collapse:collapse; font-size:12px; table-layout:fixed; }
+  .grid-table th { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); padding:9px 10px; text-align:left; background:var(--card2); border-bottom:2px solid var(--border); position:sticky; top:0; z-index:2; white-space:nowrap; cursor:pointer; user-select:none; }
+  .grid-table th:hover { color:var(--accent); }
+  .grid-table td { padding:0; border-bottom:1px solid var(--border); vertical-align:middle; }
+  .grid-table tr:last-child td { border-bottom:none; }
+  .grid-table tr:hover td { background:#f8f9ff; }
+  .grid-table tr.row-selected td { background:#eff6ff; }
+  .cell { padding:8px 10px; display:block; min-height:36px; cursor:text; outline:none; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .cell:focus { background:#fff; box-shadow:inset 0 0 0 2px var(--accent); border-radius:4px; white-space:normal; overflow:visible; z-index:3; position:relative; }
+  .cell-name { font-weight:600; color:var(--text); min-width:180px; }
+  .cell-select { padding:0; }
+  .cell-select select { width:100%; height:36px; padding:0 8px; border:none; background:transparent; font-size:12px; color:var(--text); cursor:pointer; outline:none; font-family:inherit; }
+  .cell-select select:focus { box-shadow:inset 0 0 0 2px var(--accent); }
+  .cell-date { color:var(--muted); min-width:100px; font-size:11px; }
+  .cell-date input[type=date] { width:100%; border:none; background:transparent; font-size:11px; color:var(--text); padding:8px 6px; outline:none; cursor:pointer; font-family:inherit; }
+  .cell-money { color:var(--green-text); font-weight:700; min-width:80px; }
+  .cell-money.acv { color:var(--accent); }
+  .date-missing { color:#fca5a5; font-size:10px; font-weight:600; }
+  .date-set { color:var(--green-text); font-size:11px; }
+  /* Stage badge inline */
+  .stage-sel { display:inline-flex; align-items:center; }
+  .pipe-pagination { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-top:1px solid var(--border); font-size:12px; color:var(--muted); }
+  .pipe-page-btns { display:flex; gap:4px; }
+  .pipe-page-btn { padding:4px 9px; border:1px solid var(--border2); border-radius:7px; background:white; cursor:pointer; font-size:12px; font-weight:600; color:var(--text); }
+  .pipe-page-btn:hover { background:var(--bg2); }
+  .pipe-page-btn.active { background:var(--accent); color:white; border-color:var(--accent); }
+  .pipe-page-btn:disabled { opacity:.4; cursor:default; }
+  /* Supabase config bar */
+  .sb-config { background:linear-gradient(90deg,#1a1a2e,#16213e); color:#a5b4fc; padding:10px 18px; font-size:12px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; border-radius:10px; margin-bottom:16px; }
+  .sb-status-dot { width:8px; height:8px; border-radius:50%; background:#f87171; flex-shrink:0; }
+  .sb-status-dot.connected { background:#4ade80; box-shadow:0 0 6px #4ade80; }
+  .sb-input { background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2); border-radius:6px; padding:5px 10px; font-size:11px; color:white; outline:none; font-family:monospace; width:260px; }
+  .sb-input::placeholder { color:rgba(255,255,255,.4); }
+  /* Date event modal */
+  .date-event-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .col-w { width:160px; }
+  .col-owner { width:110px; }
+  .col-status { width:130px; }
+  .col-mrr { width:90px; }
+  .col-acv { width:90px; }
+  .col-date { width:105px; }
+  .col-touch { width:105px; }
+  .col-canal { width:110px; }
+
   /* CRM Section */
   .crm-stats { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin-bottom:18px; }
   .crm-stat { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:14px 16px; box-shadow:var(--shadow); }
@@ -621,7 +676,8 @@
 
 <!-- ── TABS ─────────────────────────────────── -->
 <div class="tab-nav">
-  <button class="tab-btn active" onclick="switchTab('pipeline',this)">📊 Pipeline</button>
+  <button class="tab-btn active" onclick="switchTab('pipeline',this)">📊 Dashboard</button>
+  <button class="tab-btn" onclick="switchTab('deals',this)">🔥 Pipeline</button>
   <button class="tab-btn" onclick="switchTab('cerrados',this)">🔓 Cerrados & MRR <span style="background:#dcfce7;color:#15803d;border-radius:8px;padding:0 6px;font-size:10px;font-weight:700;margin-left:3px">133%</span></button>
   <button class="tab-btn" onclick="switchTab('plan',this)">📋 Plan Semanal</button>
   <button class="tab-btn" onclick="switchTab('iniciativas',this)">🚀 Iniciativas Clave</button>
@@ -1383,6 +1439,175 @@
 <!-- /tab-kpis -->
 
 <!-- ══════════════════════════════════════
+     TAB: PIPELINE (Supabase Grid)
+══════════════════════════════════════ -->
+<div class="tab-content" id="tab-deals">
+
+  <!-- Supabase connection bar -->
+  <div class="sb-config" id="sb-config-bar">
+    <div class="sb-status-dot" id="sb-dot"></div>
+    <span id="sb-status-txt" style="font-weight:700">Sin conexión a Supabase</span>
+    <input class="sb-input" id="sb-url" placeholder="https://xxxx.supabase.co" autocomplete="off">
+    <input class="sb-input" id="sb-key" placeholder="anon key (eyJ...)" autocomplete="off" type="password">
+    <button class="btn btn-primary" style="font-size:11px;padding:6px 14px" onclick="sbConnect()">⚡ Conectar</button>
+    <span style="margin-left:auto;font-size:10px;opacity:.7">Los datos se sincronizan en tiempo real para todo el equipo</span>
+  </div>
+
+  <!-- KPI row -->
+  <div class="pipe-kpi-row" id="pipe-kpi-row">
+    <div class="pipe-kpi"><div class="pipe-kpi-v" id="pk-total" style="color:#3b6ef8">—</div><div class="pipe-kpi-l">Total deals</div></div>
+    <div class="pipe-kpi"><div class="pipe-kpi-v" id="pk-activos" style="color:#7c3aed">—</div><div class="pipe-kpi-l">Activos</div></div>
+    <div class="pipe-kpi"><div class="pipe-kpi-v" id="pk-close" style="color:#15803d">—</div><div class="pipe-kpi-l">Close 2 close</div></div>
+    <div class="pipe-kpi"><div class="pipe-kpi-v" id="pk-mrr" style="color:#16a34a">—</div><div class="pipe-kpi-l">MRR pipeline</div></div>
+    <div class="pipe-kpi"><div class="pipe-kpi-v" id="pk-acv" style="color:#3b6ef8">—</div><div class="pipe-kpi-l">ACV pipeline</div></div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="pipe-header">
+    <input type="text" class="pipe-search" id="pipe-search" placeholder="🔍  Buscar empresa u oportunidad…" oninput="pipeRender()">
+    <select class="pipe-sel" id="pf-owner" onchange="pipeRender()">
+      <option value="">Todos los vendedores</option>
+      <option>Abraham Lopez</option>
+      <option>Héctor Nícola</option>
+      <option>Daniel Luna</option>
+    </select>
+    <select class="pipe-sel" id="pf-status" onchange="pipeRender()">
+      <option value="">Todas las etapas</option>
+      <option>Weekly Hunt</option>
+      <option>Active Lead</option>
+      <option>Calificado</option>
+      <option>Discovery</option>
+      <option>Demo</option>
+      <option>Propuesta</option>
+      <option>Close 2 close</option>
+      <option>Piloto</option>
+      <option>Cerrado</option>
+      <option>Cool Off</option>
+      <option>Churn</option>
+    </select>
+    <select class="pipe-sel" id="pf-canal" onchange="pipeRender()">
+      <option value="">Todos los canales</option>
+      <option>Cold Calling</option>
+      <option>Paid Ads</option>
+      <option>Network</option>
+      <option>CRM Reach</option>
+      <option>Linkedin</option>
+      <option>Panjiva</option>
+      <option>Landing page</option>
+      <option>Outbound</option>
+      <option>Referral</option>
+      <option>Evento</option>
+    </select>
+    <button class="btn btn-primary" onclick="pipeNewDeal()">+ Nuevo Deal</button>
+    <button class="btn btn-outline" onclick="pipeExport()">⬇ CSV</button>
+  </div>
+
+  <!-- Grid -->
+  <div class="grid-wrap">
+    <table class="grid-table" id="pipe-grid">
+      <thead>
+        <tr>
+          <th class="col-w"     onclick="pipeSort('opportunity_name')">Oportunidad ↕</th>
+          <th class="col-owner" onclick="pipeSort('owner')">Owner ↕</th>
+          <th class="col-status"onclick="pipeSort('status')">Etapa ↕</th>
+          <th class="col-mrr"   onclick="pipeSort('mrr')">MRR ↕</th>
+          <th class="col-acv"   onclick="pipeSort('acv')">ACV ↕</th>
+          <th class="col-date">Ingreso Lead</th>
+          <th class="col-date" style="color:#7c3aed">Discovery</th>
+          <th class="col-date" style="color:#5b21b6">Demo</th>
+          <th class="col-date" style="color:#ea580c">Propuesta</th>
+          <th class="col-touch" onclick="pipeSort('next_touchpoint')">Próx. Touch ↕</th>
+          <th class="col-date" style="color:#15803d">Cierre est.</th>
+          <th class="col-canal">Canal</th>
+          <th style="width:80px">Días pipe</th>
+        </tr>
+      </thead>
+      <tbody id="pipe-tbody">
+        <tr><td colspan="13" style="text-align:center;padding:40px;color:var(--muted)">Conecta Supabase para ver el pipeline en vivo →</td></tr>
+      </tbody>
+    </table>
+    <div class="pipe-pagination" id="pipe-pagination"></div>
+  </div>
+</div>
+
+<!-- Date Event Modal -->
+<div class="modal-overlay" id="modalDateEvent">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-header">
+      <h3 id="date-event-title">📅 Registrar Fecha de Evento</h3>
+      <button class="modal-close" onclick="closeModal('modalDateEvent')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px" id="date-event-desc"></p>
+      <div class="form-field">
+        <label>Fecha del evento</label>
+        <input type="date" id="date-event-value" style="width:100%;padding:10px;border:1.5px solid var(--border2);border-radius:9px;font-size:14px;font-family:inherit;outline:none">
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+        <button class="btn btn-outline" onclick="closeModal('modalDateEvent')">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveDateEvent()">💾 Guardar fecha</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- New/Edit Deal Modal -->
+<div class="modal-overlay" id="modalPipeDeal">
+  <div class="modal" style="max-width:660px">
+    <div class="modal-header">
+      <h3 id="pipe-modal-title">🔥 Nuevo Deal</h3>
+      <button class="modal-close" onclick="closeModal('modalPipeDeal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="pipe-edit-id">
+      <div class="crm-form-grid">
+        <div class="crm-field full"><label>Oportunidad / Empresa *</label><input type="text" id="pf-name" placeholder="Nombre de la oportunidad"></div>
+        <div class="crm-field"><label>Owner *</label>
+          <select id="pf-owner-f">
+            <option value="">— Selecciona —</option>
+            <option>Abraham Lopez</option><option>Héctor Nícola</option><option>Daniel Luna</option>
+          </select></div>
+        <div class="crm-field"><label>Etapa</label>
+          <select id="pf-status-f">
+            <option>Weekly Hunt</option><option>Active Lead</option><option>Calificado</option>
+            <option>Discovery</option><option>Demo</option><option>Propuesta</option>
+            <option>Close 2 close</option><option>Piloto</option><option>Cerrado</option>
+            <option>Cool Off</option><option>Churn</option>
+          </select></div>
+        <div class="crm-field"><label>Canal / Estrategia</label>
+          <select id="pf-canal-f">
+            <option value="">—</option><option>Cold Calling</option><option>Paid Ads</option>
+            <option>Network</option><option>CRM Reach</option><option>Linkedin</option>
+            <option>Panjiva</option><option>Landing page</option><option>Outbound</option>
+            <option>Referral</option><option>Evento</option>
+          </select></div>
+        <div class="crm-field"><label>MRR ($/mes)</label><input type="number" id="pf-mrr-f" placeholder="0" min="0"></div>
+        <div class="crm-field"><label>ACV ($)</label><input type="number" id="pf-acv-f" placeholder="0" min="0"></div>
+        <div class="crm-field"><label>Implementaciones ($)</label><input type="number" id="pf-impl-f" placeholder="0" min="0"></div>
+        <div class="crm-field"><label>Piloto ($)</label><input type="number" id="pf-piloto-f" placeholder="0" min="0"></div>
+        <div class="crm-field"><label>Ingreso Lead</label><input type="date" id="pf-ingreso-f"></div>
+        <div class="crm-field"><label>Discovery</label><input type="date" id="pf-discovery-f"></div>
+        <div class="crm-field"><label>Demo</label><input type="date" id="pf-demo-f"></div>
+        <div class="crm-field"><label>Envío Propuesta</label><input type="date" id="pf-proposal-f"></div>
+        <div class="crm-field"><label>Próx. Touchpoint</label><input type="date" id="pf-touch-f"></div>
+        <div class="crm-field"><label>Cierre Estimado</label><input type="date" id="pf-close-f"></div>
+        <div class="crm-field"><label>Tamaño</label>
+          <select id="pf-size-f"><option value="">—</option><option>0-100</option><option>101-500</option><option>501-1000</option><option>1000+</option></select></div>
+        <div class="crm-field"><label>Producto de interés</label><input type="text" id="pf-product-f" placeholder="Birdie Platform, AI…"></div>
+        <div class="crm-field full"><label>Feedback / Notas</label><textarea id="pf-feedback-f" rows="2" placeholder="Objeciones, próximo paso, contexto…"></textarea></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+        <button class="btn btn-outline" id="pipe-delete-btn" onclick="pipeDeleteCurrent()" style="color:var(--red);border-color:#fecaca;display:none">🗑 Eliminar</button>
+        <div style="display:flex;gap:8px;margin-left:auto">
+          <button class="btn btn-outline" onclick="closeModal('modalPipeDeal')">Cancelar</button>
+          <button class="btn btn-primary" onclick="pipeSave()">💾 Guardar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
      TAB: CRM
 ══════════════════════════════════════ -->
 <div class="tab-content" id="tab-crm">
@@ -1650,8 +1875,9 @@ function switchTab(id, btn) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-'+id).classList.add('active');
   btn.classList.add('active');
-  if (id === 'crm')  crmRender();
-  if (id === 'kpis') renderKPITab();
+  if (id === 'crm')   crmRender();
+  if (id === 'kpis')  renderKPITab();
+  if (id === 'deals') pipeRender();
 }
 
 // Accordion
@@ -1674,6 +1900,312 @@ function loadInits() {
   });
 }
 loadInits();
+
+// ─── PIPELINE (Supabase) ─────────────────────────────────────────────────
+const SB_KEY_STORE  = 'sb_url_v1';
+const SB_ANON_STORE = 'sb_key_v1';
+let SB_URL  = localStorage.getItem(SB_KEY_STORE)  || '';
+let SB_ANON = localStorage.getItem(SB_ANON_STORE) || '';
+let _pipeData    = [];
+let _pipeFiltered= [];
+let pipePage     = 1;
+let pipeSortKey  = 'ingreso_lead';
+let pipeSortAsc  = false;
+const PIPE_PAGE  = 75;
+
+// Pending date event state
+let _dateEventDealId  = null;
+let _dateEventField   = null;
+
+const STAGE_COLORS = {
+  'Weekly Hunt':  '#64748b', 'Active Lead': '#2563eb', 'Calificado': '#3b6ef8',
+  'Discovery':    '#7c3aed', 'Demo':        '#5b21b6', 'Propuesta':  '#ea580c',
+  'Close 2 close':'#15803d', 'Piloto':      '#6d28d9', 'Cerrado':    '#1d4ed8',
+  'Cool Off':     '#94a3b8', 'Churn':       '#dc2626',
+};
+const ACTIVE_STAGES = new Set(['Calificado','Discovery','Demo','Propuesta','Close 2 close','Piloto','Active Lead']);
+const DATE_TRIGGER  = { Discovery:'discovery_date', Demo:'demo_date', Propuesta:'proposal_date', Cerrado:'cierre_date', 'Close 2 close':'cierre_date' };
+const DATE_LABELS   = { discovery_date:'Discovery', demo_date:'Demo', proposal_date:'Envío de propuesta', cierre_date:'Cierre', ingreso_lead:'Ingreso lead', next_touchpoint:'Próx. touchpoint' };
+
+function sbHeaders() {
+  return { 'Content-Type':'application/json', 'apikey':SB_ANON, 'Authorization':'Bearer '+SB_ANON, 'Prefer':'return=representation' };
+}
+
+async function sbFetch(method, path, body) {
+  const r = await fetch(SB_URL+'/rest/v1/'+path, { method, headers:sbHeaders(), body: body ? JSON.stringify(body) : undefined });
+  if (!r.ok) { const e = await r.json().catch(()=>({})); throw new Error(e.message || r.status); }
+  return r.status === 204 ? null : r.json();
+}
+
+async function sbConnect() {
+  const url = document.getElementById('sb-url').value.trim().replace(/\/$/,'');
+  const key = document.getElementById('sb-key').value.trim();
+  if (!url || !key) { showToast('Ingresa URL y anon key','err'); return; }
+  SB_URL  = url; SB_ANON = key;
+  localStorage.setItem(SB_KEY_STORE,  url);
+  localStorage.setItem(SB_ANON_STORE, key);
+  showToast('⏳ Conectando a Supabase…');
+  await pipeLoad();
+}
+
+async function pipeLoad() {
+  try {
+    const data = await sbFetch('GET','pipeline?order=created_at.desc&limit=2000');
+    _pipeData = Array.isArray(data) ? data : [];
+    pipeRender();
+    updateSbStatus(true, _pipeData.length + ' deals');
+    showToast('✅ Pipeline sincronizado — '+_pipeData.length+' deals','ok');
+  } catch(e) {
+    updateSbStatus(false, 'Error: '+e.message);
+    showToast('❌ Supabase: '+e.message,'err');
+  }
+}
+
+function updateSbStatus(connected, msg) {
+  const dot = document.getElementById('sb-dot');
+  const txt = document.getElementById('sb-status-txt');
+  if (dot) dot.className = 'sb-status-dot'+(connected?' connected':'');
+  if (txt) txt.textContent = connected ? '✅ Conectado — '+msg : '🔴 '+msg;
+}
+
+function pipeSort(k) {
+  if (pipeSortKey===k) pipeSortAsc=!pipeSortAsc;
+  else { pipeSortKey=k; pipeSortAsc=true; }
+  pipeRender();
+}
+
+function parsePipeMoney(v) { return parseFloat(String(v||'').replace(/[$,]/g,''))||0; }
+
+function daysBetween(d1, d2) {
+  if (!d1) return null;
+  const a = new Date(d1), b = d2 ? new Date(d2) : new Date();
+  return Math.round((b-a)/(1000*60*60*24));
+}
+
+function pipeRender() {
+  const q      = (document.getElementById('pipe-search')?.value||'').toLowerCase();
+  const owner  = document.getElementById('pf-owner')?.value||'';
+  const status = document.getElementById('pf-status')?.value||'';
+  const canal  = document.getElementById('pf-canal')?.value||'';
+
+  let filt = _pipeData.filter(r => {
+    if (owner  && r.owner   !== owner)  return false;
+    if (status && r.status  !== status) return false;
+    if (canal  && r.estrategia !== canal) return false;
+    if (q) {
+      const hay = ((r.opportunity_name||'')+(r.cuenta_crm||'')+(r.owner||'')).toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  filt.sort((a,b) => {
+    let av=a[pipeSortKey], bv=b[pipeSortKey];
+    if (!av && !bv) return 0;
+    if (!av) return 1; if (!bv) return -1;
+    if (typeof av==='number'||pipeSortKey==='mrr'||pipeSortKey==='acv') {
+      av=parsePipeMoney(av); bv=parsePipeMoney(bv);
+      return pipeSortAsc ? av-bv : bv-av;
+    }
+    return pipeSortAsc ? String(av).localeCompare(String(bv),'es') : String(bv).localeCompare(String(av),'es');
+  });
+  _pipeFiltered = filt;
+
+  // KPI row
+  const activeDeals = filt.filter(r=>ACTIVE_STAGES.has(r.status));
+  const c2c         = filt.filter(r=>r.status==='Close 2 close');
+  const totMRR = activeDeals.reduce((s,r)=>s+parsePipeMoney(r.mrr),0);
+  const totACV = activeDeals.reduce((s,r)=>s+parsePipeMoney(r.acv),0);
+  document.getElementById('pk-total').textContent  = filt.length.toLocaleString();
+  document.getElementById('pk-activos').textContent= activeDeals.length;
+  document.getElementById('pk-close').textContent  = c2c.length;
+  document.getElementById('pk-mrr').textContent    = totMRR ? '$'+Math.round(totMRR).toLocaleString()+'/mo' : '—';
+  document.getElementById('pk-acv').textContent    = totACV ? '$'+Math.round(totACV/1000)+'K' : '—';
+
+  // Pagination
+  const tot = filt.length;
+  const totPages = Math.ceil(tot/PIPE_PAGE)||1;
+  if (pipePage>totPages) pipePage=totPages;
+  const start=(pipePage-1)*PIPE_PAGE;
+  const page=filt.slice(start,start+PIPE_PAGE);
+
+  const today = new Date().toISOString().slice(0,10);
+  const tbody = document.getElementById('pipe-tbody');
+  if (!page.length) {
+    tbody.innerHTML='<tr><td colspan="13" style="text-align:center;padding:40px;color:var(--muted)">Sin deals para este filtro.</td></tr>';
+  } else {
+    tbody.innerHTML = page.map(r => {
+      const col = STAGE_COLORS[r.status]||'#64748b';
+      const dias = daysBetween(r.ingreso_lead);
+      const nextT = r.next_touchpoint;
+      const nextClass = nextT && nextT < today ? 'style="color:var(--red);font-weight:700"' : nextT===today ? 'style="color:var(--green);font-weight:700"' : '';
+      const mrr = parsePipeMoney(r.mrr);
+      const acv = parsePipeMoney(r.acv);
+      return `<tr>
+        <td><span class="cell cell-name" title="${(r.opportunity_name||'').replace(/"/g,'')}">${r.opportunity_name||'—'}</span></td>
+        <td class="cell-select">
+          <select onchange="pipeUpdateField(${r.id},'owner',this.value)">
+            <option ${r.owner==='Abraham Lopez'?'selected':''}>Abraham Lopez</option>
+            <option ${r.owner==='Héctor Nícola'?'selected':''}>Héctor Nícola</option>
+            <option ${r.owner==='Daniel Luna'?'selected':''}>Daniel Luna</option>
+          </select>
+        </td>
+        <td class="cell-select">
+          <select style="color:${col};font-weight:700" onchange="pipeStatusChange(${r.id},this.value,this)">
+            ${['Weekly Hunt','Active Lead','Calificado','Discovery','Demo','Propuesta','Close 2 close','Piloto','Cerrado','Cool Off','Churn'].map(s=>`<option value="${s}" ${r.status===s?'selected':''}>${s}</option>`).join('')}
+          </select>
+        </td>
+        <td><span class="cell cell-money">${mrr?'$'+mrr.toLocaleString():''}</span></td>
+        <td><span class="cell cell-money acv">${acv?'$'+acv.toLocaleString():''}</span></td>
+        <td class="cell-date"><input type="date" value="${r.ingreso_lead||''}" onchange="pipeUpdateField(${r.id},'ingreso_lead',this.value)" title="Ingreso Lead"></td>
+        <td class="cell-date">${r.discovery_date ? `<input type="date" value="${r.discovery_date}" onchange="pipeUpdateField(${r.id},'discovery_date',this.value)" style="color:#7c3aed">` : `<span class="date-missing" onclick="promptDateEvent(${r.id},'discovery_date','Discovery')" style="cursor:pointer;padding:8px 6px;display:block">+ Agregar</span>`}</td>
+        <td class="cell-date">${r.demo_date ? `<input type="date" value="${r.demo_date}" onchange="pipeUpdateField(${r.id},'demo_date',this.value)" style="color:#5b21b6">` : `<span class="date-missing" onclick="promptDateEvent(${r.id},'demo_date','Demo')" style="cursor:pointer;padding:8px 6px;display:block">+ Agregar</span>`}</td>
+        <td class="cell-date">${r.proposal_date ? `<input type="date" value="${r.proposal_date}" onchange="pipeUpdateField(${r.id},'proposal_date',this.value)" style="color:#ea580c">` : `<span class="date-missing" onclick="promptDateEvent(${r.id},'proposal_date','Propuesta')" style="cursor:pointer;padding:8px 6px;display:block">+ Agregar</span>`}</td>
+        <td class="cell-date"><input type="date" value="${nextT||''}" onchange="pipeUpdateField(${r.id},'next_touchpoint',this.value)" ${nextClass} title="Próx. touchpoint"></td>
+        <td class="cell-date">${r.cierre_date ? `<input type="date" value="${r.cierre_date}" onchange="pipeUpdateField(${r.id},'cierre_date',this.value)" style="color:#15803d">` : `<span class="date-missing" onclick="promptDateEvent(${r.id},'cierre_date','Cierre')" style="cursor:pointer;padding:8px 6px;display:block">+ Agregar</span>`}</td>
+        <td><span class="cell" style="color:var(--muted);font-size:11px">${r.estrategia||'—'}</span></td>
+        <td><span class="cell" style="color:${dias&&dias>120?'var(--orange)':dias&&dias>60?'var(--yellow)':'var(--muted)'};font-size:11px">${dias!=null?dias+'d':'—'}</span></td>
+      </tr>`;
+    }).join('');
+  }
+
+  // Pagination bar
+  const pag = document.getElementById('pipe-pagination');
+  const totP = Math.ceil(tot/PIPE_PAGE)||1;
+  let btns='';
+  for (let i=1;i<=totP;i++) {
+    if (totP>8&&i>3&&i<totP-1&&Math.abs(i-pipePage)>1){if(i===4)btns+='<span style="padding:4px 6px;color:var(--muted)">…</span>';continue;}
+    btns+=`<button class="pipe-page-btn${i===pipePage?' active':''}" onclick="pipeGoPage(${i})">${i}</button>`;
+  }
+  pag.innerHTML=`<span>${start+1}–${Math.min(start+PIPE_PAGE,tot)} de <strong>${tot}</strong> deals</span>
+    <div class="pipe-page-btns"><button class="pipe-page-btn" onclick="pipeGoPage(${pipePage-1})" ${pipePage<=1?'disabled':''}>‹</button>${btns}<button class="pipe-page-btn" onclick="pipeGoPage(${pipePage+1})" ${pipePage>=totP?'disabled':''}>›</button></div>`;
+}
+
+function pipeGoPage(p){const t=Math.ceil(_pipeFiltered.length/PIPE_PAGE)||1;pipePage=Math.max(1,Math.min(p,t));pipeRender();}
+
+async function pipeUpdateField(id, field, value) {
+  const idx = _pipeData.findIndex(r=>r.id===id);
+  if (idx>=0) _pipeData[idx][field]=value||null;
+  try {
+    await sbFetch('PATCH',`pipeline?id=eq.${id}`,{[field]:value||null,updated_at:new Date().toISOString()});
+  } catch(e) { showToast('Error guardando: '+e.message,'err'); }
+}
+
+async function pipeStatusChange(id, newStatus, selectEl) {
+  await pipeUpdateField(id, 'status', newStatus);
+  selectEl.style.color = STAGE_COLORS[newStatus]||'#64748b';
+  // Check if this stage requires a date
+  const field = DATE_TRIGGER[newStatus];
+  if (field) {
+    const rec = _pipeData.find(r=>r.id===id);
+    if (rec && !rec[field]) promptDateEvent(id, field, DATE_LABELS[field]||newStatus);
+  }
+}
+
+function promptDateEvent(dealId, field, label) {
+  _dateEventDealId = dealId;
+  _dateEventField  = field;
+  const rec = _pipeData.find(r=>r.id===dealId);
+  document.getElementById('date-event-title').textContent = '📅 Fecha de '+label;
+  document.getElementById('date-event-desc').textContent  = `Empresa: ${rec?.opportunity_name||'—'} · Registra la fecha en que ocurrió este evento.`;
+  document.getElementById('date-event-value').value = new Date().toISOString().slice(0,10);
+  openModal('modalDateEvent');
+}
+
+async function saveDateEvent() {
+  const val = document.getElementById('date-event-value').value;
+  if (!val||!_dateEventDealId||!_dateEventField) return;
+  await pipeUpdateField(_dateEventDealId, _dateEventField, val);
+  closeModal('modalDateEvent');
+  pipeRender();
+  showToast('✅ Fecha guardada','ok');
+}
+
+function pipeNewDeal() {
+  document.getElementById('pipe-modal-title').textContent='🔥 Nuevo Deal';
+  document.getElementById('pipe-edit-id').value='';
+  document.getElementById('pipe-delete-btn').style.display='none';
+  ['pf-name','pf-mrr-f','pf-acv-f','pf-impl-f','pf-piloto-f','pf-ingreso-f','pf-discovery-f','pf-demo-f','pf-proposal-f','pf-touch-f','pf-close-f','pf-product-f','pf-feedback-f'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  document.getElementById('pf-status-f').value='Weekly Hunt';
+  document.getElementById('pf-ingreso-f').value=new Date().toISOString().slice(0,10);
+  openModal('modalPipeDeal');
+}
+
+async function pipeSave() {
+  const name  = document.getElementById('pf-name').value.trim();
+  const owner = document.getElementById('pf-owner-f').value;
+  if (!name)  { showToast('⚠ Ingresa el nombre del deal','err'); return; }
+  if (!owner) { showToast('⚠ Selecciona un owner','err'); return; }
+  if (!SB_URL){ showToast('Conecta Supabase primero','err'); return; }
+  const editId = parseInt(document.getElementById('pipe-edit-id').value)||0;
+  const rec = {
+    opportunity_name: name,
+    owner, status: document.getElementById('pf-status-f').value,
+    estrategia:   document.getElementById('pf-canal-f').value||null,
+    mrr:          parseFloat(document.getElementById('pf-mrr-f').value)||null,
+    acv:          parseFloat(document.getElementById('pf-acv-f').value)||null,
+    implementaciones: parseFloat(document.getElementById('pf-impl-f').value)||null,
+    piloto:       parseFloat(document.getElementById('pf-piloto-f').value)||null,
+    ingreso_lead: document.getElementById('pf-ingreso-f').value||null,
+    discovery_date: document.getElementById('pf-discovery-f').value||null,
+    demo_date:    document.getElementById('pf-demo-f').value||null,
+    proposal_date:document.getElementById('pf-proposal-f').value||null,
+    next_touchpoint:document.getElementById('pf-touch-f').value||null,
+    cierre_date:  document.getElementById('pf-close-f').value||null,
+    size:         document.getElementById('pf-size-f').value||null,
+    product_interest:document.getElementById('pf-product-f').value||null,
+    feedback:     document.getElementById('pf-feedback-f').value||null,
+    updated_at:   new Date().toISOString(),
+  };
+  try {
+    if (editId) {
+      await sbFetch('PATCH',`pipeline?id=eq.${editId}`,rec);
+      const idx=_pipeData.findIndex(r=>r.id===editId);
+      if(idx>=0) _pipeData[idx]={..._pipeData[idx],...rec};
+    } else {
+      const created = await sbFetch('POST','pipeline',[rec]);
+      if (Array.isArray(created)&&created.length) _pipeData.unshift(created[0]);
+    }
+    closeModal('modalPipeDeal');
+    pipeRender();
+    showToast((editId?'✅ Deal actualizado — ':'✅ Deal creado — ')+name,'ok');
+  } catch(e){ showToast('Error: '+e.message,'err'); }
+}
+
+async function pipeDeleteCurrent() {
+  const id=parseInt(document.getElementById('pipe-edit-id').value);
+  if(!id) return;
+  if(!confirm('¿Eliminar este deal del pipeline?')) return;
+  try {
+    await sbFetch('DELETE',`pipeline?id=eq.${id}`);
+    _pipeData=_pipeData.filter(r=>r.id!==id);
+    closeModal('modalPipeDeal');
+    pipeRender();
+    showToast('Deal eliminado','');
+  } catch(e){ showToast('Error: '+e.message,'err'); }
+}
+
+function pipeExport() {
+  const data=_pipeFiltered.length?_pipeFiltered:_pipeData;
+  const H=['ID','Oportunidad','Owner','Etapa','Canal','MRR','ACV','Implementaciones','Ingreso Lead','Discovery','Demo','Propuesta','Cierre','Próx.Touch','Días Pipe','Feedback'];
+  const rows=data.map(r=>[r.id,r.opportunity_name,r.owner,r.status,r.estrategia,r.mrr,r.acv,r.implementaciones,r.ingreso_lead,r.discovery_date,r.demo_date,r.proposal_date,r.cierre_date,r.next_touchpoint,daysBetween(r.ingreso_lead),r.feedback].map(v=>'"'+String(v||'').replace(/"/g,'""')+'"').join(','));
+  const csv=[H.join(','),...rows].join('\n');
+  const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='birdie-pipeline-'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+}
+
+// Init: restore credentials if saved
+window.addEventListener('DOMContentLoaded',()=>{
+  if(SB_URL&&SB_ANON){
+    const urlEl=document.getElementById('sb-url');
+    const keyEl=document.getElementById('sb-key');
+    if(urlEl) urlEl.value=SB_URL;
+    if(keyEl) keyEl.value=SB_ANON;
+    updateSbStatus(false,'Credenciales guardadas — clic en ⚡ Conectar');
+  }
+});
 
 // ─── CRM ─────────────────────────────────────────────────────────────────
 const CRM_KEY  = 'birdie_crm_v1';
