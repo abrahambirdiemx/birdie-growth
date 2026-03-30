@@ -1443,14 +1443,12 @@
 ══════════════════════════════════════ -->
 <div class="tab-content" id="tab-deals">
 
-  <!-- Supabase connection bar -->
+  <!-- Supabase status bar (auto-conectado) -->
   <div class="sb-config" id="sb-config-bar">
     <div class="sb-status-dot" id="sb-dot"></div>
-    <span id="sb-status-txt" style="font-weight:700">Sin conexión a Supabase</span>
-    <input class="sb-input" id="sb-url" placeholder="https://xxxx.supabase.co" autocomplete="off">
-    <input class="sb-input" id="sb-key" placeholder="anon key (eyJ...)" autocomplete="off" type="password">
-    <button class="btn btn-primary" style="font-size:11px;padding:6px 14px" onclick="sbConnect()">⚡ Conectar</button>
-    <span style="margin-left:auto;font-size:10px;opacity:.7">Los datos se sincronizan en tiempo real para todo el equipo</span>
+    <span id="sb-status-txt" style="font-weight:700">Conectando…</span>
+    <button class="btn btn-primary" style="font-size:11px;padding:6px 14px;margin-left:8px" onclick="pipeLoad()">🔄 Recargar</button>
+    <span style="margin-left:auto;font-size:10px;opacity:.7">Datos en tiempo real · compartido con todo el equipo</span>
   </div>
 
   <!-- KPI row -->
@@ -1900,12 +1898,12 @@ function loadInits() {
   });
 }
 loadInits();
+// Auto-load pipeline on page start
+window.addEventListener('DOMContentLoaded', () => { pipeLoad(); });
 
 // ─── PIPELINE (Supabase) ─────────────────────────────────────────────────
-const SB_KEY_STORE  = 'sb_url_v1';
-const SB_ANON_STORE = 'sb_key_v1';
-let SB_URL  = localStorage.getItem(SB_KEY_STORE)  || '';
-let SB_ANON = localStorage.getItem(SB_ANON_STORE) || '';
+const SB_URL  = 'https://xjrgqborwhvyqgrczetq.supabase.co';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdxYm9yd2h2eXFncmN6ZXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODc5ODksImV4cCI6MjA5MDQ2Mzk4OX0.DWOoshMXxmQk0deq2jEnOOAFpr_pyE9aWenvu_GPzLs';
 let _pipeData    = [];
 let _pipeFiltered= [];
 let pipePage     = 1;
@@ -1935,17 +1933,6 @@ async function sbFetch(method, path, body) {
   const r = await fetch(SB_URL+'/rest/v1/'+path, { method, headers:sbHeaders(), body: body ? JSON.stringify(body) : undefined });
   if (!r.ok) { const e = await r.json().catch(()=>({})); throw new Error(e.message || r.status); }
   return r.status === 204 ? null : r.json();
-}
-
-async function sbConnect() {
-  const url = document.getElementById('sb-url').value.trim().replace(/\/$/,'');
-  const key = document.getElementById('sb-key').value.trim();
-  if (!url || !key) { showToast('Ingresa URL y anon key','err'); return; }
-  SB_URL  = url; SB_ANON = key;
-  localStorage.setItem(SB_KEY_STORE,  url);
-  localStorage.setItem(SB_ANON_STORE, key);
-  showToast('⏳ Conectando a Supabase…');
-  await pipeLoad();
 }
 
 async function pipeLoad() {
@@ -2196,16 +2183,7 @@ function pipeExport() {
   a.click();
 }
 
-// Init: restore credentials if saved
-window.addEventListener('DOMContentLoaded',()=>{
-  if(SB_URL&&SB_ANON){
-    const urlEl=document.getElementById('sb-url');
-    const keyEl=document.getElementById('sb-key');
-    if(urlEl) urlEl.value=SB_URL;
-    if(keyEl) keyEl.value=SB_ANON;
-    updateSbStatus(false,'Credenciales guardadas — clic en ⚡ Conectar');
-  }
-});
+// Credentials are hardcoded — no init needed
 
 // ─── CRM ─────────────────────────────────────────────────────────────────
 const CRM_KEY  = 'birdie_crm_v1';
