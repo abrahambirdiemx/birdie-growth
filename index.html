@@ -144,6 +144,19 @@
 
   /* Deals Table */
   .table-wrap { overflow-x: auto; }
+  /* Projected sales bars */
+  .proj-col { display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer; min-width:72px; }
+  .proj-col:hover .proj-bar { opacity:.8; }
+  .proj-bar { width:52px; border-radius:8px 8px 0 0; background:linear-gradient(180deg,#3b6ef8,#6c4ef7); transition:height .3s; min-height:6px; }
+  .proj-label { font-size:11px; font-weight:700; color:var(--muted); }
+  .proj-amount { font-size:12px; font-weight:700; color:#3b6ef8; }
+  .proj-count  { font-size:10px; color:var(--muted); }
+  .proj-deal-row { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border); font-size:13px; }
+  .proj-deal-row:last-child { border-bottom:none; }
+  /* Inline date inputs */
+  .cell-date-input { border:none; background:transparent; font-size:11px; font-family:inherit; outline:none; padding:0; width:100%; cursor:pointer; }
+  .cell-date-input:hover { background:var(--bg2); border-radius:4px; }
+  .cell-date-input:focus { background:#eff6ff; border-radius:4px; }
   .deals-table { width: 100%; border-collapse: collapse; }
   .deals-table th { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); padding: 8px 10px; text-align: left; border-bottom: 2px solid var(--border); background: var(--card2); }
   .deals-table td { padding: 9px 10px; border-bottom: 1px solid var(--border); font-size: 12px; vertical-align: middle; }
@@ -442,9 +455,98 @@
     .detail-grid { grid-template-columns: 1fr 1fr; }
     .tab-content { padding: 16px; }
   }
+
+  /* ── LOGIN SCREEN ─────────────────────────────────────────────────── */
+  #login-screen {
+    position: fixed; inset: 0; z-index: 9999;
+    background: linear-gradient(135deg, #0f172a 0%, #1e2d5c 50%, #0f172a 100%);
+    display: flex; align-items: center; justify-content: center;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  #login-screen.hidden { display: none; }
+  .login-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 48px 44px;
+    width: 380px;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 32px 64px rgba(0,0,0,0.4);
+  }
+  .login-logo {
+    width: 52px; height: 52px;
+    background: linear-gradient(135deg,#3b6ef8,#6c4ef7);
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; font-weight: 900; color: #fff;
+    margin: 0 auto 24px;
+    box-shadow: 0 8px 24px rgba(59,110,248,0.4);
+  }
+  .login-title { color:#fff; font-size:22px; font-weight:700; text-align:center; margin-bottom:4px; }
+  .login-sub   { color:#94a3b8; font-size:13px; text-align:center; margin-bottom:32px; }
+  .login-field { margin-bottom:16px; }
+  .login-field label { display:block; font-size:12px; font-weight:600; color:#94a3b8; text-transform:uppercase; letter-spacing:.5px; margin-bottom:7px; }
+  .login-field input {
+    width:100%; box-sizing:border-box;
+    background:rgba(255,255,255,0.07);
+    border:1.5px solid rgba(255,255,255,0.12);
+    border-radius:10px; padding:12px 14px;
+    color:#fff; font-size:14px; font-family:inherit;
+    outline:none; transition:border-color .2s;
+  }
+  .login-field input:focus { border-color:#3b6ef8; background:rgba(59,110,248,0.08); }
+  .login-field input::placeholder { color:#475569; }
+  .login-btn {
+    width:100%; padding:13px; border:none; border-radius:10px;
+    background:linear-gradient(135deg,#3b6ef8,#6c4ef7);
+    color:#fff; font-size:15px; font-weight:700; cursor:pointer;
+    margin-top:8px; transition:opacity .2s, transform .1s;
+    box-shadow: 0 4px 16px rgba(59,110,248,0.4);
+  }
+  .login-btn:hover { opacity:.92; }
+  .login-btn:active { transform:scale(.98); }
+  .login-btn:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+  .login-error { color:#f87171; font-size:13px; text-align:center; margin-top:12px; min-height:18px; }
+  .login-footer { color:#334155; font-size:11px; text-align:center; margin-top:24px; }
+  /* Logout button */
+  #logout-btn {
+    background:none; border:1px solid rgba(255,255,255,0.15);
+    color:#64748b; border-radius:8px; padding:6px 12px;
+    font-size:12px; cursor:pointer; transition:all .2s;
+  }
+  #logout-btn:hover { border-color:#f87171; color:#f87171; }
+  /* Hide main content until logged in */
+  #app-root { display:none; }
+  #app-root.visible { display:block; }
 </style>
 </head>
 <body>
+
+<!-- ══════════════════════════════════════
+     LOGIN SCREEN
+══════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">B</div>
+    <div class="login-title">Birdie Growth</div>
+    <div class="login-sub">Acceso exclusivo para el equipo de ventas</div>
+    <div class="login-field">
+      <label>Correo electrónico</label>
+      <input type="email" id="login-email" placeholder="tu@birdie.mx" autocomplete="email">
+    </div>
+    <div class="login-field">
+      <label>Contraseña</label>
+      <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="login-btn" id="login-btn" onclick="doLogin()">Iniciar sesión →</button>
+    <div class="login-error" id="login-error"></div>
+    <div class="login-footer">Birdie · Dashboard Interno · Solo equipo autorizado</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     APP ROOT (visible after login)
+══════════════════════════════════════ -->
 
 <!-- ── MODALS ──────────────────────────────── -->
 <div class="modal-overlay" id="modalUpdates">
@@ -695,8 +797,50 @@
     </div>
   </div>
 
+  <!-- Clientes Activos KPIs -->
+  <div class="section-title" style="margin-top:18px">⭐ Clientes Activos (MRR Recurrente)</div>
+  <div class="grid-4" id="cliente-kpi-row">
+    <div class="card card-sm">
+      <div class="card-title">MRR Activo (Clientes)</div>
+      <div class="stat-value" style="color:#d97706" id="kpi-cliente-mrr">—</div>
+      <div class="stat-sub" id="kpi-cliente-mrr-sub">Cargando…</div>
+      <div class="stat-delta" id="kpi-cliente-mrr-delta"></div>
+    </div>
+    <div class="card card-sm">
+      <div class="card-title">ACV Clientes</div>
+      <div class="stat-value" style="color:#d97706" id="kpi-cliente-acv">—</div>
+      <div class="stat-sub" id="kpi-cliente-acv-sub">Valor anual combinado</div>
+      <div class="stat-delta" id="kpi-cliente-acv-delta"></div>
+    </div>
+    <div class="card card-sm">
+      <div class="card-title">Ticket Promedio</div>
+      <div class="stat-value" style="color:#d97706" id="kpi-cliente-ticket">—</div>
+      <div class="stat-sub" id="kpi-cliente-ticket-sub">MRR / cliente</div>
+      <div class="stat-delta delta-ok" id="kpi-cliente-ticket-delta"></div>
+    </div>
+    <div class="card card-sm">
+      <div class="card-title">Clientes Activos</div>
+      <div class="stat-value" style="color:#d97706" id="kpi-cliente-count">—</div>
+      <div class="stat-sub" id="kpi-cliente-count-sub">cuentas en etapa Cliente</div>
+      <div class="stat-delta" id="kpi-cliente-count-delta"></div>
+    </div>
+  </div>
+
+  <!-- Ventas Proyectadas por Mes -->
+  <div class="section-title" style="margin-top:18px">📅 Ventas Proyectadas por Mes <span style="font-size:11px;font-weight:400;color:var(--muted)">(MRR ponderado por probabilidad de cierre)</span></div>
+  <div class="card" style="padding:20px" id="proj-section">
+    <div id="proj-bars" style="display:flex;gap:12px;align-items:flex-end;min-height:120px;flex-wrap:wrap"></div>
+    <div id="proj-deals-panel" style="display:none;margin-top:20px;border-top:1px solid var(--border);padding-top:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div class="card-title" id="proj-deals-title">Deals</div>
+        <button onclick="document.getElementById('proj-deals-panel').style.display='none'" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:18px">✕</button>
+      </div>
+      <div id="proj-deals-list"></div>
+    </div>
+  </div>
+
   <!-- Funnel + Metas -->
-  <div class="section-title">Embudo & Metas de Marzo</div>
+  <div class="section-title" style="margin-top:18px">Embudo & Metas de Marzo</div>
   <div class="grid-2-1">
     <div class="card">
       <div class="card-title">Embudo · Actualizado 20 Mar <span style="font-size:10px;color:var(--green-text);background:var(--green-bg);padding:1px 6px;border-radius:6px">vs 16 Mar</span></div>
@@ -1448,17 +1592,10 @@
     </select>
     <select class="pipe-sel" id="pf-status" onchange="pipeRender()">
       <option value="">Todas las etapas</option>
-      <option>Weekly Hunt</option>
-      <option>Active Lead</option>
-      <option>Calificado</option>
-      <option>Discovery</option>
-      <option>Demo</option>
-      <option>Propuesta</option>
-      <option>Close 2 close</option>
-      <option>Piloto</option>
-      <option>Cerrado</option>
-      <option>Cool Off</option>
-      <option>Churn</option>
+      <option>Calificado</option><option>Weekly Hunt</option><option>Active Lead</option>
+      <option>Discovery</option><option>Demo</option><option>Propuesta</option>
+      <option>Close 2 close</option><option>Cerrado</option><option>Piloto</option>
+      <option>Cliente</option><option>Cool Off</option><option>Churn</option>
     </select>
     <select class="pipe-sel" id="pf-canal" onchange="pipeRender()">
       <option value="">Todos los canales</option>
@@ -1493,14 +1630,15 @@
           <th class="col-date" style="color:#5b21b6">Demo</th>
           <th class="col-date" style="color:#ea580c">Propuesta</th>
           <th class="col-touch" onclick="pipeSort('next_touchpoint')">Próx. Touch ↕</th>
-          <th class="col-date" style="color:#15803d">Cierre est.</th>
+          <th class="col-date" style="color:#15803d;width:90px" onclick="pipeSort('cierre_date')">Cierre Mes ↕</th>
           <th class="col-canal">Canal</th>
           <th style="width:70px" onclick="pipeSort('size')">Tamaño ↕</th>
+          <th style="width:60px" onclick="pipeSort('probability')">Prob% ↕</th>
           <th style="width:80px">Días pipe</th>
         </tr>
       </thead>
       <tbody id="pipe-tbody">
-        <tr><td colspan="14" style="text-align:center;padding:40px;color:var(--muted)">Conecta Supabase para ver el pipeline en vivo →</td></tr>
+        <tr><td colspan="16" style="text-align:center;padding:40px;color:var(--muted)">Conecta Supabase para ver el pipeline en vivo →</td></tr>
       </tbody>
     </table>
     <div class="pipe-pagination" id="pipe-pagination"></div>
@@ -1553,10 +1691,10 @@
           </select></div>
         <div class="crm-field"><label>Etapa</label>
           <select id="pf-status-f">
-            <option>Weekly Hunt</option><option>Active Lead</option><option>Calificado</option>
+            <option>Calificado</option><option>Weekly Hunt</option><option>Active Lead</option>
             <option>Discovery</option><option>Demo</option><option>Propuesta</option>
-            <option>Close 2 close</option><option>Piloto</option><option>Cerrado</option>
-            <option>Cool Off</option><option>Churn</option>
+            <option>Close 2 close</option><option>Cerrado</option><option>Piloto</option>
+            <option>Cliente</option><option>Cool Off</option><option>Churn</option>
           </select></div>
         <div class="crm-field"><label>Canal / Estrategia</label>
           <select id="pf-canal-f">
@@ -1574,7 +1712,8 @@
         <div class="crm-field"><label>Demo</label><input type="date" id="pf-demo-f"></div>
         <div class="crm-field"><label>Envío Propuesta</label><input type="date" id="pf-proposal-f"></div>
         <div class="crm-field"><label>Próx. Touchpoint</label><input type="date" id="pf-touch-f"></div>
-        <div class="crm-field"><label>Cierre Estimado</label><input type="date" id="pf-close-f"></div>
+        <div class="crm-field"><label>Cierre Estimado (mes)</label><input type="month" id="pf-close-f"></div>
+        <div class="crm-field"><label>Probabilidad de cierre %</label><input type="number" id="pf-prob-f" min="0" max="100" placeholder="50"></div>
         <div class="crm-field"><label>Tamaño</label>
           <select id="pf-size-f"><option value="">—</option><option>0-100</option><option>101-500</option><option>501-1000</option><option>1000+</option></select></div>
         <div class="crm-field"><label>Producto de interés</label><input type="text" id="pf-product-f" placeholder="Birdie Platform, AI…"></div>
@@ -1905,12 +2044,20 @@ let _dateEventDealId  = null;
 let _dateEventField   = null;
 
 const STAGE_COLORS = {
-  'Weekly Hunt':  '#64748b', 'Active Lead': '#2563eb', 'Calificado': '#3b6ef8',
-  'Discovery':    '#7c3aed', 'Demo':        '#5b21b6', 'Propuesta':  '#ea580c',
-  'Close 2 close':'#15803d', 'Piloto':      '#6d28d9', 'Cerrado':    '#1d4ed8',
-  'Cool Off':     '#94a3b8', 'Churn':       '#dc2626',
+  'Calificado':   '#3b6ef8', 'Weekly Hunt':  '#64748b', 'Active Lead':  '#2563eb',
+  'Active lead':  '#2563eb', 'Discovery':    '#7c3aed', 'Demo':         '#5b21b6',
+  'Propuesta':    '#ea580c', 'Close 2 close':'#15803d', 'Cerrado':      '#1d4ed8',
+  'Piloto':       '#6d28d9', 'Cliente':      '#d97706',
+  'Cool Off':     '#94a3b8', 'Churn':        '#dc2626',
 };
-const ACTIVE_STAGES = new Set(['Calificado','Discovery','Demo','Propuesta','Close 2 close','Piloto','Active Lead']);
+const STAGE_ORDER_LIST = ['Calificado','Weekly Hunt','Active Lead','Discovery','Demo','Propuesta','Close 2 close','Cerrado','Piloto','Cliente','Cool Off','Churn'];
+// Default close probability per stage
+const STAGE_PROB = {
+  'Calificado':10,'Weekly Hunt':5,'Active Lead':10,'Active lead':10,
+  'Discovery':20,'Demo':35,'Propuesta':50,'Close 2 close':70,
+  'Cerrado':100,'Piloto':80,'Cliente':100,'Cool Off':2,'Churn':0
+};
+const ACTIVE_STAGES = new Set(['Calificado','Discovery','Demo','Propuesta','Close 2 close','Piloto','Active Lead','Active lead','Cliente']);
 const DATE_TRIGGER  = { Discovery:'discovery_date', Demo:'demo_date', Propuesta:'proposal_date', Cerrado:'cierre_date', 'Close 2 close':'cierre_date' };
 const DATE_LABELS   = { discovery_date:'Discovery', demo_date:'Demo', proposal_date:'Envío de propuesta', cierre_date:'Cierre', ingreso_lead:'Ingreso lead', next_touchpoint:'Próx. touchpoint' };
 
@@ -1957,6 +2104,20 @@ function pipeSort(k) {
 }
 
 function parsePipeMoney(v) { return parseFloat(String(v||'').replace(/[$,]/g,''))||0; }
+
+const MONTH_NAMES_ES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+function fmtMonth(ym) {
+  // ym = "YYYY-MM"
+  if (!ym || ym.length < 7) return '—';
+  const [y, m] = ym.split('-');
+  return MONTH_NAMES_ES[parseInt(m)-1] + ' ' + y;
+}
+
+async function pipeSaveCierreMonth(id, ym) {
+  // Convert YYYY-MM to YYYY-MM-01 for storage as DATE
+  const dateVal = ym ? ym + '-01' : null;
+  await pipeUpdateField(id, 'cierre_date', dateVal);
+}
 
 function daysBetween(d1, d2) {
   if (!d1) return null;
@@ -2009,62 +2170,83 @@ function pipeRender() {
   const tbody = document.getElementById('pipe-tbody');
 
   function buildRow(r) {
-      const col = STAGE_COLORS[r.status]||'#64748b';
-      const dias = daysBetween(r.ingreso_lead);
-      const nextT = r.next_touchpoint;
-      const nextClass = nextT && nextT < today ? 'style="color:var(--red);font-weight:700"' : nextT===today ? 'style="color:var(--green);font-weight:700"' : '';
-      const mrr = parsePipeMoney(r.mrr);
-      const acv = parsePipeMoney(r.acv);
-      return `<tr>
-        <td><span class="cell cell-name" title="Clic para editar" style="cursor:pointer" onclick="pipeOpenEdit(${r.id})">${r.opportunity_name||'—'}</span></td>
-        <td class="cell-select">
-          <select onchange="pipeUpdateField(${r.id},'owner',this.value)">
-            <option ${r.owner==='Abraham Lopez'?'selected':''}>Abraham Lopez</option>
-            <option ${r.owner==='Héctor Nícola'?'selected':''}>Héctor Nícola</option>
-            <option ${r.owner==='Daniel Luna'?'selected':''}>Daniel Luna</option>
-          </select>
-        </td>
-        <td class="cell-select">
-          <select style="color:${col};font-weight:700" onchange="pipeStatusChange(${r.id},this.value,this)">
-            ${['Weekly Hunt','Active Lead','Calificado','Discovery','Demo','Propuesta','Close 2 close','Piloto','Cerrado','Cool Off','Churn'].map(s=>`<option value="${s}" ${r.status===s?'selected':''}>${s}</option>`).join('')}
-          </select>
-        </td>
-        <td><span class="cell cell-money">${mrr?'$'+mrr.toLocaleString():''}</span></td>
-        <td><span class="cell cell-money acv">${acv?'$'+acv.toLocaleString():''}</span></td>
-        <td class="cell-date"><input type="date" value="${r.ingreso_lead||''}" onchange="pipeUpdateField(${r.id},'ingreso_lead',this.value)" title="Ingreso Lead"></td>
-        <td class="cell-date">${r.discovery_date ? `<input type="date" value="${r.discovery_date}" onchange="pipeUpdateField(${r.id},'discovery_date',this.value)" style="color:#7c3aed">` : `<span class="date-missing" onclick="promptDateEvent(${r.id},'discovery_date','Discovery')" style="cursor:pointer;padding:8px 6px;display:block">+ Agregar</span>`}</td>
-        <td class="cell-date">${r.demo_date ? `<input type="date" value="${r.demo_date}" onchange="pipeUpdateField(${r.id},'demo_date',this.value)" style="color:#5b21b6">` : `<span class="date-missing" onclick="promptDateEvent(${r.id},'demo_date','Demo')" style="cursor:pointer;padding:8px 6px;display:block">+ Agregar</span>`}</td>
-        <td class="cell-date">${r.proposal_date ? `<input type="date" value="${r.proposal_date}" onchange="pipeUpdateField(${r.id},'proposal_date',this.value)" style="color:#ea580c">` : `<span class="date-missing" onclick="promptDateEvent(${r.id},'proposal_date','Propuesta')" style="cursor:pointer;padding:8px 6px;display:block">+ Agregar</span>`}</td>
-        <td class="cell-date"><input type="date" value="${nextT||''}" onchange="pipeUpdateField(${r.id},'next_touchpoint',this.value)" ${nextClass} title="Próx. touchpoint"></td>
-        <td class="cell-date">${r.cierre_date ? `<input type="date" value="${r.cierre_date}" onchange="pipeUpdateField(${r.id},'cierre_date',this.value)" style="color:#15803d">` : `<span class="date-missing" onclick="promptDateEvent(${r.id},'cierre_date','Cierre')" style="cursor:pointer;padding:8px 6px;display:block">+ Agregar</span>`}</td>
-        <td><span class="cell" style="color:var(--muted);font-size:11px">${r.estrategia||'—'}</span></td>
-        <td><span class="cell" style="font-size:11px;color:#64748b">${r.size||'—'}</span></td>
-        <td><span class="cell" style="color:${dias&&dias>120?'var(--orange)':dias&&dias>60?'var(--yellow)':'var(--muted)'};font-size:11px">${dias!=null?dias+'d':'—'}</span></td>
-      </tr>`;
+    const col  = STAGE_COLORS[r.status]||'#64748b';
+    const dias = daysBetween(r.ingreso_lead);
+    const nextT = r.next_touchpoint;
+    const nextStyle = nextT && nextT < today ? 'color:var(--red);font-weight:700' : nextT===today ? 'color:var(--green);font-weight:700' : '';
+    const mrr  = parsePipeMoney(r.mrr);
+    const acv  = parsePipeMoney(r.acv);
+    const prob = r.probability ?? STAGE_PROB[r.status] ?? 50;
+    // cierre_date stored as YYYY-MM-DD, display as month selector (YYYY-MM)
+    const cierreMonth = r.cierre_date ? r.cierre_date.slice(0,7) : '';
+    const cierreLabel = cierreMonth ? fmtMonth(cierreMonth) : '—';
+    // inline date cell helper: always shows input, empty if null
+    const dInline = (val, field, color) =>
+      `<input type="date" class="cell-date-input" value="${val||''}" onchange="pipeUpdateField(${r.id},'${field}',this.value||null)" style="${color?'color:'+color:''}" title="${field}">`;
+    return `<tr>
+      <td><span class="cell cell-name" title="Clic para editar" style="cursor:pointer" onclick="pipeOpenEdit(${r.id})">${r.opportunity_name||'—'}</span></td>
+      <td class="cell-select">
+        <select onchange="pipeUpdateField(${r.id},'owner',this.value)">
+          <option ${r.owner==='Abraham Lopez'?'selected':''}>Abraham Lopez</option>
+          <option ${r.owner==='Héctor Nícola'?'selected':''}>Héctor Nícola</option>
+          <option ${r.owner==='Daniel Luna'?'selected':''}>Daniel Luna</option>
+        </select>
+      </td>
+      <td class="cell-select">
+        <select style="color:${col};font-weight:700" onchange="pipeStatusChange(${r.id},this.value,this)">
+          ${STAGE_ORDER_LIST.map(s=>`<option value="${s}" ${r.status===s?'selected':''}>${s}</option>`).join('')}
+        </select>
+      </td>
+      <td><span class="cell cell-money">${mrr?'$'+mrr.toLocaleString():''}</span></td>
+      <td><span class="cell cell-money acv">${acv?'$'+acv.toLocaleString():''}</span></td>
+      <td class="cell-date">${dInline(r.ingreso_lead,'ingreso_lead','')}</td>
+      <td class="cell-date">${dInline(r.discovery_date,'discovery_date','#7c3aed')}</td>
+      <td class="cell-date">${dInline(r.demo_date,'demo_date','#5b21b6')}</td>
+      <td class="cell-date">${dInline(r.proposal_date,'proposal_date','#ea580c')}</td>
+      <td class="cell-date"><input type="date" class="cell-date-input" value="${nextT||''}" onchange="pipeUpdateField(${r.id},'next_touchpoint',this.value||null)" style="${nextStyle}" title="Próx. touchpoint"></td>
+      <td class="cell-date" style="white-space:nowrap">
+        <input type="month" class="cell-date-input" value="${cierreMonth}" onchange="pipeSaveCierreMonth(${r.id},this.value)" style="color:#15803d;width:110px" title="Cierre estimado mes">
+      </td>
+      <td><span class="cell" style="color:var(--muted);font-size:11px">${r.estrategia||'—'}</span></td>
+      <td><span class="cell" style="font-size:11px;color:#64748b">${r.size||'—'}</span></td>
+      <td>
+        <input type="number" class="cell-date-input" value="${prob}" min="0" max="100"
+          onchange="pipeUpdateField(${r.id},'probability',parseInt(this.value)||0)"
+          style="width:46px;text-align:center;font-size:12px;color:${prob>=70?'#16a34a':prob>=40?'#d97706':'#64748b'};font-weight:700"
+          title="Probabilidad de cierre %">
+      </td>
+      <td><span class="cell" style="color:${dias&&dias>120?'var(--orange)':dias&&dias>60?'var(--yellow)':'var(--muted)'};font-size:11px">${dias!=null?dias+'d':'—'}</span></td>
+    </tr>`;
   }
 
   const pag = document.getElementById('pipe-pagination');
 
   if (_pipeGroupBy) {
-    // ── Group-by-stage mode ─────────────────────────────────────────────────
-    const STAGE_ORDER = ['Weekly Hunt','Active Lead','Calificado','Discovery','Demo','Propuesta','Close 2 close','Piloto','Cerrado','Cool Off','Churn'];
+    // ── Group-by-stage mode (collapsible) ──────────────────────────────────
     let html = '';
-    for (const stage of STAGE_ORDER) {
+    let stageCount = 0;
+    for (const stage of STAGE_ORDER_LIST) {
       const group = filt.filter(r=>r.status===stage);
       if (!group.length) continue;
+      stageCount++;
       const col = STAGE_COLORS[stage]||'#64748b';
+      const collapsed = _collapsedGroups.has(stage);
       const groupMRR = group.reduce((s,r)=>s+parsePipeMoney(r.mrr),0);
       const groupACV = group.reduce((s,r)=>s+parsePipeMoney(r.acv),0);
-      html += `<tr style="background:${col}18;border-top:2px solid ${col}40">
-        <td colspan="14" style="padding:8px 12px;font-weight:700;font-size:12px;color:${col}">
-          ${stage} <span style="font-weight:400;color:var(--muted);margin-left:8px">${group.length} deal${group.length!==1?'s':''}</span>
-          ${groupMRR?`<span style="margin-left:16px;color:#16a34a">MRR $${Math.round(groupMRR).toLocaleString()}/mo</span>`:''}
-          ${groupACV?`<span style="margin-left:8px;color:#3b6ef8">ACV $${Math.round(groupACV/1000)}K</span>`:''}
+      const projMRR  = group.reduce((s,r)=>s+parsePipeMoney(r.mrr)*((r.probability??STAGE_PROB[r.status]??50)/100),0);
+      html += `<tr style="background:${col}18;border-top:2px solid ${col}40;cursor:pointer" onclick="pipeToggleStageCollapse('${stage.replace(/'/g,"\\'")}')">
+        <td colspan="16" style="padding:9px 14px;font-weight:700;font-size:12px;color:${col};user-select:none">
+          <span style="margin-right:8px;font-size:10px">${collapsed?'▶':'▼'}</span>${stage}
+          <span style="font-weight:400;color:var(--muted);margin-left:8px">${group.length} deal${group.length!==1?'s':''}</span>
+          ${groupMRR?`<span style="margin-left:16px;color:#16a34a;font-weight:600">MRR $${Math.round(groupMRR).toLocaleString()}/mo</span>`:''}
+          ${groupACV?`<span style="margin-left:10px;color:#3b6ef8">ACV ${fmt$(groupACV)}</span>`:''}
+          ${projMRR?`<span style="margin-left:10px;color:#d97706">Proyectado $${Math.round(projMRR).toLocaleString()}/mo</span>`:''}
+          <span style="float:right;font-size:10px;color:var(--muted);font-weight:400">${collapsed?'Expandir':'Colapsar'}</span>
         </td></tr>`;
-      html += group.map(r=>buildRow(r)).join('');
+      if (!collapsed) html += group.map(r=>buildRow(r)).join('');
     }
-    tbody.innerHTML = html || '<tr><td colspan="14" style="text-align:center;padding:40px;color:var(--muted)">Sin deals para este filtro.</td></tr>';
-    pag.innerHTML = `<span>${tot} deals en ${Object.values(STAGE_ORDER.reduce((a,s)=>{const g=filt.filter(r=>r.status===s);if(g.length)a[s]=1;return a},{})).length} etapas</span>`;
+    tbody.innerHTML = html || '<tr><td colspan="16" style="text-align:center;padding:40px;color:var(--muted)">Sin deals para este filtro.</td></tr>';
+    pag.innerHTML = `<span style="color:var(--muted);font-size:12px">${tot} deals · ${stageCount} etapas · Clic en etapa para colapsar/expandir</span>`;
   } else {
     // ── Flat paginated mode ─────────────────────────────────────────────────
     const totPages = Math.ceil(tot/PIPE_PAGE)||1;
@@ -2073,7 +2255,7 @@ function pipeRender() {
     const page=filt.slice(start,start+PIPE_PAGE);
     tbody.innerHTML = page.length
       ? page.map(r=>buildRow(r)).join('')
-      : '<tr><td colspan="14" style="text-align:center;padding:40px;color:var(--muted)">Sin deals para este filtro.</td></tr>';
+      : '<tr><td colspan="16" style="text-align:center;padding:40px;color:var(--muted)">Sin deals para este filtro.</td></tr>';
     const totP = Math.ceil(tot/PIPE_PAGE)||1;
     let btns='';
     for (let i=1;i<=totP;i++) {
@@ -2148,7 +2330,8 @@ function pipeOpenEdit(id) {
   setV('pf-demo-f',      r.demo_date);
   setV('pf-proposal-f',  r.proposal_date);
   setV('pf-touch-f',     r.next_touchpoint);
-  setV('pf-close-f',     r.cierre_date);
+  setV('pf-close-f',     r.cierre_date ? r.cierre_date.slice(0,7) : '');
+  setV('pf-prob-f',      r.probability ?? STAGE_PROB[r.status] ?? 50);
   setV('pf-product-f',   r.product_interest);
   setV('pf-feedback-f',  r.feedback);
   openModal('modalPipeDeal');
@@ -2156,10 +2339,17 @@ function pipeOpenEdit(id) {
 
 // ── Group-by-stage toggle ───────────────────────────────────────────────────
 let _pipeGroupBy = false;
+let _collapsedGroups = new Set();
 function pipeToggleGroup() {
   _pipeGroupBy = !_pipeGroupBy;
+  _collapsedGroups.clear();
   const btn = document.getElementById('groupByBtn');
   if (btn) { btn.style.background = _pipeGroupBy ? '#3b6ef8' : ''; btn.style.color = _pipeGroupBy ? '#fff' : ''; }
+  pipeRender();
+}
+function pipeToggleStageCollapse(stage) {
+  if (_collapsedGroups.has(stage)) _collapsedGroups.delete(stage);
+  else _collapsedGroups.add(stage);
   pipeRender();
 }
 
@@ -2209,7 +2399,7 @@ function pipeNewDeal() {
   if (css) { css.style.display='block'; }
   document.getElementById('crm-deal-search').value='';
   document.getElementById('crm-deal-results').style.display='none';
-  ['pf-name','pf-mrr-f','pf-acv-f','pf-impl-f','pf-piloto-f','pf-ingreso-f','pf-discovery-f','pf-demo-f','pf-proposal-f','pf-touch-f','pf-close-f','pf-product-f','pf-feedback-f'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  ['pf-name','pf-mrr-f','pf-acv-f','pf-impl-f','pf-piloto-f','pf-ingreso-f','pf-discovery-f','pf-demo-f','pf-proposal-f','pf-touch-f','pf-close-f','pf-product-f','pf-feedback-f','pf-prob-f'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
   ['pf-owner-f','pf-status-f','pf-canal-f','pf-size-f'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
   document.getElementById('pf-status-f').value='Weekly Hunt';
   document.getElementById('pf-ingreso-f').value=new Date().toISOString().slice(0,10);
@@ -2236,7 +2426,8 @@ async function pipeSave() {
     demo_date:    document.getElementById('pf-demo-f').value||null,
     proposal_date:document.getElementById('pf-proposal-f').value||null,
     next_touchpoint:document.getElementById('pf-touch-f').value||null,
-    cierre_date:  document.getElementById('pf-close-f').value||null,
+    cierre_date:  (document.getElementById('pf-close-f').value ? document.getElementById('pf-close-f').value+'-01' : null),
+    probability:  parseInt(document.getElementById('pf-prob-f')?.value)||null,
     size:         document.getElementById('pf-size-f').value||null,
     product_interest:document.getElementById('pf-product-f').value||null,
     feedback:     document.getElementById('pf-feedback-f').value||null,
@@ -2841,8 +3032,13 @@ function parseSupabaseData(data) {
   const ACTIVE = new Set(['Weekly Hunt','Active Lead','Active lead','Calificado','Discovery','Demo','Propuesta','Close 2 close','Piloto']);
   const stageCounts = {}, stageACV = {};
   let totalACV=0, totalMRR=0, cerradoMRR=0, cerradoACV=0, cerradoImpl=0;
+  let clienteMRR=0, clienteACV=0, clienteCount=0;
   let activeCount=0;
-  const cerradoAccounts=[];
+  const cerradoAccounts=[], clienteAccounts=[];
+  // projected MRR by month: { 'YYYY-MM': { mrr, deals:[] } }
+  const projectedByMonth = {};
+  const today = new Date().toISOString().slice(0,7); // YYYY-MM
+
   for (const r of data) {
     const status = r.status||'';
     if (!status) continue;
@@ -2851,25 +3047,36 @@ function parseSupabaseData(data) {
     const mrr  = parseFloat(r.mrr)||0;
     stageACV[status] = (stageACV[status]||0)+acv;
     if (ACTIVE.has(status)) { activeCount++; totalACV+=acv; totalMRR+=mrr; }
+
     if (status==='Cerrado') {
       const impl = parseFloat(r.implementaciones)||0;
       cerradoMRR+=mrr; cerradoACV+=acv; cerradoImpl+=impl;
-      cerradoAccounts.push({
-        name:  r.opportunity_name||'(sin nombre)',
-        mrr, acv, impl,
-        owner: r.owner||'—',
-        nextT: r.next_touchpoint||null,
-        dias:  r.ingreso_lead ? daysBetween(r.ingreso_lead) : null,
-        cierre: r.cierre_date||null,
-      });
+      cerradoAccounts.push({ name:r.opportunity_name||'(sin nombre)', mrr, acv, impl, owner:r.owner||'—', nextT:r.next_touchpoint||null, dias:r.ingreso_lead?daysBetween(r.ingreso_lead):null, cierre:r.cierre_date||null });
+    }
+    if (status==='Cliente') {
+      clienteCount++; clienteMRR+=mrr; clienteACV+=acv;
+      clienteAccounts.push({ name:r.opportunity_name||'(sin nombre)', mrr, acv, owner:r.owner||'—' });
+    }
+    // Projected MRR: deals with a future cierre_date and mrr
+    if (mrr > 0 && r.cierre_date) {
+      const cMonth = r.cierre_date.slice(0,7);
+      if (cMonth >= today) {
+        const prob = (r.probability ?? STAGE_PROB[status] ?? 50) / 100;
+        if (!projectedByMonth[cMonth]) projectedByMonth[cMonth] = { projMRR:0, deals:[] };
+        projectedByMonth[cMonth].projMRR += mrr * prob;
+        projectedByMonth[cMonth].deals.push({ name:r.opportunity_name, mrr, prob:Math.round(prob*100), owner:r.owner, status });
+      }
     }
   }
+
   return {
     total: data.length, activeCount,
     totalACV, totalMRR,
     cerradoMRR, cerradoACV, cerradoImpl,
+    clienteMRR, clienteACV, clienteCount, clienteAccounts,
     stageCounts, stageACV,
     cerradoAccounts: cerradoAccounts.sort((a,b)=>b.mrr-a.mrr),
+    projectedByMonth,
   };
 }
 
@@ -2934,15 +3141,17 @@ function renderDashboard(d) {
 
   // ── Funnel rows
   const STAGE_ORDER = [
-    { key:'Weekly Hunt',    label:'🌐 Weekly Hunt',   color:'#3b6ef8', textColor:'#64748b' },
-    { key:'Active lead',    label:'🎯 Active lead',    color:'#2563eb', textColor:'var(--text)' },
     { key:'Calificado',     label:'✅ Calificado',     color:'linear-gradient(90deg,#3b6ef8,#6c4ef7)', textColor:'#3b6ef8' },
+    { key:'Weekly Hunt',    label:'🌐 Weekly Hunt',   color:'#64748b', textColor:'#64748b' },
+    { key:'Active lead',    label:'🎯 Active lead',    color:'#2563eb', textColor:'var(--text)' },
+    { key:'Active Lead',    label:'🎯 Active Lead',    color:'#2563eb', textColor:'var(--text)' },
     { key:'Discovery',      label:'🔭 Discovery',      color:'#7c3aed', textColor:'#7c3aed' },
     { key:'Demo',           label:'💻 Demo',           color:'#5b21b6', textColor:'#6d28d9' },
     { key:'Propuesta',      label:'💰 Propuesta',      color:'#c2410c', textColor:'#ea580c' },
     { key:'Close 2 close',  label:'🤝 Close 2 close', color:'#15803d', textColor:'#15803d' },
     { key:'Cerrado',        label:'🔓 Cerrado',        color:'#1d4ed8', textColor:'#1d4ed8' },
     { key:'Piloto',         label:'🚀 Piloto',         color:'#4338ca', textColor:'#6d28d9' },
+    { key:'Cliente',        label:'⭐ Cliente',         color:'#d97706', textColor:'#d97706' },
   ];
   const maxCount = Math.max(...STAGE_ORDER.map(s => d.stageCounts[s.key] || 0), 1);
   const fr = document.getElementById('funnel-rows');
@@ -3027,6 +3236,41 @@ function renderDashboard(d) {
     }
   }
 
+  // ── Cliente KPIs
+  const ticket = d.clienteCount > 0 ? Math.round(d.clienteMRR / d.clienteCount) : 0;
+  setEl('kpi-cliente-mrr',        d.clienteMRR ? '$' + d.clienteMRR.toLocaleString() + '/mo' : '—');
+  setEl('kpi-cliente-mrr-sub',    d.clienteCount + ' cliente' + (d.clienteCount !== 1 ? 's' : '') + ' activo' + (d.clienteCount !== 1 ? 's' : ''));
+  setEl('kpi-cliente-mrr-delta',  d.clienteMRR ? '✅ Ingresos recurrentes confirmados' : 'Sin clientes activos aún');
+  setEl('kpi-cliente-acv',        d.clienteACV ? '$' + d.clienteACV.toLocaleString() : '—');
+  setEl('kpi-cliente-acv-sub',    'Valor anual combinado');
+  setEl('kpi-cliente-ticket',     ticket ? '$' + ticket.toLocaleString() + '/mo' : '—');
+  setEl('kpi-cliente-ticket-sub', 'MRR / cliente');
+  setEl('kpi-cliente-count',      d.clienteCount || '0');
+  setEl('kpi-cliente-count-sub',  'cuentas en etapa Cliente');
+
+  // ── Ventas Proyectadas por Mes
+  const pb = document.getElementById('proj-bars');
+  if (pb && d.projectedByMonth) {
+    const months = Object.keys(d.projectedByMonth).sort();
+    if (months.length === 0) {
+      pb.innerHTML = '<span style="color:var(--muted);font-size:13px;padding:20px 0">Sin deals con cierre estimado y MRR registrado</span>';
+    } else {
+      const maxProj = Math.max(...months.map(m => d.projectedByMonth[m].projMRR), 1);
+      // Store deals in a global map indexed by month to avoid HTML escaping issues
+      window._projDealsCache = d.projectedByMonth;
+      pb.innerHTML = months.map(m => {
+        const { projMRR, deals } = d.projectedByMonth[m];
+        const h = Math.max(Math.round(projMRR / maxProj * 140), 6);
+        return `<div class="proj-col" onclick="showProjDeals('${m}')">
+          <div class="proj-amount">$${Math.round(projMRR).toLocaleString()}</div>
+          <div class="proj-bar" style="height:${h}px"></div>
+          <div class="proj-label">${fmtMonth(m)}</div>
+          <div class="proj-count">${deals.length} deal${deals.length !== 1 ? 's' : ''}</div>
+        </div>`;
+      }).join('');
+    }
+  }
+
   // ── Topbar + footer
   const now = new Date();
   const timeStr = now.toLocaleTimeString('es-MX', {hour:'2-digit',minute:'2-digit'});
@@ -3035,6 +3279,34 @@ function renderDashboard(d) {
   if (sub) sub.textContent = dateStr + ' · Sincronizado con Supabase ' + timeStr;
   const ft = document.getElementById('footer-text');
   if (ft) ft.textContent = 'Birdie Growth Dashboard · Última sincronización: ' + dateStr + ' ' + timeStr + ' · Fuente: Supabase Pipeline (' + d.total + ' registros)';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+function showProjDeals(month) {
+  const cache = window._projDealsCache || {};
+  const deals = (cache[month] && cache[month].deals) ? cache[month].deals : [];
+  const titleEl = document.getElementById('proj-deals-title');
+  const listEl  = document.getElementById('proj-deals-list');
+  const panel   = document.getElementById('proj-deals-panel');
+  if (!titleEl || !listEl || !panel) return;
+  titleEl.textContent = '📅 ' + fmtMonth(month) + ' — ' + deals.length + ' deal' + (deals.length !== 1 ? 's' : '');
+  listEl.innerHTML = deals
+    .slice().sort((a, b) => b.mrr - a.mrr)
+    .map(d => `
+      <div class="proj-deal-row">
+        <div>
+          <strong style="font-size:13px">${d.name}</strong>
+          <span style="margin-left:8px;font-size:11px;color:var(--muted)">${d.owner || ''}</span>
+        </div>
+        <div style="display:flex;gap:16px;align-items:center;flex-shrink:0">
+          <span style="font-size:11px;color:${STAGE_COLORS[d.status]||'#64748b'};font-weight:600">${d.status}</span>
+          <span style="font-size:11px;color:#d97706;font-weight:700">${d.prob}%</span>
+          <strong style="color:#16a34a;font-size:13px">$${Number(d.mrr).toLocaleString()}/mo</strong>
+        </div>
+      </div>`).join('');
+  panel.style.display = 'block';
+  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
