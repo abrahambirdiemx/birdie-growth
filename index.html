@@ -2066,7 +2066,8 @@ function showApp(user) {
   if (greet) greet.textContent = '👤 ' + user.name;
   pipeLoad();
   updateGoalsFromLogs();
-  startAutoSync(60000); // refresh silently every 60s
+  startAutoSync(60000);  // refresh silently every 60s
+  startLiveClock();      // update topbar date/time every minute
 }
 
 function doLogout() {
@@ -2081,6 +2082,22 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+// ── Live clock — updates topbar date/time every minute
+function startLiveClock() {
+  function tick() {
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('es-MX', {hour:'2-digit', minute:'2-digit'});
+    const dateStr = now.toLocaleDateString('es-MX', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+    const sub = document.getElementById('topbar-sub');
+    if (sub) {
+      const lastSync = window._lastSyncLabel || 'pendiente';
+      sub.textContent = dateStr + ' · ' + timeStr + ' · Sync: ' + lastSync;
+    }
+  }
+  tick(); // run immediately
+  setInterval(tick, 60000);
+}
+
 // ── Auto-sync background every 60 seconds (silent, no spinner)
 let _autoSyncTimer = null;
 function startAutoSync(intervalMs = 60000) {
@@ -2092,9 +2109,7 @@ function startAutoSync(intervalMs = 60000) {
       pipeRender();
       renderDashboard(parseSupabaseData(_pipeData));
       updateGoalsFromLogs();
-      const sub = document.getElementById('topbar-sub');
-      const now = new Date();
-      if (sub) sub.textContent = now.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long',year:'numeric'}) + ' · Auto-sync ' + now.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+      window._lastSyncLabel = new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}) + ' (auto)';
     } catch(e) { /* silent fail on auto-sync */ }
   }, intervalMs);
 }
@@ -2147,6 +2162,8 @@ async function pipeLoad() {
   try {
     const data = await sbFetch('GET','pipeline?order=created_at.desc&limit=2000');
     _pipeData = Array.isArray(data) ? data : [];
+    const _syncTime = new Date().toLocaleTimeString('es-MX', {hour:'2-digit', minute:'2-digit'});
+    window._lastSyncLabel = _syncTime;
     pipeRender();
     renderDashboard(parseSupabaseData(_pipeData));
     updateGoalsFromLogs();
@@ -3357,8 +3374,8 @@ function renderDashboard(d) {
   const now = new Date();
   const timeStr = now.toLocaleTimeString('es-MX', {hour:'2-digit',minute:'2-digit'});
   const dateStr = now.toLocaleDateString('es-MX', {weekday:'long',day:'numeric',month:'long',year:'numeric'});
-  const sub = document.getElementById('topbar-sub');
-  if (sub) sub.textContent = dateStr + ' · Sincronizado con Supabase ' + timeStr;
+  // topbar-sub is managed by startLiveClock() — updates every minute automatically
+  // (keeping dateStr/timeStr for footer)
   const ft = document.getElementById('footer-text');
   if (ft) ft.textContent = 'Birdie Growth Dashboard · Última sincronización: ' + dateStr + ' ' + timeStr + ' · Fuente: Supabase Pipeline (' + d.total + ' registros)';
 }
