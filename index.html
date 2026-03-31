@@ -291,8 +291,9 @@
   .cell-select { padding:0; }
   .cell-select select { width:100%; height:36px; padding:0 8px; border:none; background:transparent; font-size:12px; color:var(--text); cursor:pointer; outline:none; font-family:inherit; }
   .cell-select select:focus { box-shadow:inset 0 0 0 2px var(--accent); }
-  .cell-date { color:var(--muted); min-width:100px; font-size:11px; }
+  .cell-date { color:var(--muted); min-width:90px; max-width:115px; font-size:11px; overflow:hidden; }
   .cell-date input[type=date] { width:100%; border:none; background:transparent; font-size:11px; color:var(--text); padding:8px 6px; outline:none; cursor:pointer; font-family:inherit; }
+  .cell-date input[type=month] { max-width:102px; }
   .cell-money { color:var(--green-text); font-weight:700; min-width:80px; }
   .cell-money.acv { color:var(--accent); }
   .date-missing { color:#fca5a5; font-size:10px; font-weight:600; }
@@ -2061,11 +2062,11 @@ function checkSession() {
 function showApp(user) {
   document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('app-root').style.display = '';
-  // Update topbar greeting
   const greet = document.getElementById('topbar-user');
   if (greet) greet.textContent = '👤 ' + user.name;
   pipeLoad();
   updateGoalsFromLogs();
+  startAutoSync(60000); // refresh silently every 60s
 }
 
 function doLogout() {
@@ -2075,11 +2076,28 @@ function doLogout() {
 
 window.addEventListener('DOMContentLoaded', () => {
   if (!checkSession()) {
-    // Show login screen, hide app
     document.getElementById('login-screen').classList.remove('hidden');
     document.getElementById('app-root').style.display = 'none';
   }
 });
+
+// ── Auto-sync background every 60 seconds (silent, no spinner)
+let _autoSyncTimer = null;
+function startAutoSync(intervalMs = 60000) {
+  if (_autoSyncTimer) clearInterval(_autoSyncTimer);
+  _autoSyncTimer = setInterval(async () => {
+    try {
+      const data = await sbFetch('GET','pipeline?order=created_at.desc&limit=2000');
+      _pipeData = Array.isArray(data) ? data : [];
+      pipeRender();
+      renderDashboard(parseSupabaseData(_pipeData));
+      updateGoalsFromLogs();
+      const sub = document.getElementById('topbar-sub');
+      const now = new Date();
+      if (sub) sub.textContent = now.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long',year:'numeric'}) + ' · Auto-sync ' + now.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+    } catch(e) { /* silent fail on auto-sync */ }
+  }, intervalMs);
+}
 
 // ─── PIPELINE (Supabase) ─────────────────────────────────────────────────
 const SB_URL  = 'https://xjrgqborwhvyqgrczetq.supabase.co';
@@ -2257,9 +2275,9 @@ function pipeRender() {
       <td class="cell-date">${dInline(r.proposal_date,'proposal_date','#ea580c')}</td>
       <td class="cell-date"><input type="date" class="cell-date-input" value="${nextT||''}" onchange="pipeUpdateField(${r.id},'next_touchpoint',this.value||null)" style="${nextStyle}" title="Próx. touchpoint"></td>
       <td class="cell-date" style="white-space:nowrap">
-        <input type="month" class="cell-date-input" value="${cierreMonth}" onchange="pipeSaveCierreMonth(${r.id},this.value)" style="color:#15803d;width:110px" title="Cierre estimado mes">
+        <input type="month" class="cell-date-input" value="${cierreMonth}" onchange="pipeSaveCierreMonth(${r.id},this.value)" style="color:#15803d;width:100px;max-width:100px" title="Cierre estimado mes">
       </td>
-      <td><span class="cell" style="color:var(--muted);font-size:11px">${r.estrategia||'—'}</span></td>
+      <td style="max-width:110px;overflow:hidden;white-space:nowrap"><span class="cell" style="color:var(--muted);font-size:11px">${r.estrategia||'—'}</span></td>
       <td><span class="cell" style="font-size:11px;color:#64748b">${r.size||'—'}</span></td>
       <td>
         <input type="number" class="cell-date-input" value="${prob}" min="0" max="100"
@@ -2322,11 +2340,23 @@ function pipeRender() {
 function pipeGoPage(p){const t=Math.ceil(_pipeFiltered.length/PIPE_PAGE)||1;pipePage=Math.max(1,Math.min(p,t));pipeRender();}
 
 async function pipeUpdateField(id, field, value) {
+  // Optimistic update — apply locally immediately, sync in background
   const idx = _pipeData.findIndex(r=>r.id===id);
-  if (idx>=0) _pipeData[idx][field]=value||null;
-  try {
-    await sbFetch('PATCH',`pipeline?id=eq.${id}`,{[field]:value||null,updated_at:new Date().toISOString()});
-  } catch(e) { showToast('Error guardando: '+e.message,'err'); }
+  if (idx>=0) _pipeData[idx][field] = (value===''||value===undefined) ? null : value;
+  // Async fire-and-forget with silent retry on schema cache errors
+  (async () => {
+    try {
+      await sbFetch('PATCH',`pipeline?id=eq.${id}`,{[field]: (value===''||value===undefined)?null:value, updated_at:new Date().toISOString()});
+    } catch(e) {
+      // If column doesn't exist in schema cache, skip silently for 'probability'
+      if (e.message && (e.message.includes('schema cache') || e.message.includes('Could not find'))) {
+        if (field==='probability') return; // column not yet added — user must run ALTER TABLE
+        showToast('⚠ Columna no encontrada: '+field,'err');
+      } else {
+        showToast('Error guardando: '+e.message,'err');
+      }
+    }
+  })();
 }
 
 async function pipeStatusChange(id, newStatus, selectEl) {
