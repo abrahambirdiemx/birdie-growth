@@ -750,6 +750,8 @@
     <button class="btn btn-primary" onclick="openModal('modalUpdates')">🔄 Actualizaciones <span class="badge-count" style="background:rgba(255,255,255,0.25)">9</span></button>
     <button class="btn btn-green" id="syncBtn" onclick="pipeLoad()" title="Recargar datos de Supabase">🔄 Sync</button>
     <div class="health-pill" id="health-pill">⚠ Health: 38/100</div>
+    <span id="topbar-user" style="font-size:12px;color:var(--muted);margin-left:4px"></span>
+    <button class="btn btn-outline" onclick="doLogout()" title="Cerrar sesión" style="font-size:11px;padding:4px 10px">🚪 Salir</button>
   </div>
 </div>
 
@@ -2024,9 +2026,59 @@ function loadInits() {
 }
 loadInits();
 // Auto-load pipeline on page start + init goals from log
-window.addEventListener('DOMContentLoaded', () => {
+// ─── LOGIN ──────────────────────────────────────────────────────────────────
+const USERS = {
+  'abraham@birdie.mx': { pass: 'birdie24', name: 'Abraham Lopez',  owner: 'Abraham Lopez'  },
+  'hector@birdie.mx':  { pass: 'birdie25', name: 'Héctor Nícola',  owner: 'Héctor Nícola'  },
+  'daniel@birdie.mx':  { pass: 'birdie26', name: 'Daniel Luna',    owner: 'Daniel Luna'    },
+};
+const SESSION_KEY = 'birdie_session_v1';
+
+function doLogin() {
+  const email    = (document.getElementById('login-email')?.value || '').trim().toLowerCase();
+  const password = document.getElementById('login-password')?.value || '';
+  const errEl    = document.getElementById('login-error');
+  const btn      = document.getElementById('login-btn');
+  const user     = USERS[email];
+  if (!user || user.pass !== password) {
+    if (errEl) errEl.textContent = 'Email o contraseña incorrectos';
+    document.getElementById('login-password').value = '';
+    return;
+  }
+  // Save session
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify({ email, name: user.name, owner: user.owner }));
+  showApp(user);
+}
+
+function checkSession() {
+  try {
+    const s = JSON.parse(sessionStorage.getItem(SESSION_KEY) || 'null');
+    if (s && USERS[s.email]) { showApp(USERS[s.email]); return true; }
+  } catch(e) {}
+  return false;
+}
+
+function showApp(user) {
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('app-root').style.display = '';
+  // Update topbar greeting
+  const greet = document.getElementById('topbar-user');
+  if (greet) greet.textContent = '👤 ' + user.name;
   pipeLoad();
   updateGoalsFromLogs();
+}
+
+function doLogout() {
+  sessionStorage.removeItem(SESSION_KEY);
+  location.reload();
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  if (!checkSession()) {
+    // Show login screen, hide app
+    document.getElementById('login-screen').classList.remove('hidden');
+    document.getElementById('app-root').style.display = 'none';
+  }
 });
 
 // ─── PIPELINE (Supabase) ─────────────────────────────────────────────────
