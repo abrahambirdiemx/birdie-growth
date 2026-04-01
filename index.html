@@ -1587,7 +1587,7 @@
 
   <!-- Toolbar -->
   <div class="pipe-header">
-    <input type="text" class="pipe-search" id="pipe-search" placeholder="🔍  Buscar empresa u oportunidad…" oninput="pipeRender()">
+    <input type="text" class="pipe-search" id="pipe-search" placeholder="🔍  Buscar empresa u oportunidad…" oninput="pipeRenderDebounced()">
     <select class="pipe-sel" id="pf-owner" onchange="pipeRender()">
       <option value="">Todos los vendedores</option>
       <option>Abraham Lopez</option>
@@ -1750,7 +1750,7 @@
 
   <!-- Toolbar -->
   <div class="crm-toolbar">
-    <input type="text" class="crm-search" id="crm-search" placeholder="🔍  Buscar empresa, contacto, email…" oninput="crmRender()">
+    <input type="text" class="crm-search" id="crm-search" placeholder="🔍  Buscar empresa, contacto, email…" oninput="crmRenderDebounced()">
     <select class="crm-select" id="crm-f-owner" onchange="crmRender()">
       <option value="">Todos los responsables</option>
       <option>Abraham Lopez</option>
@@ -2066,7 +2066,8 @@ function showApp(user) {
   const greet = document.getElementById('topbar-user');
   if (greet) greet.textContent = '👤 ' + user.name;
   pipeLoad();
-  updateGoalsFromLogs();
+  crmLoad();
+  kpiLogsLoad();
   startAutoSync(30000);  // refresh silently every 30s
 }
 
@@ -2112,6 +2113,12 @@ function startAutoSync(intervalMs = 60000) {
       _pipeData = Array.isArray(data) ? data : [];
       pipeRender();
       renderDashboard(parseSupabaseData(_pipeData));
+      // Silent CRM refresh
+      const crmData = await sbFetch('GET', 'crm?order=created_at.desc&limit=5000');
+      if (Array.isArray(crmData)) { _crmData = crmData; }
+      // Silent KPI logs refresh
+      const kpiData = await sbFetch('GET', 'kpi_logs?order=created_at.desc&limit=2000');
+      if (Array.isArray(kpiData)) { _kpiLogs = kpiData; }
       updateGoalsFromLogs();
       window._lastSyncLabel = new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}) + ' (auto)';
     } catch(e) { /* silent fail on auto-sync */ }
@@ -2585,6 +2592,7 @@ const CRM_PAGE_SIZE = 50;
 let crmPage    = 1;
 let crmSortKey = 'n';
 let crmSortAsc = true;
+let _crmData     = [];  // shared CRM state (loaded from Supabase)
 let _crmFiltered = [];
 
 const ST_BADGE = {
@@ -2599,19 +2607,46 @@ const ST_BADGE = {
   'Piloto':      'st-badge st-pilot',
 };
 
-function crmGet() {
+// ── CRM: returns in-memory cache (loaded from Supabase via crmLoad)
+function crmGet() { return _crmData; }
+
+// crmSet: updates local cache only (individual saves go via sbFetch)
+function crmSet(data) { _crmData = data; }
+
+// ── crmLoad: fetch all CRM records from Supabase, seed on first run
+async function crmLoad() {
   try {
-    const stored = localStorage.getItem(CRM_KEY);
-    if (stored) return JSON.parse(stored);
-    // First load: seed from CSV data
-    const seed = (typeof CRM_SEED !== 'undefined') ? CRM_SEED : [];
-    localStorage.setItem(CRM_KEY, JSON.stringify(seed));
-    return seed;
-  } catch(e) { return []; }
+    const data = await sbFetch('GET', 'crm?order=created_at.desc&limit=5000');
+    _crmData = Array.isArray(data) ? data : [];
+    // First run: if empty, batch-import CRM_SEED
+    if (_crmData.length === 0 && typeof CRM_SEED !== 'undefined' && CRM_SEED.length > 0) {
+      showToast('⏳ Importando CRM a Supabase (' + CRM_SEED.length + ' cuentas)…', 'ok');
+      await crmSeedImport();
+      const fresh = await sbFetch('GET', 'crm?order=created_at.desc&limit=5000');
+      _crmData = Array.isArray(fresh) ? fresh : [];
+      showToast('✅ CRM importado — ' + _crmData.length + ' cuentas', 'ok');
+    }
+    crmRender();
+  } catch(e) {
+    showToast('⚠ CRM offline: ' + e.message + ' — usando datos locales', 'err');
+    try {
+      const stored = localStorage.getItem(CRM_KEY);
+      _crmData = stored ? JSON.parse(stored) : (typeof CRM_SEED !== 'undefined' ? CRM_SEED : []);
+    } catch { _crmData = typeof CRM_SEED !== 'undefined' ? CRM_SEED : []; }
+    crmRender();
+  }
 }
 
-function crmSet(data) {
-  localStorage.setItem(CRM_KEY, JSON.stringify(data));
+// ── crmSeedImport: batch-upload CRM_SEED to Supabase (200 records/batch)
+async function crmSeedImport() {
+  const KEYS = ['id','n','r','st','ind','e','sz','c','p','em','tel','mrr','acv','notes'];
+  const BATCH = 200;
+  for (let i = 0; i < CRM_SEED.length; i += BATCH) {
+    const batch = CRM_SEED.slice(i, i + BATCH).map(row => {
+      const obj = {}; KEYS.forEach(k => obj[k] = row[k] ?? null); return obj;
+    });
+    await sbFetch('POST', 'crm', batch);
+  }
 }
 
 function crmNextId() {
@@ -2766,7 +2801,7 @@ function crmCloseModal() {
   document.getElementById('cf-status').value = 'Lead';
 }
 
-function crmSave() {
+async function crmSave() {
   const name  = document.getElementById('cf-name').value.trim();
   const owner = document.getElementById('cf-owner').value;
   if (!name)  { showToast('⚠ Ingresa el nombre de la empresa','err'); return; }
@@ -2776,52 +2811,54 @@ function crmSave() {
     id:    editId || crmNextId(),
     n:     name,
     r:     owner,
-    st:    document.getElementById('cf-status').value   || 'Lead',
-    ind:   document.getElementById('cf-industry').value || '',
-    e:     document.getElementById('cf-canal').value    || '',
-    sz:    document.getElementById('cf-size').value     || '',
-    c:     document.getElementById('cf-contact').value  || '',
-    p:     document.getElementById('cf-puesto').value   || '',
-    em:    document.getElementById('cf-email').value    || '',
-    tel:   document.getElementById('cf-phone').value    || '',
-    mrr:   document.getElementById('cf-mrr').value      ? '$'+document.getElementById('cf-mrr').value : '',
-    acv:   document.getElementById('cf-acv').value      ? '$'+document.getElementById('cf-acv').value : '',
-    notes: document.getElementById('cf-notes').value    || '',
+    st:    document.getElementById('cf-status').value    || 'Lead',
+    ind:   document.getElementById('cf-industry').value || null,
+    e:     document.getElementById('cf-canal').value     || null,
+    sz:    document.getElementById('cf-size').value      || null,
+    c:     document.getElementById('cf-contact').value   || null,
+    p:     document.getElementById('cf-puesto').value    || null,
+    em:    document.getElementById('cf-email').value     || null,
+    tel:   document.getElementById('cf-phone').value     || null,
+    mrr:   document.getElementById('cf-mrr').value  ? '$'+document.getElementById('cf-mrr').value  : null,
+    acv:   document.getElementById('cf-acv').value  ? '$'+document.getElementById('cf-acv').value  : null,
+    notes: document.getElementById('cf-notes').value     || null,
   };
-  // Remove empty fields
-  Object.keys(rec).forEach(k => { if (rec[k] === '') delete rec[k]; });
-  rec.id = editId || crmNextId();
-
-  const data = crmGet();
-  if (editId) {
-    const idx = data.findIndex(r => r.id === editId);
-    if (idx >= 0) data[idx] = rec; else data.push(rec);
-  } else {
-    data.unshift(rec);
-  }
-  crmSet(data);
-  crmCloseModal();
-  crmRender();
-  showToast((editId ? '✅ Cuenta actualizada — ' : '✅ Cuenta registrada — ') + name, 'ok');
+  try {
+    if (editId) {
+      await sbFetch('PATCH', `crm?id=eq.${editId}`, rec);
+      const idx = _crmData.findIndex(r => r.id === editId);
+      if (idx >= 0) _crmData[idx] = rec; else _crmData.push(rec);
+    } else {
+      await sbFetch('POST', 'crm', [rec]);
+      _crmData.unshift(rec);
+    }
+    crmCloseModal();
+    crmRender();
+    showToast((editId ? '✅ Cuenta actualizada — ' : '✅ Cuenta registrada — ') + name, 'ok');
+  } catch(e) { showToast('Error guardando CRM: ' + e.message, 'err'); }
 }
 
-function crmDeleteId(id) {
+async function crmDeleteId(id) {
   if (!confirm('¿Eliminar esta cuenta del CRM?')) return;
-  const data = crmGet().filter(r => r.id !== id);
-  crmSet(data);
-  crmRender();
-  showToast('Cuenta eliminada', '');
+  try {
+    await sbFetch('DELETE', `crm?id=eq.${id}`);
+    _crmData = _crmData.filter(r => r.id !== id);
+    crmRender();
+    showToast('Cuenta eliminada', '');
+  } catch(e) { showToast('Error eliminando: ' + e.message, 'err'); }
 }
 
-function crmDeleteCurrent() {
+async function crmDeleteCurrent() {
   const id = parseInt(document.getElementById('crm-edit-id').value);
   if (!id) return;
   if (!confirm('¿Eliminar esta cuenta del CRM?')) return;
-  const data = crmGet().filter(r => r.id !== id);
-  crmSet(data);
-  crmCloseModal();
-  crmRender();
-  showToast('Cuenta eliminada', '');
+  try {
+    await sbFetch('DELETE', `crm?id=eq.${id}`);
+    _crmData = _crmData.filter(r => r.id !== id);
+    crmCloseModal();
+    crmRender();
+    showToast('Cuenta eliminada', '');
+  } catch(e) { showToast('Error eliminando: ' + e.message, 'err'); }
 }
 
 function crmExportCSV() {
@@ -2838,10 +2875,9 @@ function crmExportCSV() {
   a.click(); URL.revokeObjectURL(url);
 }
 
-// Init CRM on tab open (lazy)
+// Init CRM on tab open (lazy) — now loads from Supabase
 document.addEventListener('DOMContentLoaded', () => {
-  // Pre-load seed into localStorage if not already done
-  crmGet();
+  // crmLoad() is called from showApp() after login
 });
 
 // ─── KPI TAB ──────────────────────────────────────────────────────────────
@@ -2887,7 +2923,7 @@ function clearLogForm() {
   );
 }
 
-function submitLogEntry() {
+async function submitLogEntry() {
   const seller  = document.getElementById('log-seller').value;
   const date    = document.getElementById('log-date').value;
   const company = document.getElementById('log-company').value.trim();
@@ -2907,24 +2943,62 @@ function submitLogEntry() {
     impl:    Number(document.getElementById('log-impl').value) || 0,
     notes:   document.getElementById('log-notes').value.trim(),
   };
-  const logs = getKPILogs();
-  logs.unshift(entry);
-  localStorage.setItem('kpi_log', JSON.stringify(logs));
-  showToast('✅ Actividad registrada — ' + company, 'ok');
-  clearLogForm();
-  renderLogTable();
-  renderKPITab();
+  try {
+    await sbFetch('POST', 'kpi_logs', [entry]);
+    _kpiLogs.unshift(entry);
+    showToast('✅ Actividad registrada — ' + company, 'ok');
+    clearLogForm();
+    renderLogTable();
+    renderKPITab();
+    updateGoalsFromLogs();
+  } catch(e) { showToast('Error guardando actividad: ' + e.message, 'err'); }
+}
+
+let _kpiLogs = [];  // KPI log cache (loaded from Supabase)
+
+// ── kpiLogsLoad: fetch logs from Supabase, migrate localStorage on first run
+async function kpiLogsLoad() {
+  try {
+    const data = await sbFetch('GET', 'kpi_logs?order=created_at.desc&limit=2000');
+    _kpiLogs = Array.isArray(data) ? data : [];
+    // One-time migration: move localStorage logs to Supabase
+    if (_kpiLogs.length === 0) {
+      const stored = localStorage.getItem('kpi_log');
+      if (stored) {
+        const localLogs = JSON.parse(stored);
+        if (localLogs.length > 0) {
+          await sbFetch('POST', 'kpi_logs', localLogs);
+          _kpiLogs = localLogs;
+          localStorage.removeItem('kpi_log');
+          showToast('✅ ' + localLogs.length + ' actividades migradas a Supabase', 'ok');
+        }
+      }
+    }
+    renderLogTable();
+    renderKPITab();
+    updateGoalsFromLogs();
+  } catch(e) {
+    // Fallback to localStorage
+    try { _kpiLogs = JSON.parse(localStorage.getItem('kpi_log') || '[]'); } catch { _kpiLogs = []; }
+    renderLogTable(); renderKPITab(); updateGoalsFromLogs();
+  }
 }
 
 function getKPILogs() {
-  try { return JSON.parse(localStorage.getItem('kpi_log') || '[]'); } catch { return []; }
+  return _kpiLogs;
 }
 
-function deleteLogEntry(id) {
-  const logs = getKPILogs().filter(e => e.id !== id);
-  localStorage.setItem('kpi_log', JSON.stringify(logs));
+async function deleteLogEntry(id) {
+  try {
+    await sbFetch('DELETE', `kpi_logs?id=eq.${id}`);
+    _kpiLogs = _kpiLogs.filter(e => e.id !== id);
+  } catch(e) {
+    // Fallback: remove locally
+    _kpiLogs = _kpiLogs.filter(e => e.id !== id);
+  }
   renderLogTable();
   renderKPITab();
+  updateGoalsFromLogs();
 }
 
 const ACT_CONFIG = {
@@ -3120,6 +3194,13 @@ function exportKPILog() {
 }
 
 // ─── SUPABASE → DASHBOARD BRIDGE ──────────────────────────────────────────
+// ── Debounce utility
+function debounce(fn, ms) {
+  let t; return function(...args) { clearTimeout(t); t = setTimeout(() => fn.apply(this, args), ms); };
+}
+const pipeRenderDebounced = debounce(() => pipeRender(), 280);
+const crmRenderDebounced  = debounce(() => crmRender(),  280);
+
 function showToast(msg, type='') {
   const old = document.querySelector('.sync-toast');
   if (old) old.remove();
