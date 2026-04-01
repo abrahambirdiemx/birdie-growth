@@ -49,7 +49,7 @@ Current team: abraham@birdie.mx, hector@birdie.mx, daniel@birdie.mx
 Passwords set by each user (not stored in code).
 
 ## Priority next steps (picked up in Claude Code)
-1. [ ] Remove CRM_SEED inline data (125KB) — now in Supabase, no longer needed
+1. [x] Remove CRM_SEED inline data (125KB) — now in Supabase, no longer needed
 2. [ ] Fix module circular imports (dashboard ↔ pipeline)
 3. [ ] Implement proper ES module imports (replace window.* globals)
 4. [ ] Add virtualized pipeline grid (react-virtual or custom) for 2000+ rows

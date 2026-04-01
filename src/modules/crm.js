@@ -22,39 +22,16 @@ function crmGet() { return _crmData; }
 // crmSet: updates local cache only (individual saves go via sbFetch)
 function crmSet(data) { _crmData = data; }
 
-// ── crmLoad: fetch all CRM records from Supabase, seed on first run
+// ── crmLoad: fetch all CRM records from Supabase
 async function crmLoad() {
   try {
     const data = await sbFetch('GET', 'crm?select=id,n,r,st,ind,e,sz,c,p,em,tel,mrr,acv,notes,created_at&order=created_at.desc&limit=5000');
     _crmData = Array.isArray(data) ? data : [];
-    // First run: if empty, batch-import CRM_SEED
-    if (_crmData.length === 0 && typeof CRM_SEED !== 'undefined' && CRM_SEED.length > 0) {
-      showToast('⏳ Importando CRM a Supabase (' + CRM_SEED.length + ' cuentas)…', 'ok');
-      await crmSeedImport();
-      const fresh = await sbFetch('GET', 'crm?select=id,n,r,st,ind,e,sz,c,p,em,tel,mrr,acv,notes,created_at&order=created_at.desc&limit=5000');
-      _crmData = Array.isArray(fresh) ? fresh : [];
-      showToast('✅ CRM importado — ' + _crmData.length + ' cuentas', 'ok');
-    }
     crmRender();
   } catch(e) {
-    showToast('⚠ CRM offline: ' + e.message + ' — usando datos locales', 'err');
-    try {
-      const stored = localStorage.getItem(CRM_KEY);
-      _crmData = stored ? JSON.parse(stored) : (typeof CRM_SEED !== 'undefined' ? CRM_SEED : []);
-    } catch { _crmData = typeof CRM_SEED !== 'undefined' ? CRM_SEED : []; }
+    showToast('⚠ CRM offline: ' + e.message, 'err');
+    _crmData = [];
     crmRender();
-  }
-}
-
-// ── crmSeedImport: batch-upload CRM_SEED to Supabase (200 records/batch)
-async function crmSeedImport() {
-  const KEYS = ['id','n','r','st','ind','e','sz','c','p','em','tel','mrr','acv','notes'];
-  const BATCH = 200;
-  for (let i = 0; i < CRM_SEED.length; i += BATCH) {
-    const batch = CRM_SEED.slice(i, i + BATCH).map(row => {
-      const obj = {}; KEYS.forEach(k => obj[k] = row[k] ?? null); return obj;
-    });
-    await sbFetch('POST', 'crm', batch);
   }
 }
 
