@@ -1,12 +1,8 @@
 import { sbFetch } from '../api/supabase.js';
-import { showToast } from './utils.js';
+import { showToast, fmtMonth, parsePipeMoney, debounce } from './utils.js';
 import { STAGE_COLORS, STAGE_ORDER_LIST, STAGE_PROB, ACTIVE_STAGES, DATE_TRIGGER, DATE_LABELS, MONTH_NAMES_ES } from './config.js';
-import { renderDashboard, parseSupabaseData } from './dashboard.js';
-import { fmtMonth, parsePipeMoney, debounce } from './utils.js';
 
 // ─── PIPELINE (Supabase) ─────────────────────────────────────────────────
-const SB_URL  = 'https://xjrgqborwhvyqgrczetq.supabase.co';
-const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdxYm9yd2h2eXFncmN6ZXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODc5ODksImV4cCI6MjA5MDQ2Mzk4OX0.DWOoshMXxmQk0deq2jEnOOAFpr_pyE9aWenvu_GPzLs';
 let _pipeData    = [];
 let _pipeFiltered= [];
 let pipePage     = 1;
@@ -18,34 +14,9 @@ const PIPE_PAGE  = 75;
 let _dateEventDealId  = null;
 let _dateEventField   = null;
 
-const STAGE_COLORS = {
-  'Calificado':   '#3b6ef8', 'Weekly Hunt':  '#64748b', 'Active Lead':  '#2563eb',
-  'Active lead':  '#2563eb', 'Discovery':    '#7c3aed', 'Demo':         '#5b21b6',
-  'Propuesta':    '#ea580c', 'Close 2 close':'#15803d', 'Cerrado':      '#1d4ed8',
-  'Piloto':       '#6d28d9', 'Cliente':      '#d97706',
-  'Cool Off':     '#94a3b8', 'Churn':        '#dc2626',
-};
-const STAGE_ORDER_LIST = ['Calificado','Weekly Hunt','Active Lead','Discovery','Demo','Propuesta','Close 2 close','Cerrado','Piloto','Cliente','Cool Off','Churn'];
-// Default close probability per stage
-const STAGE_PROB = {
-  'Calificado':10,'Weekly Hunt':5,'Active Lead':10,'Active lead':10,
-  'Discovery':20,'Demo':35,'Propuesta':50,'Close 2 close':70,
-  'Cerrado':100,'Piloto':80,'Cliente':100,'Cool Off':2,'Churn':0
-};
-const ACTIVE_STAGES = new Set(['Calificado','Discovery','Demo','Propuesta','Close 2 close','Piloto','Active Lead','Active lead','Cliente']);
-const DATE_TRIGGER  = { Discovery:'discovery_date', Demo:'demo_date', Propuesta:'proposal_date', Cerrado:'cierre_date', 'Close 2 close':'cierre_date' };
-const DATE_LABELS   = { discovery_date:'Discovery', demo_date:'Demo', proposal_date:'Envío de propuesta', cierre_date:'Cierre', ingreso_lead:'Ingreso lead', next_touchpoint:'Próx. touchpoint' };
-
-function sbHeaders() {
-  const token = window._sbAccessToken || SB_ANON;
-  return { 'Content-Type':'application/json', 'apikey':SB_ANON, 'Authorization':'Bearer '+token, 'Prefer':'return=representation' };
-}
-
-async function sbFetch(method, path, body) {
-  const r = await fetch(SB_URL+'/rest/v1/'+path, { method, headers:sbHeaders(), body: body ? JSON.stringify(body) : undefined });
-  if (!r.ok) { const e = await r.json().catch(()=>({})); throw new Error(e.message || r.status); }
-  return r.status === 204 ? null : r.json();
-}
+// Callback registered by main.js to update the dashboard after pipe changes
+let _onPipeChange = null;
+export function setPipeChangeCb(fn) { _onPipeChange = fn; }
 
 async function pipeLoad() {
   const btn = document.getElementById('syncBtn');
@@ -56,8 +27,8 @@ async function pipeLoad() {
     const _syncTime = new Date().toLocaleTimeString('es-MX', {hour:'2-digit', minute:'2-digit'});
     window._lastSyncLabel = _syncTime;
     pipeRender();
-    renderDashboard(parseSupabaseData(_pipeData));
-    updateGoalsFromLogs();
+    _onPipeChange?.(_pipeData);
+    window.updateGoalsFromLogs?.();
     updateSbStatus(true, _pipeData.length + ' deals');
     showToast('✅ Pipeline sincronizado — '+_pipeData.length+' deals','ok');
   } catch(e) {
@@ -79,16 +50,6 @@ function pipeSort(k) {
   if (pipeSortKey===k) pipeSortAsc=!pipeSortAsc;
   else { pipeSortKey=k; pipeSortAsc=true; }
   pipeRender();
-}
-
-function parsePipeMoney(v) { return parseFloat(String(v||'').replace(/[$,]/g,''))||0; }
-
-const MONTH_NAMES_ES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-function fmtMonth(ym) {
-  // ym = "YYYY-MM"
-  if (!ym || ym.length < 7) return '—';
-  const [y, m] = ym.split('-');
-  return MONTH_NAMES_ES[parseInt(m)-1] + ' ' + y;
 }
 
 async function pipeSaveCierreMonth(id, ym) {
@@ -434,7 +395,7 @@ async function pipeSave() {
     }
     closeModal('modalPipeDeal');
     pipeRender();
-    renderDashboard(parseSupabaseData(_pipeData));
+    _onPipeChange?.(_pipeData);
     showToast((editId?'✅ Deal actualizado — ':'✅ Deal creado — ')+name,'ok');
   } catch(e){ showToast('Error: '+e.message,'err'); }
 }
@@ -448,7 +409,7 @@ async function pipeDeleteCurrent() {
     _pipeData=_pipeData.filter(r=>r.id!==id);
     closeModal('modalPipeDeal');
     pipeRender();
-    renderDashboard(parseSupabaseData(_pipeData));
+    _onPipeChange?.(_pipeData);
     showToast('Deal eliminado','');
   } catch(e){ showToast('Error: '+e.message,'err'); }
 }

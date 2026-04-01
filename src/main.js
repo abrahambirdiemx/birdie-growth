@@ -1,12 +1,15 @@
 // ── Birdie Growth Dashboard — Entry Point
 import './styles/main.css';
 import { checkSession, doLogin, doLogout, refreshToken } from './modules/auth.js';
-import { pipeLoad, pipeRender }                          from './modules/pipeline.js';
+import { pipeLoad, pipeRender, setPipeChangeCb }         from './modules/pipeline.js';
 import { crmLoad, crmRender }                            from './modules/crm.js';
 import { kpiLogsLoad, renderKPITab, updateGoalsFromLogs } from './modules/kpi.js';
 import { renderDashboard, parseSupabaseData }            from './modules/dashboard.js';
 import { showToast, debounce }                           from './modules/utils.js';
 import { sbFetch }                                       from './api/supabase.js';
+
+// Wire dashboard refresh to pipeline data changes
+setPipeChangeCb(data => renderDashboard(parseSupabaseData(data)));
 
 // ── Expose globals needed by inline HTML onclick handlers
 // (In Vite these are module-scoped; we expose on window for compatibility

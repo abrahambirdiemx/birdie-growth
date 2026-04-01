@@ -1,14 +1,8 @@
 import { sbFetch } from '../api/supabase.js';
 import { showToast } from './utils.js';
-import { SELLERS } from './config.js';
-import { renderDashboard, parseSupabaseData } from './dashboard.js';
+import { SELLERS, STAGE_PROB } from './config.js';
 
 // ─── KPI TAB ──────────────────────────────────────────────────────────────
-const SELLERS = [
-  { name:'Abraham Lopez',  initial:'A', color:'linear-gradient(135deg,#3b6ef8,#6c4ef7)' },
-  { name:'Héctor Nícola',  initial:'H', color:'linear-gradient(135deg,#6c4ef7,#7c3aed)' },
-  { name:'Daniel Luna',    initial:'D', color:'linear-gradient(135deg,#16a34a,#15803d)' },
-];
 
 // KPI per-seller data now comes from _pipeData (Supabase)
 let _currentActType  = '';
@@ -314,24 +308,6 @@ function exportKPILog() {
   const a = document.createElement('a'); a.href=url;
   a.download = 'birdie-kpi-log-' + new Date().toISOString().slice(0,10) + '.csv';
   a.click(); URL.revokeObjectURL(url);
-}
-
-// ─── SUPABASE → DASHBOARD BRIDGE ──────────────────────────────────────────
-// ── Debounce utility
-function debounce(fn, ms) {
-  let t; return function(...args) { clearTimeout(t); t = setTimeout(() => fn.apply(this, args), ms); };
-}
-const pipeRenderDebounced = debounce(() => pipeRender(), 280);
-const crmRenderDebounced  = debounce(() => crmRender(),  280);
-
-function showToast(msg, type='') {
-  const old = document.querySelector('.sync-toast');
-  if (old) old.remove();
-  const el = document.createElement('div');
-  el.className = 'sync-toast ' + type;
-  el.innerHTML = msg;
-  document.body.appendChild(el);
-  setTimeout(() => el.remove(), 4000);
 }
 
 // Derive dashboard metrics directly from Supabase pipeline data

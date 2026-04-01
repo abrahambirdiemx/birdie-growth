@@ -1,5 +1,5 @@
 import { STAGE_COLORS, STAGE_ORDER_LIST, STAGE_PROB, ACTIVE_STAGES, MONTH_NAMES_ES } from './config.js';
-import { fmt$, fmtMonth, parsePipeMoney } from './utils.js';
+import { fmt$, fmtMonth, parsePipeMoney, daysBetween } from './utils.js';
 
 function parseSupabaseData(data) {
   const ACTIVE = new Set(['Weekly Hunt','Active Lead','Active lead','Calificado','Discovery','Demo','Propuesta','Close 2 close','Piloto']);
@@ -52,13 +52,6 @@ function parseSupabaseData(data) {
     projectedByMonth,
   };
 }
-
-function fmt$(n) {
-  if (n >= 1000000) return '$' + (n/1000000).toFixed(1) + 'M';
-  if (n >= 1000)    return '$' + Math.round(n/1000) + 'K';
-  return '$' + n.toLocaleString();
-}
-function fmtMRR(n) { return '$' + n.toLocaleString() + '/mo'; }
 
 function renderDashboard(d) {
   // ── KPIs — todos los 4 cards
