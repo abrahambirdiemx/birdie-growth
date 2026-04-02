@@ -2174,15 +2174,30 @@ function startAutoSync(intervalMs = 60000) {
   }, intervalMs);
 }
 
+// ─── GLOBAL STATE — declared first to avoid TDZ issues ──────────────────────
+// CRM
+var crmSortKey  = 'n';
+var crmSortAsc  = true;
+var crmPage     = 1;
+var _crmData    = [];
+var _crmFiltered= [];
+const CRM_PAGE_SIZE = 50;
+// KPI
+var _kpiLogs    = [];
+// Pipeline
+var _pipeData   = [];
+var _pipeFiltered=[];
+var pipePage    = 1;
+var pipeSortKey = 'ingreso_lead';
+var pipeSortAsc = false;
+const PIPE_PAGE = 75;
+var _pipeGroupBy= false;
+var _collapsedGroups = new Set();
+
 // ─── PIPELINE (Supabase) ─────────────────────────────────────────────────
 const SB_URL  = 'https://xjrgqborwhvyqgrczetq.supabase.co';
 const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdxYm9yd2h2eXFncmN6ZXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODc5ODksImV4cCI6MjA5MDQ2Mzk4OX0.DWOoshMXxmQk0deq2jEnOOAFpr_pyE9aWenvu_GPzLs';
-let _pipeData    = [];
-let _pipeFiltered= [];
-let pipePage     = 1;
-let pipeSortKey  = 'ingreso_lead';
-let pipeSortAsc  = false;
-const PIPE_PAGE  = 75;
+// Pipeline state declared at top of script (see GLOBAL STATE section above)
 
 // Pending date event state
 let _dateEventDealId  = null;
@@ -2498,8 +2513,7 @@ function pipeOpenEdit(id) {
 }
 
 // ── Group-by-stage toggle ───────────────────────────────────────────────────
-let _pipeGroupBy = false;
-let _collapsedGroups = new Set();
+// Group-by state declared at top of script (see GLOBAL STATE section above)
 function pipeToggleGroup() {
   _pipeGroupBy = !_pipeGroupBy;
   _collapsedGroups.clear();
@@ -2638,12 +2652,7 @@ function pipeExport() {
 
 // ─── CRM ─────────────────────────────────────────────────────────────────
 const CRM_KEY  = 'birdie_crm_v1';
-const CRM_PAGE_SIZE = 50;
-let crmPage    = 1;
-let crmSortKey = 'n';
-let crmSortAsc = true;
-let _crmData     = [];  // shared CRM state (loaded from Supabase)
-let _crmFiltered = [];
+// CRM state declared at top of script (see GLOBAL STATE section above)
 
 const ST_BADGE = {
   'Lead':        'st-badge st-lead',
@@ -2678,7 +2687,12 @@ async function crmLoad() {
     }
     crmRender();
   } catch(e) {
-    showToast('⚠ CRM offline: ' + e.message + ' — usando datos locales', 'err');
+    // Only show offline warning for network errors, not JS errors
+    if (e instanceof TypeError || e.message?.includes('fetch') || e.message?.includes('network') || e.message?.includes('Failed')) {
+      showToast('⚠ CRM sin conexión — usando datos locales', 'err');
+    } else {
+      console.error('crmLoad error:', e);
+    }
     try {
       const stored = localStorage.getItem(CRM_KEY);
       _crmData = stored ? JSON.parse(stored) : (typeof CRM_SEED !== 'undefined' ? CRM_SEED : []);
@@ -3004,7 +3018,7 @@ async function submitLogEntry() {
   } catch(e) { showToast('Error guardando actividad: ' + e.message, 'err'); }
 }
 
-let _kpiLogs = [];  // KPI log cache (loaded from Supabase)
+// _kpiLogs declared at top of script (see GLOBAL STATE section above)
 
 // ── kpiLogsLoad: fetch logs from Supabase, migrate localStorage on first run
 async function kpiLogsLoad() {
