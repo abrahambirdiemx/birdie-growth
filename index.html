@@ -662,7 +662,7 @@
       <button class="modal-close" onclick="closeModal('modalNew')">✕</button>
     </div>
     <div class="modal-body">
-      <div class="modal-section">Hoy · 20 Marzo (10 nuevos por Daniel Luna)</div>
+      <div class="modal-section" id="modal-updates-date">Hoy · <span id="modal-today-date">…</span></div>
       <div class="update-item">
         <div class="update-dot ud-new"></div>
         <div class="update-text"><div class="update-title">AXALTA · Discovery</div><div class="update-sub">Entró directo a Discovery — Daniel Luna</div></div>
@@ -728,14 +728,14 @@
 <!-- ── LIVE BANNER ──────────────────────────── -->
 <div class="live-banner">
   <div class="live-dot"></div>
-  <span style="font-weight:700">Actualizado: Viernes 20 Marzo 2026</span>
-  <span class="banner-win">🏆 +2 Cierres: Lamex + STULZ</span>
-  <span class="banner-change">MRR confirmado: $7,560 → $9,310/mo (+$1,750)</span>
-  <span class="banner-change">Total registros: 715 → 726</span>
-  <span class="banner-new">+11 nuevos hoy</span>
-  <span class="banner-change">Calificados: 80 → 87</span>
-  <span class="banner-change">Close 2 close: 7 → 5</span>
-  <span class="banner-change">Cerrado: 4 → 6</span>
+  <span style="font-weight:700" id="banner-date">Actualizando…</span>
+  <span class="banner-win" id="banner-cierres" style="display:none"></span>
+  <span class="banner-change" id="banner-mrr">MRR confirmado: —</span>
+  <span class="banner-change" id="banner-registros">Total registros: —</span>
+  <span class="banner-change" id="banner-activos">Activos: —</span>
+  <span class="banner-change" id="banner-calificados">Calificados: —</span>
+  <span class="banner-change" id="banner-close2close">Close 2 close: —</span>
+  <span class="banner-change" id="banner-cerrado">Cerrado: —</span>
 </div>
 
 <!-- ── TOP BAR ──────────────────────────────── -->
@@ -777,27 +777,27 @@
   <div class="grid-4">
     <div class="card card-sm">
       <div class="card-title">ACV Total Activo</div>
-      <div class="stat-value" style="color:#3b6ef8" id="kpi-acv">$603K</div>
-      <div class="stat-sub" id="kpi-acv-sub">43 deals con valor</div>
-      <div class="stat-delta delta-new" id="kpi-acv-delta">↑ Sincroniza para actualizar</div>
+      <div class="stat-value" style="color:#3b6ef8" id="kpi-acv">—</div>
+      <div class="stat-sub" id="kpi-acv-sub">Cargando…</div>
+      <div class="stat-delta delta-new" id="kpi-acv-delta">↑ Sincronizando…</div>
     </div>
     <div class="card card-sm">
       <div class="card-title">MRR Pipeline</div>
-      <div class="stat-value" style="color:#6c4ef7" id="kpi-mrr-pipeline">$50.2K</div>
+      <div class="stat-value" style="color:#6c4ef7" id="kpi-mrr-pipeline">—</div>
       <div class="stat-sub" id="kpi-mrr-pipeline-sub">/mes en deals activos</div>
-      <div class="stat-delta delta-ok" id="kpi-mrr-pipeline-delta">✓ Meta $7K superada (133%)</div>
+      <div class="stat-delta" id="kpi-mrr-pipeline-delta">Cargando…</div>
     </div>
     <div class="card card-sm">
       <div class="card-title">Deals Activos</div>
-      <div class="stat-value" style="color:#d97706" id="kpi-activos">366</div>
-      <div class="stat-sub" id="kpi-activos-sub">de 726 registros totales</div>
-      <div class="stat-delta delta-new" id="kpi-activos-delta">↑ Sincroniza para actualizar</div>
+      <div class="stat-value" style="color:#d97706" id="kpi-activos">—</div>
+      <div class="stat-sub" id="kpi-activos-sub">Cargando…</div>
+      <div class="stat-delta delta-new" id="kpi-activos-delta">↑ Sincronizando…</div>
     </div>
     <div class="card card-sm">
       <div class="card-title">MRR Confirmado</div>
-      <div class="stat-value" style="color:#16a34a" id="kpi-mrr-confirmed">$9,310</div>
-      <div class="stat-sub" id="kpi-mrr-confirmed-sub">/mes · 6 cuentas cerradas</div>
-      <div class="stat-delta delta-ok" id="kpi-mrr-confirmed-delta">↑ +$1,750 esta semana 🏆</div>
+      <div class="stat-value" style="color:#16a34a" id="kpi-mrr-confirmed">—</div>
+      <div class="stat-sub" id="kpi-mrr-confirmed-sub">Cargando…</div>
+      <div class="stat-delta" id="kpi-mrr-confirmed-delta">Cargando…</div>
     </div>
   </div>
 
@@ -847,7 +847,7 @@
   <div class="section-title" style="margin-top:18px">Embudo & Metas de Marzo</div>
   <div class="grid-2-1">
     <div class="card">
-      <div class="card-title">Embudo · Actualizado 20 Mar <span style="font-size:10px;color:var(--green-text);background:var(--green-bg);padding:1px 6px;border-radius:6px">vs 16 Mar</span></div>
+      <div class="card-title" id="funnel-title">Embudo · Actualizado <span id="funnel-date">…</span></div>
       <div style="padding:4px 0" id="funnel-rows">
 
         <div class="funnel-row">
@@ -1188,7 +1188,7 @@
   </div>
   <div class="grid-2">
     <div>
-      <div class="day-label">HOY · Viernes 20 Marzo</div>
+      <div class="day-label" id="day-label-hoy">HOY · Cargando…</div>
       <div class="plan-col">
         <div class="plan-item">
           <div class="plan-check" onclick="this.classList.toggle('done')"></div>
@@ -2136,16 +2136,41 @@ window.addEventListener('DOMContentLoaded', () => {
   startLiveClock();
 });
 
-// ── Live clock — updates topbar date/time every minute
+// ── Live clock — updates topbar date/time + banner date every minute
 function startLiveClock() {
   function tick() {
     const now = new Date();
     const timeStr = now.toLocaleTimeString('es-MX', {hour:'2-digit', minute:'2-digit'});
     const dateStr = now.toLocaleDateString('es-MX', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+    // Capitalize first letter (es-MX returns lowercase weekday)
+    const dateStrCap = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
     const sub = document.getElementById('topbar-sub');
     if (sub) {
       const lastSync = window._lastSyncLabel || 'pendiente';
-      sub.textContent = dateStr + ' · ' + timeStr + ' · Sync: ' + lastSync;
+      sub.textContent = dateStrCap + ' · ' + timeStr + ' · Sync: ' + lastSync;
+    }
+    // Keep live banner date in sync too
+    const bannerDate = document.getElementById('banner-date');
+    if (bannerDate) {
+      bannerDate.textContent = 'Actualizado: ' + dateStrCap + ' ' + timeStr;
+    }
+    // Funnel card title date
+    const funnelDate = document.getElementById('funnel-date');
+    if (funnelDate) {
+      const shortDate = now.toLocaleDateString('es-MX', {day:'numeric', month:'short'});
+      funnelDate.textContent = shortDate.charAt(0).toUpperCase() + shortDate.slice(1);
+    }
+    // Day label in planning section
+    const dayLbl = document.getElementById('day-label-hoy');
+    if (dayLbl) {
+      const dayName = now.toLocaleDateString('es-MX', {weekday:'long', day:'numeric', month:'long'});
+      dayLbl.textContent = 'HOY · ' + dayName.charAt(0).toUpperCase() + dayName.slice(1);
+    }
+    // Modal today date
+    const modalTodayDate = document.getElementById('modal-today-date');
+    if (modalTodayDate) {
+      const shortMd = now.toLocaleDateString('es-MX', {day:'numeric', month:'long'});
+      modalTodayDate.textContent = shortMd.charAt(0).toUpperCase() + shortMd.slice(1);
     }
   }
   tick(); // run immediately
@@ -3518,6 +3543,30 @@ function renderDashboard(d) {
       }).join('');
     }
   }
+
+  // ── Live banner — update stats from real data
+  (function updateBanner() {
+    function setB(id, txt) { const e = document.getElementById(id); if (e) e.textContent = txt; }
+    const cerradoCntB = d.stageCounts['Cerrado'] || 0;
+    const calCnt      = d.stageCounts['Calificado'] || 0;
+    const c2cCnt      = d.stageCounts['Close 2 close'] || 0;
+    setB('banner-mrr',        'MRR confirmado: $' + d.cerradoMRR.toLocaleString() + '/mo');
+    setB('banner-registros',  'Total registros: ' + d.total);
+    setB('banner-activos',    'Activos: ' + d.activeCount);
+    setB('banner-calificados','Calificados: ' + calCnt);
+    setB('banner-close2close','Close 2 close: ' + c2cCnt);
+    setB('banner-cerrado',    'Cerrado: ' + cerradoCntB);
+    // Show wins pill only if there are closed deals
+    const winEl = document.getElementById('banner-cierres');
+    if (winEl) {
+      if (cerradoCntB > 0) {
+        winEl.textContent = '🏆 ' + cerradoCntB + ' cuenta' + (cerradoCntB !== 1 ? 's' : '') + ' cerrada' + (cerradoCntB !== 1 ? 's' : '');
+        winEl.style.display = '';
+      } else {
+        winEl.style.display = 'none';
+      }
+    }
+  })();
 
   // ── Topbar + footer
   const now = new Date();
