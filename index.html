@@ -1026,21 +1026,21 @@
   <div style="margin-top:20px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:16px 20px;display:flex;gap:24px;flex-wrap:wrap;align-items:center;">
     <div>
       <div style="font-size:11px;color:#16a34a;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Total MRR Confirmado</div>
-      <div id="cf-mrr" style="font-size:24px;font-weight:800;color:#15803d">—</div>
+      <div id="ckf-mrr" style="font-size:24px;font-weight:800;color:#15803d">—</div>
     </div>
     <div style="width:1px;height:40px;background:#bbf7d0"></div>
     <div>
       <div style="font-size:11px;color:#16a34a;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Total Implementaciones</div>
-      <div id="cf-impl" style="font-size:24px;font-weight:800;color:#15803d">—</div>
+      <div id="ckf-impl" style="font-size:24px;font-weight:800;color:#15803d">—</div>
     </div>
     <div style="width:1px;height:40px;background:#bbf7d0"></div>
     <div>
       <div style="font-size:11px;color:#16a34a;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">ACV Combinado</div>
-      <div id="cf-acv" style="font-size:24px;font-weight:800;color:#15803d">—</div>
+      <div id="ckf-acv" style="font-size:24px;font-weight:800;color:#15803d">—</div>
     </div>
     <div style="margin-left:auto;background:white;border:2px solid #16a34a;border-radius:10px;padding:10px 16px;text-align:center;">
-      <div style="font-size:11px;color:#16a34a;font-weight:700" id="cf-meta-label">Meta MRR</div>
-      <div id="cf-meta-pct" style="font-size:22px;font-weight:800;color:#15803d">—</div>
+      <div style="font-size:11px;color:#16a34a;font-weight:700" id="ckf-meta-label">Meta MRR</div>
+      <div id="ckf-meta-pct" style="font-size:22px;font-weight:800;color:#15803d">—</div>
     </div>
   </div>
 </div>
@@ -3414,16 +3414,20 @@ function renderCerradosTab() {
   // If no pipeline data yet, check localStorage snapshot
   let deals = [];
   if (Array.isArray(_pipeData) && _pipeData.length > 0) {
-    // Filter: Cerrado status AND cierre_date in selected month
-    deals = _pipeData.filter(r => {
-      if (r.status !== 'Cerrado') return false;
-      const d = r.cierre_date || '';
-      if (d) return d.startsWith(selectedMonth);
-      // No cierre_date: show under current month only
-      return selectedMonth === currentMonth;
+    // Get ALL Cerrado deals first
+    const allCerrado = _pipeData.filter(r => r.status === 'Cerrado');
+
+    // For each deal, pick the best available date to determine which month it belongs to:
+    // 1st priority: cierre_date (explicitly set close date)
+    // 2nd priority: updated_at  (when the deal was last modified — proxy for when it moved to Cerrado)
+    // 3rd priority: created_at  (last resort)
+    deals = allCerrado.filter(r => {
+      const dateStr = (r.cierre_date || r.updated_at || r.created_at || '').slice(0, 7);
+      return dateStr === selectedMonth;
     });
-    // Auto-save snapshot for this month
-    if (deals.length > 0) saveCerradoSnapshot(selectedMonth, deals);
+
+    // Auto-save snapshot any time we have live data (overwrites stale localStorage)
+    if (allCerrado.length > 0) saveCerradoSnapshot(selectedMonth, deals);
   } else {
     // Fallback: try localStorage snapshot
     const snap = loadCerradoSnapshot(selectedMonth);
@@ -3460,12 +3464,12 @@ function renderCerradosTab() {
   setEl('ck-impl',     '$' + totalImpl.toLocaleString());
   setEl('ck-impl-delta', totalImpl > 0 ? '↑ Setup + Onboarding' : 'Sin fees de implementación');
 
-  // Footer bar
-  setEl('cf-mrr',  '$' + totalMRR.toLocaleString() + ' / mes');
-  setEl('cf-impl', '$' + totalImpl.toLocaleString());
-  setEl('cf-acv',  '$' + totalACV.toLocaleString());
-  setEl('cf-meta-label', 'Meta $' + mrrGoal.toLocaleString() + ' MRR');
-  setEl('cf-meta-pct', mrrGoalPct + '%' + (mrrGoalPct >= 100 ? ' ✅' : ''));
+  // Footer bar (ckf-* to avoid conflict with CRM form ids)
+  setEl('ckf-mrr',  '$' + totalMRR.toLocaleString() + ' / mes');
+  setEl('ckf-impl', '$' + totalImpl.toLocaleString());
+  setEl('ckf-acv',  '$' + totalACV.toLocaleString());
+  setEl('ckf-meta-label', 'Meta $' + mrrGoal.toLocaleString() + ' MRR');
+  setEl('ckf-meta-pct', mrrGoalPct + '%' + (mrrGoalPct >= 100 ? ' ✅' : ''));
 
   // Tab badge (current month only)
   if (selectedMonth === currentMonth) {
