@@ -185,6 +185,15 @@ function renderKPITab() {
 function updateGoalsFromLogs() {
   // Update goal progress bars from the KPI activity log (month-to-date)
   const logs = filterByPeriod(getKPILogs(), 'month');
+
+  // Update card title to current month
+  const now = new Date();
+  const monthName = now.toLocaleString('es', { month: 'long' });
+  const titleEl = document.querySelector('.card-title');
+  if (titleEl && titleEl.textContent.startsWith('Metas')) {
+    titleEl.textContent = 'Metas ' + monthName.charAt(0).toUpperCase() + monthName.slice(1) + ' · Progreso';
+  }
+
   const MAP = [
     { id: 'calificado', type: 'lead',      goal: 150 },
     { id: 'discovery',  type: 'discovery', goal: 50  },
@@ -193,7 +202,6 @@ function updateGoalsFromLogs() {
   ];
   MAP.forEach(m => {
     const count = logs.filter(e => e.type === m.type).length;
-    if (count === 0) return; // don't overwrite if no log entries yet
     const pct = Math.min(Math.round(count / m.goal * 100), 100);
     const el   = document.getElementById('g-' + m.id);
     const fill = document.getElementById('gf-' + m.id);
