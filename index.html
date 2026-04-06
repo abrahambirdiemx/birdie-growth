@@ -761,10 +761,11 @@
 <div class="tab-nav">
   <button class="tab-btn active" onclick="switchTab('pipeline',this)">📊 Dashboard</button>
   <button class="tab-btn" onclick="switchTab('deals',this)">🔥 Pipeline</button>
-  <button class="tab-btn" onclick="switchTab('cerrados',this)">🔓 Cerrados & MRR <span style="background:#dcfce7;color:#15803d;border-radius:8px;padding:0 6px;font-size:10px;font-weight:700;margin-left:3px">133%</span></button>
+  <button class="tab-btn" onclick="switchTab('cerrados',this)">🔓 Cerrados & MRR <span id="cerrado-tab-badge" style="background:#dcfce7;color:#15803d;border-radius:8px;padding:0 6px;font-size:10px;font-weight:700;margin-left:3px">—%</span></button>
+  <button class="tab-btn" onclick="switchTab('metas',this)">🏹 Metas del Trimestre</button>
+  <button class="tab-btn" onclick="switchTab('kpis',this)">🎯 KPIs por Vendedor</button>
   <button class="tab-btn" onclick="switchTab('plan',this)">📋 Plan Semanal</button>
   <button class="tab-btn" onclick="switchTab('iniciativas',this)">🚀 Iniciativas Clave</button>
-  <button class="tab-btn" onclick="switchTab('kpis',this)">🎯 KPIs por Vendedor</button>
   <button class="tab-btn" onclick="switchTab('crm',this)">🏢 CRM</button>
 </div>
 
@@ -979,203 +980,91 @@
      TAB: CERRADOS
 ══════════════════════════════════════ -->
 <div class="tab-content" id="tab-cerrados">
-  <div style="margin-bottom:20px;">
-    <div style="font-size:15px;font-weight:700;margin-bottom:4px">🔓 Cerrados — MRR Confirmado en Activación</div>
-    <div style="font-size:13px;color:var(--muted)">Cuentas en proceso de firma, alta e implementación. Haz clic para ver el detalle de cada una.</div>
+
+  <!-- Header + month selector -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+    <div>
+      <div style="font-size:15px;font-weight:700;margin-bottom:4px">🔓 Cerrados — MRR Confirmado por Mes</div>
+      <div id="cerrado-header-sub" style="font-size:13px;color:var(--muted)">Sincronizando pipeline…</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="font-size:12px;font-weight:600;color:var(--muted)">📅 Ver mes:</span>
+      <select id="cerrado-month-select" class="pipe-sel" style="min-width:175px" onchange="renderCerradosTab()">
+        <!-- Options built by JS -->
+      </select>
+    </div>
   </div>
 
+  <!-- KPI cards -->
   <div class="cerrado-summary" id="cerrado-kpis">
     <div class="cerrado-kpi green">
-      <div class="cerrado-kpi-value">$9,310</div>
+      <div class="cerrado-kpi-value" id="ck-mrr">—</div>
       <div class="cerrado-kpi-label">MRR Confirmado / mes</div>
-      <div class="cerrado-kpi-sub">6 cuentas · En activación</div>
-      <div class="cerrado-kpi-delta">↑ +$1,750 esta semana</div>
+      <div class="cerrado-kpi-sub" id="ck-mrr-sub">Cargando…</div>
+      <div class="cerrado-kpi-delta" id="ck-mrr-delta">Sincronizando…</div>
     </div>
     <div class="cerrado-kpi blue">
-      <div class="cerrado-kpi-value">$111,720</div>
+      <div class="cerrado-kpi-value" id="ck-acv">—</div>
       <div class="cerrado-kpi-label">ACV Total Cerrado</div>
-      <div class="cerrado-kpi-sub">Valor anual combinado</div>
-      <div class="cerrado-kpi-delta">↑ +$21,000 vs sem. pasada</div>
+      <div class="cerrado-kpi-sub" id="ck-acv-sub">Valor anual combinado</div>
+      <div class="cerrado-kpi-delta" id="ck-acv-delta">Sincronizando…</div>
     </div>
     <div class="cerrado-kpi purple">
-      <div class="cerrado-kpi-value">$11,640</div>
+      <div class="cerrado-kpi-value" id="ck-impl">—</div>
       <div class="cerrado-kpi-label">Ingresos por Implementación</div>
       <div class="cerrado-kpi-sub">Setup + Onboarding</div>
-      <div class="cerrado-kpi-delta">↑ +$2,420 nuevos</div>
+      <div class="cerrado-kpi-delta" id="ck-impl-delta">Sincronizando…</div>
     </div>
   </div>
 
-  <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 16px;margin-bottom:20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-    <span style="font-size:20px">🎯</span>
-    <div>
-      <div style="font-size:13px;font-weight:700;color:#15803d">¡Meta de $7K MRR superada! · $9,310/mo confirmados = <strong>133%</strong></div>
-      <div style="font-size:11px;color:#16a34a;margin-top:2px">Lamex ($1,350/mo) y STULZ ($400/mo) cerraron esta semana gracias a Abraham Lopez.</div>
-    </div>
+  <!-- Dynamic account list — populated by renderCerradosTab() -->
+  <div id="cerrado-accounts-dynamic" style="margin-top:16px">
+    <div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">Cargando datos del pipeline…</div>
   </div>
 
-  <div id="cerrado-accounts">
-  <!-- GEA ANDINA -->
-  <div class="account-card">
-    <div class="account-header" onclick="toggleAccount(this)">
-      <div style="font-size:20px">🏭</div>
-      <div class="account-name">GEA ANDINA</div>
-      <span class="status-badge sb-firma">📝 Proceso de Firma</span>
-      <div style="display:flex;gap:8px;align-items:center">
-        <span class="owner-chip">Daniel Luna</span>
-        <div style="text-align:right"><div class="account-mrr">$3,000/mo</div><div style="font-size:10px;color:var(--muted)">$36K ACV</div></div>
-      </div>
-      <div class="account-chevron">▼</div>
-    </div>
-    <div class="account-detail">
-      <div class="detail-grid">
-        <div class="detail-item"><div class="detail-label">MRR Mensual</div><div class="detail-value" style="color:#16a34a">$3,000</div></div>
-        <div class="detail-item"><div class="detail-label">ACV Anual</div><div class="detail-value">$36,000</div></div>
-        <div class="detail-item"><div class="detail-label">Fee Implementación</div><div class="detail-value" style="color:#7c3aed">$5,400</div></div>
-        <div class="detail-item"><div class="detail-label">Días en Pipe</div><div class="detail-value">17 días</div></div>
-        <div class="detail-item"><div class="detail-label">Próximo Toque</div><div class="detail-value overdue">17 Mar (3d vencido)</div></div>
-        <div class="detail-item"><div class="detail-label">Solución</div><div class="detail-value">Birdie Platform</div></div>
-      </div>
-      <div class="account-notes">⚠️ <strong>Alerta:</strong> Next touch era el 17 Mar (3 días vencido). Confirmar firma y hacer handoff a CS esta semana.</div>
-    </div>
-  </div>
-
-  <!-- RADEC* -->
-  <div class="account-card">
-    <div class="account-header" onclick="toggleAccount(this)">
-      <div style="font-size:20px">🚢</div>
-      <div class="account-name">RADEC*</div>
-      <span class="status-badge sb-activacion">⚡ En Activación</span>
-      <div style="display:flex;gap:8px;align-items:center">
-        <span class="owner-chip">Daniel Luna</span>
-        <div style="text-align:right"><div class="account-mrr">$2,500/mo</div><div style="font-size:10px;color:var(--muted)">$30K ACV</div></div>
-      </div>
-      <div class="account-chevron">▼</div>
-    </div>
-    <div class="account-detail">
-      <div class="detail-grid">
-        <div class="detail-item"><div class="detail-label">MRR Mensual</div><div class="detail-value" style="color:#16a34a">$2,500</div></div>
-        <div class="detail-item"><div class="detail-label">ACV Anual</div><div class="detail-value">$30,000</div></div>
-        <div class="detail-item"><div class="detail-label">Fee Implementación</div><div class="detail-value" style="color:var(--muted)">$0 (incluido)</div></div>
-        <div class="detail-item"><div class="detail-label">Días en Pipe</div><div class="detail-value" style="color:var(--orange)">192 días</div></div>
-        <div class="detail-item"><div class="detail-label">Próximo Toque</div><div class="detail-value overdue">Sin registrar ⚠</div></div>
-        <div class="detail-item"><div class="detail-label">Solución</div><div class="detail-value">Birdie AI</div></div>
-      </div>
-      <div class="account-notes">⚠️ <strong>Alerta:</strong> 192 días en pipe sin touchpoint registrado. Confirmar con CS el status de activación urgente.</div>
-    </div>
-  </div>
-
-  <!-- IB Group -->
-  <div class="account-card">
-    <div class="account-header" onclick="toggleAccount(this)">
-      <div style="font-size:20px">🏢</div>
-      <div class="account-name">IB Group</div>
-      <span class="status-badge sb-onboarding">✅ Onboarding</span>
-      <div style="display:flex;gap:8px;align-items:center">
-        <span class="owner-chip">Abraham Lopez</span>
-        <div style="text-align:right"><div class="account-mrr">$1,250/mo</div><div style="font-size:10px;color:var(--muted)">$15K ACV</div></div>
-      </div>
-      <div class="account-chevron">▼</div>
-    </div>
-    <div class="account-detail">
-      <div class="detail-grid">
-        <div class="detail-item"><div class="detail-label">MRR Mensual</div><div class="detail-value" style="color:#16a34a">$1,250</div></div>
-        <div class="detail-item"><div class="detail-label">ACV Anual</div><div class="detail-value">$15,000</div></div>
-        <div class="detail-item"><div class="detail-label">Fee Implementación</div><div class="detail-value" style="color:var(--muted)">$0</div></div>
-        <div class="detail-item"><div class="detail-label">Estado CS</div><div class="detail-value" style="color:#16a34a">Onboarding activo</div></div>
-        <div class="detail-item"><div class="detail-label">Próximo Toque</div><div class="detail-value" style="color:var(--muted)">—</div></div>
-        <div class="detail-item"><div class="detail-label">Solución</div><div class="detail-value">Birdie Platform</div></div>
-      </div>
-      <div class="account-notes">✅ En onboarding. Coordinar con CS para timeline de arranque operativo.</div>
-    </div>
-  </div>
-
-  <!-- LANTIA -->
-  <div class="account-card">
-    <div class="account-header" onclick="toggleAccount(this)">
-      <div style="font-size:20px">⚓</div>
-      <div class="account-name">LANTIA MARITIMA</div>
-      <span class="status-badge sb-firma">📝 Firma Completada</span>
-      <div style="display:flex;gap:8px;align-items:center">
-        <span class="owner-chip">Daniel Luna</span>
-        <div style="text-align:right"><div class="account-mrr">$810/mo</div><div style="font-size:10px;color:var(--muted)">$9.7K ACV</div></div>
-      </div>
-      <div class="account-chevron">▼</div>
-    </div>
-    <div class="account-detail">
-      <div class="detail-grid">
-        <div class="detail-item"><div class="detail-label">MRR Mensual</div><div class="detail-value" style="color:#16a34a">$810</div></div>
-        <div class="detail-item"><div class="detail-label">ACV Anual</div><div class="detail-value">$9,720</div></div>
-        <div class="detail-item"><div class="detail-label">Fee Implementación</div><div class="detail-value" style="color:#7c3aed">$1,400</div></div>
-        <div class="detail-item"><div class="detail-label">Días desde Cierre</div><div class="detail-value" style="color:var(--orange)">53 días</div></div>
-        <div class="detail-item"><div class="detail-label">Close date</div><div class="detail-value">26 Ene 2026</div></div>
-        <div class="detail-item"><div class="detail-label">Solución</div><div class="detail-value">Birdie Platform</div></div>
-      </div>
-      <div class="account-notes">📌 Cerrado hace 53 días. Verificar que CS completó el onboarding y la cuenta está activa.</div>
-    </div>
-  </div>
-
-  <!-- LAMEX — NUEVO CIERRE -->
-  <div class="account-card is-new">
-    <div class="account-header" onclick="toggleAccount(this)">
-      <div style="font-size:20px">🚛</div>
-      <div class="account-name">Lamex <span class="tag-new" style="font-size:11px;padding:2px 8px">🏆 NUEVO CIERRE</span></div>
-      <span class="status-badge sb-new">🆕 Recién Cerrado</span>
-      <div style="display:flex;gap:8px;align-items:center">
-        <span class="owner-chip">Abraham Lopez</span>
-        <div style="text-align:right"><div class="account-mrr">$1,350/mo</div><div style="font-size:10px;color:var(--muted)">$16.2K ACV</div></div>
-      </div>
-      <div class="account-chevron">▼</div>
-    </div>
-    <div class="account-detail">
-      <div class="detail-grid">
-        <div class="detail-item"><div class="detail-label">MRR Mensual</div><div class="detail-value" style="color:#16a34a">$1,350</div></div>
-        <div class="detail-item"><div class="detail-label">ACV Anual</div><div class="detail-value">$16,200</div></div>
-        <div class="detail-item"><div class="detail-label">Fee Implementación</div><div class="detail-value" style="color:#7c3aed">$1,700</div></div>
-        <div class="detail-item"><div class="detail-label">Días en Pipe</div><div class="detail-value">198 días</div></div>
-        <div class="detail-item"><div class="detail-label">Cerrado esta semana</div><div class="detail-value" style="color:#16a34a">17–20 Mar ✓</div></div>
-        <div class="detail-item"><div class="detail-label">Responsable</div><div class="detail-value">Abraham Lopez</div></div>
-      </div>
-      <div class="account-notes">🏆 <strong>Nuevo cierre esta semana.</strong> Antes en Close 2 close (198 días). Iniciar proceso de alta y onboarding inmediatamente. Coordinación con CS urgente.</div>
-    </div>
-  </div>
-
-  <!-- STULZ — NUEVO CIERRE -->
-  <div class="account-card is-new">
-    <div class="account-header" onclick="toggleAccount(this)">
-      <div style="font-size:20px">❄️</div>
-      <div class="account-name">STULZ <span class="tag-new" style="font-size:11px;padding:2px 8px">🏆 NUEVO CIERRE</span></div>
-      <span class="status-badge sb-new">🆕 Recién Cerrado</span>
-      <div style="display:flex;gap:8px;align-items:center">
-        <span class="owner-chip">Abraham Lopez</span>
-        <div style="text-align:right"><div class="account-mrr">$400/mo</div><div style="font-size:10px;color:var(--muted)">$4.8K ACV</div></div>
-      </div>
-      <div class="account-chevron">▼</div>
-    </div>
-    <div class="account-detail">
-      <div class="detail-grid">
-        <div class="detail-item"><div class="detail-label">MRR Mensual</div><div class="detail-value" style="color:#16a34a">$400</div></div>
-        <div class="detail-item"><div class="detail-label">ACV Anual</div><div class="detail-value">$4,800</div></div>
-        <div class="detail-item"><div class="detail-label">Fee Implementación</div><div class="detail-value" style="color:#7c3aed">$720</div></div>
-        <div class="detail-item"><div class="detail-label">Días en Pipe</div><div class="detail-value">106 días</div></div>
-        <div class="detail-item"><div class="detail-label">Cerrado esta semana</div><div class="detail-value" style="color:#16a34a">17–20 Mar ✓</div></div>
-        <div class="detail-item"><div class="detail-label">Responsable</div><div class="detail-value">Abraham Lopez</div></div>
-      </div>
-      <div class="account-notes">🏆 <strong>Nuevo cierre esta semana.</strong> 106 días en pipe. Iniciar onboarding y coordinación con CS.</div>
-    </div>
-  </div>
-  </div><!-- /cerrado-accounts -->
-
-  <!-- Footer -->
+  <!-- Footer summary bar -->
   <div style="margin-top:20px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:16px 20px;display:flex;gap:24px;flex-wrap:wrap;align-items:center;">
-    <div><div style="font-size:11px;color:#16a34a;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Total MRR Confirmado</div><div style="font-size:24px;font-weight:800;color:#15803d">$9,310 / mes</div></div>
-    <div style="width:1px;height:40px;background:#bbf7d0"></div>
-    <div><div style="font-size:11px;color:#16a34a;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Total Implementaciones</div><div style="font-size:24px;font-weight:800;color:#15803d">$11,640</div></div>
-    <div style="width:1px;height:40px;background:#bbf7d0"></div>
-    <div><div style="font-size:11px;color:#16a34a;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">ACV Combinado</div><div style="font-size:24px;font-weight:800;color:#15803d">$111,720</div></div>
-    <div style="margin-left:auto;background:white;border:2px solid #16a34a;border-radius:10px;padding:10px 16px;text-align:center;">
-      <div style="font-size:11px;color:#16a34a;font-weight:700">Meta $7K MRR</div>
-      <div style="font-size:22px;font-weight:800;color:#15803d">133% ✅</div>
+    <div>
+      <div style="font-size:11px;color:#16a34a;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Total MRR Confirmado</div>
+      <div id="cf-mrr" style="font-size:24px;font-weight:800;color:#15803d">—</div>
     </div>
+    <div style="width:1px;height:40px;background:#bbf7d0"></div>
+    <div>
+      <div style="font-size:11px;color:#16a34a;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Total Implementaciones</div>
+      <div id="cf-impl" style="font-size:24px;font-weight:800;color:#15803d">—</div>
+    </div>
+    <div style="width:1px;height:40px;background:#bbf7d0"></div>
+    <div>
+      <div style="font-size:11px;color:#16a34a;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">ACV Combinado</div>
+      <div id="cf-acv" style="font-size:24px;font-weight:800;color:#15803d">—</div>
+    </div>
+    <div style="margin-left:auto;background:white;border:2px solid #16a34a;border-radius:10px;padding:10px 16px;text-align:center;">
+      <div style="font-size:11px;color:#16a34a;font-weight:700" id="cf-meta-label">Meta MRR</div>
+      <div id="cf-meta-pct" style="font-size:22px;font-weight:800;color:#15803d">—</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     TAB: METAS DEL TRIMESTRE
+══════════════════════════════════════ -->
+<div class="tab-content" id="tab-metas">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+    <div>
+      <div style="font-size:15px;font-weight:700;margin-bottom:4px">🏹 Metas del Trimestre</div>
+      <div style="font-size:13px;color:var(--muted)">Establece las metas del trimestre y el seguimiento se actualiza automáticamente desde el pipeline.</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <select id="metas-quarter-select" class="pipe-sel" style="min-width:150px" onchange="renderMetasTab()">
+        <!-- Built by JS -->
+      </select>
+      <button class="btn btn-primary" onclick="saveGoals()" style="padding:7px 14px;font-size:12px">💾 Guardar Metas</button>
+    </div>
+  </div>
+
+  <!-- Goal inputs + progress — populated by renderMetasTab() -->
+  <div id="metas-content">
+    <div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">Cargando…</div>
   </div>
 </div>
 
@@ -1183,130 +1072,28 @@
      TAB: PLAN SEMANAL
 ══════════════════════════════════════ -->
 <div class="tab-content" id="tab-plan">
-  <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 16px;margin-bottom:18px;font-size:13px;color:#1d4ed8;">
-    📅 <strong>Semana del 20–24 Marzo.</strong> Hoy (viernes) hay touchpoints para Qualtia y Arista Int. La semana que viene: seguimiento de todos los overdue críticos.
+  <div id="plan-semanal-banner" style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 16px;margin-bottom:18px;font-size:13px;color:#1d4ed8;">
+    📅 Cargando plan desde pipeline…
   </div>
   <div class="grid-2">
     <div>
       <div class="day-label" id="day-label-hoy">HOY · Cargando…</div>
-      <div class="plan-col">
-        <div class="plan-item">
-          <div class="plan-check" onclick="this.classList.toggle('done')"></div>
-          <div class="plan-content">
-            <div class="plan-title">Qualtia — Discovery follow-up</div>
-            <div class="plan-desc">Toque programado HOY. Último contacto fue el 11 Mar. Mantener momentum y avanzar a Demo.</div>
-            <div class="plan-meta"><span class="plan-tag pt-blue">Discovery</span><span class="owner-tag">Héctor</span><span class="plan-tag pt-red">Hoy ✅</span></div>
-          </div>
-        </div>
-        <div class="plan-item">
-          <div class="plan-check" onclick="this.classList.toggle('done')"></div>
-          <div class="plan-content">
-            <div class="plan-title">Arista Int — Propuesta activa ($7,020)</div>
-            <div class="plan-desc">Next touch HOY. Tocado el 13 Mar. Llevar propuesta actualizada y buscar cierre.</div>
-            <div class="plan-meta"><span class="plan-tag pt-green">$7,020 ACV</span><span class="owner-tag">Abraham</span><span class="plan-tag pt-red">Hoy ✅</span></div>
-          </div>
-        </div>
-        <div class="plan-item">
-          <div class="plan-check" onclick="this.classList.toggle('done')"></div>
-          <div class="plan-content">
-            <div class="plan-title">Iniciar onboarding: Lamex + STULZ</div>
-            <div class="plan-desc">Dos nuevos cierres esta semana. Hacer handoff a CS hoy mismo para no perder momentum post-firma.</div>
-            <div class="plan-meta"><span class="plan-tag pt-green">🏆 Cierres nuevos</span><span class="owner-tag">Abraham → CS</span></div>
-          </div>
-        </div>
+      <div class="plan-col" id="plan-hoy-col">
+        <div style="padding:12px;color:var(--muted);font-size:12px">Sincronizando pipeline…</div>
       </div>
-
-      <div class="day-label" style="margin-top:16px">SEMANA QUE ENTRA · 23–27 Marzo</div>
-      <div class="plan-col">
-        <div class="plan-item">
-          <div class="plan-check" onclick="this.classList.toggle('done')"></div>
-          <div class="plan-content">
-            <div class="plan-title">Sigma Laredo* + Sigma — Urgente ($102K ACV)</div>
-            <div class="plan-desc">Ambos con next touch vencido (17 y 18 Mar). Los 2 deals más valiosos después de Coppel. Sin touchpoint registrado — acción inmediata el lunes.</div>
-            <div class="plan-meta"><span class="plan-tag pt-red">🚨 Vencido 2–3d</span><span class="owner-tag">Abraham</span><span class="plan-tag pt-green">$102K ACV</span></div>
-          </div>
-        </div>
-        <div class="plan-item">
-          <div class="plan-check" onclick="this.classList.toggle('done')"></div>
-          <div class="plan-content">
-            <div class="plan-title">Grupo Alta / Divine Flavor — Cierre pendiente</div>
-            <div class="plan-desc">Next touch era 16 Mar (4 días vencido). Close 2 close, Pilot $4K entregado. Contactar lunes para formalizar firma.</div>
-            <div class="plan-meta"><span class="plan-tag pt-red">Vencido 4d</span><span class="owner-tag">Héctor</span><span class="plan-tag pt-green">$22,560</span></div>
-          </div>
-        </div>
-        <div class="plan-item">
-          <div class="plan-check" onclick="this.classList.toggle('done')"></div>
-          <div class="plan-content">
-            <div class="plan-title">GEA ANDINA — Confirmar firma y handoff CS</div>
-            <div class="plan-desc">Cerrado, next touch vencido 3 días. Coordinación con CS para inicio de implementación ($5,400 impl).</div>
-            <div class="plan-meta"><span class="plan-tag pt-yellow">Next vencido 3d</span><span class="owner-tag">Daniel</span><span class="plan-tag pt-green">$36K</span></div>
-          </div>
-        </div>
-        <div class="plan-item">
-          <div class="plan-check" onclick="this.classList.toggle('done')"></div>
-          <div class="plan-content">
-            <div class="plan-title">Helvex + *L'Oréal — Discovery (24 Mar)</div>
-            <div class="plan-desc">Ambos con next touch el 24 Mar. Preparar deck de discovery personalizado.</div>
-            <div class="plan-meta"><span class="plan-tag pt-blue">Discovery</span><span class="owner-tag">Abraham</span></div>
-          </div>
-        </div>
-        <div class="plan-item">
-          <div class="plan-check" onclick="this.classList.toggle('done')"></div>
-          <div class="plan-content">
-            <div class="plan-title">Agrosuper* — Retomar propuesta (10d de retraso)</div>
-            <div class="plan-desc">$21,600 ACV. Next touch era 10 Mar. Llamar esta semana o el deal se enfría definitivamente.</div>
-            <div class="plan-meta"><span class="plan-tag pt-yellow">10d sin follow-up</span><span class="owner-tag">Abraham</span><span class="plan-tag pt-green">$21,600</span></div>
-          </div>
-        </div>
+      <div class="day-label" id="plan-week-label" style="margin-top:16px">PRÓXIMOS 7 DÍAS</div>
+      <div class="plan-col" id="plan-semana-col">
+        <div style="padding:12px;color:var(--muted);font-size:12px">Sincronizando pipeline…</div>
       </div>
     </div>
-
     <div>
-      <div class="day-label">REGISTROS NUEVOS HOY (10 de Daniel)</div>
-      <div style="background:var(--card);border:1px solid #bfdbfe;border-radius:10px;padding:14px;margin-bottom:12px;box-shadow:var(--shadow);">
-        <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Daniel agregó 10 nuevos prospectos hoy. Todos sin ACV aún — primer contacto pendiente.</div>
-        <div style="display:flex;flex-direction:column;gap:6px">
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;background:#eff6ff;border-radius:7px;border:1px solid #bfdbfe;">
-            <span style="font-size:12px;font-weight:600">AXALTA</span><span class="stage-tag tag-discovery" style="font-size:9px">🔭 Discovery</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;background:var(--bg2);border-radius:7px;">
-            <span style="font-size:12px">ALPURA</span><span class="stage-tag tag-activo" style="font-size:9px">Active lead</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;background:var(--bg2);border-radius:7px;">
-            <span style="font-size:12px">PRISMA</span><span class="stage-tag tag-activo" style="font-size:9px">Active lead</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;background:var(--bg2);border-radius:7px;">
-            <span style="font-size:12px">MOTRIX</span><span class="stage-tag tag-activo" style="font-size:9px">Active lead</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;background:var(--bg2);border-radius:7px;">
-            <span style="font-size:12px">MAARBA LOGISTICS</span><span class="stage-tag tag-activo" style="font-size:9px">Active lead</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;background:var(--bg2);border-radius:7px;">
-            <span style="font-size:12px">LUTHERR</span><span class="stage-tag tag-activo" style="font-size:9px">Active lead</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;background:var(--bg2);border-radius:7px;">
-            <span style="font-size:12px">ZF Frenos y mecanismos</span><span class="stage-tag" style="font-size:9px;background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd">Weekly Hunt</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;background:var(--bg2);border-radius:7px;">
-            <span style="font-size:12px">IMCD MEXICO</span><span class="stage-tag" style="font-size:9px;background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd">Weekly Hunt</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;background:var(--bg2);border-radius:7px;">
-            <span style="font-size:12px">HERAEUS ELECTRO NITE</span><span class="stage-tag" style="font-size:9px;background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd">Weekly Hunt</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;background:var(--bg2);border-radius:7px;">
-            <span style="font-size:12px">ITASA AMERICAS / MATIV</span><span class="stage-tag" style="font-size:9px;background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd">Weekly Hunt</span>
-          </div>
-        </div>
+      <div class="day-label">🚨 OVERDUE · Toques Vencidos</div>
+      <div class="risk-list" id="plan-overdue-list">
+        <div style="padding:12px;color:var(--muted);font-size:12px">Sincronizando pipeline…</div>
       </div>
-
-      <div class="day-label">TOP OVERDUE · Semana que entra</div>
-      <div class="risk-list">
-        <div class="risk-row"><div class="risk-dot rd-red"></div><div><div class="risk-deal">Sigma Laredo*</div><div class="risk-reason">Next 17 Mar · Close 2 close · 3d vencido</div></div><div class="risk-acv-val" style="color:var(--red)">$66K</div></div>
-        <div class="risk-row"><div class="risk-dot rd-red"></div><div><div class="risk-deal">Grupo Alta / Divine Flavor</div><div class="risk-reason">Next 16 Mar · Close 2 close · 4d vencido</div></div><div class="risk-acv-val" style="color:var(--red)">$22.5K</div></div>
-        <div class="risk-row"><div class="risk-dot rd-red"></div><div><div class="risk-deal">Sigma</div><div class="risk-reason">Next 18 Mar · Close 2 close · 2d vencido</div></div><div class="risk-acv-val" style="color:var(--orange)">$36K</div></div>
-        <div class="risk-row"><div class="risk-dot rd-orange"></div><div><div class="risk-deal">Agrosuper*</div><div class="risk-reason">Next 10 Mar · Propuesta · 10d vencido</div></div><div class="risk-acv-val" style="color:var(--orange)">$21.6K</div></div>
-        <div class="risk-row"><div class="risk-dot rd-orange"></div><div><div class="risk-deal">VEGUSA</div><div class="risk-reason">Next 17 Mar · Propuesta · 3d vencido</div></div><div class="risk-acv-val">$7.2K</div></div>
-        <div class="risk-row"><div class="risk-dot rd-orange"></div><div><div class="risk-deal">SCI CHIHUAHUA</div><div class="risk-reason">Next 17 Mar · Propuesta · 3d vencido</div></div><div class="risk-acv-val">$6K</div></div>
+      <div class="day-label" style="margin-top:16px">🆕 NUEVOS · Últimos 7 días</div>
+      <div id="plan-nuevos-col" style="background:var(--card);border:1px solid #bfdbfe;border-radius:10px;padding:14px;margin-bottom:12px;box-shadow:var(--shadow);">
+        <div style="font-size:12px;color:var(--muted)">Sincronizando pipeline…</div>
       </div>
     </div>
   </div>
@@ -2002,9 +1789,12 @@ function switchTab(id, btn) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-'+id).classList.add('active');
   btn.classList.add('active');
-  if (id === 'crm')   crmRender();
-  if (id === 'kpis')  renderKPITab();
-  if (id === 'deals') pipeRender();
+  if (id === 'crm')      crmRender();
+  if (id === 'kpis')     renderKPITab();
+  if (id === 'deals')    pipeRender();
+  if (id === 'cerrados') renderCerradosTab();
+  if (id === 'metas')    renderMetasTab();
+  if (id === 'plan')     renderPlanSemanal();
 }
 
 // Accordion
@@ -2187,6 +1977,8 @@ function startAutoSync(intervalMs = 60000) {
       _pipeData = Array.isArray(data) ? data : [];
       pipeRender();
       renderDashboard(parseSupabaseData(_pipeData));
+      renderPlanSemanal();
+      renderCerradosTab();
       // Silent CRM refresh
       const crmData = await sbFetch('GET', 'crm?select=id,n,r,st,ind,e,sz,c,p,em,tel,mrr,acv,notes,created_at&order=created_at.desc&limit=5000');
       if (Array.isArray(crmData)) { _crmData = crmData; }
@@ -2267,6 +2059,8 @@ async function pipeLoad() {
     window._lastSyncLabel = _syncTime;
     pipeRender();
     renderDashboard(parseSupabaseData(_pipeData));
+    renderPlanSemanal();
+    renderCerradosTab();
     updateGoalsFromLogs();
     updateSbStatus(true, _pipeData.length + ' deals');
     showToast('✅ Pipeline sincronizado — '+_pipeData.length+' deals','ok');
@@ -3363,7 +3157,9 @@ function fmtMRR(n) { return '$' + n.toLocaleString() + '/mo'; }
 function renderDashboard(d) {
   // ── KPIs — todos los 4 cards
   const cerradoCnt = d.stageCounts['Cerrado'] || 0;
-  const mrrGoalPct = Math.round(d.cerradoMRR / 7000 * 100);
+  const _goals = loadGoals();
+  const _mrrGoal = _goals.mrr_mensual || 7000;
+  const mrrGoalPct = _mrrGoal > 0 ? Math.round(d.cerradoMRR / _mrrGoal * 100) : 0;
 
   function setEl(id, val) { const e = document.getElementById(id); if (e) e.textContent = val; }
   function setClass(id, cls) { const e = document.getElementById(id); if (e) { e.className = 'stat-delta ' + cls; } }
@@ -3377,7 +3173,7 @@ function renderDashboard(d) {
   // MRR Pipeline
   setEl('kpi-mrr-pipeline',       fmt$(d.totalMRR));
   setEl('kpi-mrr-pipeline-sub',   '/mes en deals activos');
-  setEl('kpi-mrr-pipeline-delta', mrrGoalPct >= 100 ? '✅ Meta $7K superada · ' + mrrGoalPct + '%' : mrrGoalPct + '% de meta $7K');
+  setEl('kpi-mrr-pipeline-delta', mrrGoalPct >= 100 ? '✅ Meta $'+_mrrGoal.toLocaleString()+' superada · '+mrrGoalPct+'%' : mrrGoalPct+'% de meta $'+_mrrGoal.toLocaleString());
   setClass('kpi-mrr-pipeline-delta', mrrGoalPct >= 100 ? 'delta-ok' : 'delta-warn');
 
   // Deals Activos
@@ -3386,28 +3182,36 @@ function renderDashboard(d) {
   setEl('kpi-activos-delta', '📊 ' + Object.keys(d.stageCounts).length + ' etapas · última sync ahora');
   setClass('kpi-activos-delta', 'delta-new');
 
-  // MRR Confirmado
+  // MRR Confirmado (Dashboard tab KPI)
   setEl('kpi-mrr-confirmed',       '$' + d.cerradoMRR.toLocaleString());
   setEl('kpi-mrr-confirmed-sub',   '/mes · ' + cerradoCnt + ' cuenta' + (cerradoCnt !== 1 ? 's' : '') + ' cerrada' + (cerradoCnt !== 1 ? 's' : ''));
-  setEl('kpi-mrr-confirmed-delta', mrrGoalPct >= 100 ? '🏆 META SUPERADA · ' + mrrGoalPct + '%' : '→ ' + mrrGoalPct + '% de meta $7K');
+  setEl('kpi-mrr-confirmed-delta', mrrGoalPct >= 100 ? '🏆 META SUPERADA · '+mrrGoalPct+'%' : '→ '+mrrGoalPct+'% de meta $'+_mrrGoal.toLocaleString());
   setClass('kpi-mrr-confirmed-delta', mrrGoalPct >= 100 ? 'delta-ok' : 'delta-warn');
+
+  // Tab badge (Cerrados & MRR) — updated from dashboard KPI source of truth
+  const tabBadge = document.getElementById('cerrado-tab-badge');
+  if (tabBadge) tabBadge.textContent = mrrGoalPct + '%';
+  // Note: ck-* and cf-* elements are now owned by renderCerradosTab() for month-filtered accuracy
 
   // ── Goals (Metas de Marzo)
   // Las metas miden avance acumulado del mes, no el snapshot actual por etapa.
   // Solo se actualiza el MRR confirmado (dato exacto desde Cerrado).
   // Los conteos de leads/discovery/demo/propuesta se deben actualizar manualmente
   // desde la pestaña KPIs → Registro de Actividad.
-  const mrrPct = Math.min(Math.round(d.cerradoMRR / 7000 * 100), 133);
+  const mrrPct = Math.min(mrrGoalPct, 999);
   const gMrr = document.getElementById('g-mrr');
   const gfMrr = document.getElementById('gf-mrr');
   const gsMrr = document.getElementById('gs-mrr');
+  const gGoalEl = document.querySelector('.goal-item .goal-nums span+span');  // goal denominator
   if (gMrr) gMrr.textContent = '$' + d.cerradoMRR.toLocaleString();
+  // Update goal denominator label in existing Metas card
+  const mrrGoalNums = document.querySelector('#g-mrr')?.closest('.goal-header')?.querySelector('.goal-nums');
+  if (mrrGoalNums) mrrGoalNums.innerHTML = '<span id="g-mrr">$'+d.cerradoMRR.toLocaleString()+'</span> / $'+_mrrGoal.toLocaleString();
   if (gfMrr) gfMrr.style.width = Math.min(mrrPct, 100) + '%';
   if (gsMrr) {
-    const cerradoCnt = d.stageCounts['Cerrado'] || 0;
     gsMrr.textContent = mrrPct >= 100
       ? '✅ META SUPERADA · ' + mrrPct + '% · ' + cerradoCnt + ' cuentas'
-      : mrrPct + '% · ' + cerradoCnt + ' cuentas · faltan $' + Math.max(7000 - d.cerradoMRR, 0).toLocaleString();
+      : mrrPct + '% · ' + cerradoCnt + ' cuentas · faltan $' + Math.max(_mrrGoal - d.cerradoMRR, 0).toLocaleString();
     gsMrr.style.color = mrrPct >= 100 ? 'var(--green-text)' : '';
     gsMrr.style.fontWeight = mrrPct >= 100 ? '700' : '';
   }
@@ -3576,6 +3380,445 @@ function renderDashboard(d) {
   // (keeping dateStr/timeStr for footer)
   const ft = document.getElementById('footer-text');
   if (ft) ft.textContent = 'Birdie Growth Dashboard · Última sincronización: ' + dateStr + ' ' + timeStr + ' · Fuente: Supabase Pipeline (' + d.total + ' registros)';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Cerrados Tab — dynamic month-filtered rendering
+// ─────────────────────────────────────────────────────────────────────────────
+
+function buildCerradoMonthOptions() {
+  const sel = document.getElementById('cerrado-month-select');
+  if (!sel || sel.options.length > 0) return;
+  const now = new Date();
+  for (let i = 0; i < 13; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const val = d.toISOString().slice(0,7);
+    const raw = d.toLocaleDateString('es-MX', {month:'long', year:'numeric'});
+    const label = raw.charAt(0).toUpperCase() + raw.slice(1);
+    const opt = document.createElement('option');
+    opt.value = val;
+    opt.textContent = i === 0 ? label + ' (actual)' : label;
+    if (i === 0) opt.selected = true;
+    sel.appendChild(opt);
+  }
+}
+
+function renderCerradosTab() {
+  buildCerradoMonthOptions();
+  const sel = document.getElementById('cerrado-month-select');
+  const currentMonth = new Date().toISOString().slice(0,7);
+  const selectedMonth = sel ? sel.value : currentMonth;
+
+  function setEl(id, val) { const e = document.getElementById(id); if (e) e.textContent = val; }
+
+  // If no pipeline data yet, check localStorage snapshot
+  let deals = [];
+  if (Array.isArray(_pipeData) && _pipeData.length > 0) {
+    // Filter: Cerrado status AND cierre_date in selected month
+    deals = _pipeData.filter(r => {
+      if (r.status !== 'Cerrado') return false;
+      const d = r.cierre_date || '';
+      if (d) return d.startsWith(selectedMonth);
+      // No cierre_date: show under current month only
+      return selectedMonth === currentMonth;
+    });
+    // Auto-save snapshot for this month
+    if (deals.length > 0) saveCerradoSnapshot(selectedMonth, deals);
+  } else {
+    // Fallback: try localStorage snapshot
+    const snap = loadCerradoSnapshot(selectedMonth);
+    if (snap) deals = snap;
+  }
+
+  // Compute totals from live deals
+  let totalMRR = 0, totalACV = 0, totalImpl = 0;
+  for (const r of deals) {
+    totalMRR += parseFloat(r.mrr)||0;
+    totalACV += parseFloat(r.acv)||0;
+    totalImpl += parseFloat(r.implementaciones)||0;
+  }
+  const cnt = deals.length;
+
+  // Goal for current quarter (from localStorage)
+  const goals = loadGoals();
+  const mrrGoal = goals.mrr_mensual || 7000;
+  const mrrGoalPct = mrrGoal > 0 ? Math.round(totalMRR / mrrGoal * 100) : 0;
+
+  // Header sub
+  const d15 = new Date(selectedMonth + '-15');
+  const monthFmt = d15.toLocaleDateString('es-MX', {month:'long', year:'numeric'});
+  const monthLabel = monthFmt.charAt(0).toUpperCase() + monthFmt.slice(1);
+  setEl('cerrado-header-sub', cnt + ' cuenta' + (cnt!==1?'s':'') + ' cerrada' + (cnt!==1?'s':'') + ' · ' + monthLabel);
+
+  // KPI cards
+  setEl('ck-mrr',      '$' + totalMRR.toLocaleString());
+  setEl('ck-mrr-sub',  cnt + ' cuenta' + (cnt!==1?'s':'') + (selectedMonth===currentMonth?' · mes actual':' · historial'));
+  setEl('ck-mrr-delta', mrrGoalPct >= 100 ? '🏆 Meta $'+mrrGoal.toLocaleString()+' superada · '+mrrGoalPct+'%' : '→ '+mrrGoalPct+'% de meta $'+mrrGoal.toLocaleString());
+  setEl('ck-acv',      '$' + totalACV.toLocaleString());
+  setEl('ck-acv-sub',  'Valor anual combinado');
+  setEl('ck-acv-delta', cnt + ' cuenta' + (cnt!==1?'s':'') + ' cerrada' + (cnt!==1?'s':''));
+  setEl('ck-impl',     '$' + totalImpl.toLocaleString());
+  setEl('ck-impl-delta', totalImpl > 0 ? '↑ Setup + Onboarding' : 'Sin fees de implementación');
+
+  // Footer bar
+  setEl('cf-mrr',  '$' + totalMRR.toLocaleString() + ' / mes');
+  setEl('cf-impl', '$' + totalImpl.toLocaleString());
+  setEl('cf-acv',  '$' + totalACV.toLocaleString());
+  setEl('cf-meta-label', 'Meta $' + mrrGoal.toLocaleString() + ' MRR');
+  setEl('cf-meta-pct', mrrGoalPct + '%' + (mrrGoalPct >= 100 ? ' ✅' : ''));
+
+  // Tab badge (current month only)
+  if (selectedMonth === currentMonth) {
+    const badge = document.getElementById('cerrado-tab-badge');
+    if (badge) badge.textContent = mrrGoalPct + '%';
+  }
+
+  // Render account cards
+  const container = document.getElementById('cerrado-accounts-dynamic');
+  if (!container) return;
+
+  if (deals.length === 0) {
+    container.innerHTML = `<div style="padding:28px;text-align:center;color:var(--muted);font-size:13px;background:var(--card);border:1px solid var(--border);border-radius:12px;">
+      Sin cierres registrados para <strong>${monthLabel}</strong>.<br>
+      Verifica que los deals tengan <em>cierre_date</em> dentro del mes seleccionado.</div>`;
+    return;
+  }
+
+  const sorted = [...deals].sort((a,b) => (parseFloat(b.mrr)||0) - (parseFloat(a.mrr)||0));
+  const now = new Date();
+
+  container.innerHTML = sorted.map(r => {
+    const mrr  = parseFloat(r.mrr)||0;
+    const acv  = parseFloat(r.acv)||0;
+    const impl = parseFloat(r.implementaciones)||0;
+    const cierreLabel = r.cierre_date
+      ? new Date(r.cierre_date+'T12:00:00').toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'numeric'})
+      : '—';
+    const nt = r.next_touchpoint;
+    let ntLabel = '—', ntStyle = '';
+    if (nt) {
+      const diff = Math.round((new Date(nt+'T12:00:00') - now) / 86400000);
+      ntLabel = diff < 0 ? nt + ' ('+Math.abs(diff)+'d vencido)' : nt;
+      ntStyle = diff < 0 ? 'color:var(--red)' : '';
+    }
+    const ingreso = r.ingreso_lead;
+    const dias = ingreso ? Math.round((now - new Date(ingreso+'T12:00:00')) / 86400000) : null;
+    const isNew = r.created_at && r.created_at.slice(0,7) === currentMonth && selectedMonth === currentMonth;
+    const ownerFirst = (r.owner||'—').split(' ')[0];
+
+    return `<div class="account-card${isNew?' is-new':''}">
+      <div class="account-header" onclick="toggleAccount(this)">
+        <div style="font-size:20px">🏢</div>
+        <div class="account-name">${r.opportunity_name||'(sin nombre)'}${isNew?' <span class="tag-new" style="font-size:10px;padding:2px 7px">🏆 NUEVO</span>':''}</div>
+        <span class="status-badge sb-activacion">✅ Cerrado</span>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span class="owner-chip">${ownerFirst}</span>
+          <div style="text-align:right">
+            <div class="account-mrr">$${mrr.toLocaleString()}/mo</div>
+            <div style="font-size:10px;color:var(--muted)">$${acv>=1000?Math.round(acv/1000)+'K':acv} ACV</div>
+          </div>
+        </div>
+        <div class="account-chevron">▼</div>
+      </div>
+      <div class="account-detail">
+        <div class="detail-grid">
+          <div class="detail-item"><div class="detail-label">MRR Mensual</div><div class="detail-value" style="color:#16a34a">$${mrr.toLocaleString()}</div></div>
+          <div class="detail-item"><div class="detail-label">ACV Anual</div><div class="detail-value">$${acv.toLocaleString()}</div></div>
+          <div class="detail-item"><div class="detail-label">Fee Implementación</div><div class="detail-value" style="color:${impl?'#7c3aed':'var(--muted)'}">$${impl.toLocaleString()}${!impl?' (incluido)':''}</div></div>
+          <div class="detail-item"><div class="detail-label">Fecha Cierre</div><div class="detail-value">${cierreLabel}</div></div>
+          <div class="detail-item"><div class="detail-label">Próximo Toque</div><div class="detail-value" style="${ntStyle}">${ntLabel||'Sin registrar ⚠'}</div></div>
+          <div class="detail-item"><div class="detail-label">Vendedor</div><div class="detail-value">${r.owner||'—'}</div></div>
+          ${dias !== null ? '<div class="detail-item"><div class="detail-label">Días en Pipe</div><div class="detail-value" style="color:var(--orange)">'+dias+' días</div></div>' : ''}
+          ${r.estrategia ? '<div class="detail-item"><div class="detail-label">Canal</div><div class="detail-value">'+r.estrategia+'</div></div>' : ''}
+        </div>
+        ${r.notes ? '<div class="account-notes">📝 '+r.notes+'</div>' : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function saveCerradoSnapshot(month, deals) {
+  try {
+    const snap = deals.map(r => ({
+      id: r.id, opportunity_name: r.opportunity_name, mrr: r.mrr, acv: r.acv,
+      implementaciones: r.implementaciones, owner: r.owner, cierre_date: r.cierre_date,
+      next_touchpoint: r.next_touchpoint, status: r.status, created_at: r.created_at,
+      estrategia: r.estrategia, notes: r.notes, ingreso_lead: r.ingreso_lead
+    }));
+    localStorage.setItem('birdie_cerrado_snap_'+month, JSON.stringify({ deals: snap, savedAt: new Date().toISOString() }));
+  } catch(e) {}
+}
+
+function loadCerradoSnapshot(month) {
+  try {
+    const raw = localStorage.getItem('birdie_cerrado_snap_'+month);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed.deals || null;
+  } catch(e) { return null; }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Metas del Trimestre — goals stored in localStorage, progress from pipeline
+// ─────────────────────────────────────────────────────────────────────────────
+
+const GOALS_KEY = 'birdie_goals_v2';
+
+function loadGoals() {
+  try {
+    const raw = localStorage.getItem(GOALS_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch(e) { return {}; }
+}
+
+function saveGoals() {
+  const goals = {};
+  ['mrr_mensual','impl_mensual','leads_tri','discovery_tri','demo_tri','propuesta_tri'].forEach(k => {
+    const el = document.getElementById('goal-input-'+k);
+    if (el) goals[k] = parseFloat(el.value)||0;
+  });
+  try { localStorage.setItem(GOALS_KEY, JSON.stringify(goals)); } catch(e) {}
+  showToast('✅ Metas guardadas', 'ok');
+  renderMetasTab();
+}
+
+function buildMetasQuarterOptions() {
+  const sel = document.getElementById('metas-quarter-select');
+  if (!sel || sel.options.length > 0) return;
+  const now = new Date();
+  const year = now.getFullYear();
+  const q = Math.ceil((now.getMonth()+1)/3);
+  for (let i = 0; i < 4; i++) {
+    let qn = q - i; let yr = year;
+    if (qn < 1) { qn += 4; yr--; }
+    const opt = document.createElement('option');
+    opt.value = yr + '-Q' + qn;
+    opt.textContent = 'Q' + qn + ' ' + yr + (i===0?' (actual)':'');
+    if (i === 0) opt.selected = true;
+    sel.appendChild(opt);
+  }
+}
+
+function renderMetasTab() {
+  buildMetasQuarterOptions();
+  const goals = loadGoals();
+
+  // Actual values from pipeline
+  const d = Array.isArray(_pipeData) && _pipeData.length ? parseSupabaseData(_pipeData) : null;
+  const actMRR   = d ? d.cerradoMRR : 0;
+  const actImpl  = d ? d.cerradoImpl : 0;
+  const actLeads = d ? ((d.stageCounts['Calificado']||0)+(d.stageCounts['Active lead']||0)+(d.stageCounts['Active Lead']||0)) : 0;
+  const actDisc  = d ? (d.stageCounts['Discovery']||0) : 0;
+  const actDemo  = d ? (d.stageCounts['Demo']||0) : 0;
+  const actProp  = d ? (d.stageCounts['Propuesta']||0) : 0;
+
+  const METRICS = [
+    { key:'mrr_mensual',  label:'MRR Cerrado (mensual)', icon:'💰', actual:actMRR,  fmt: v=>'$'+v.toLocaleString(), color:'#16a34a', hint:'Meta de MRR nuevo cerrado por mes' },
+    { key:'impl_mensual', label:'Implementaciones (mensual)', icon:'🔧', actual:actImpl, fmt: v=>'$'+v.toLocaleString(), color:'#7c3aed', hint:'Meta de ingresos por setup/onboarding' },
+    { key:'leads_tri',    label:'Leads Calificados (trimestre)', icon:'🎯', actual:actLeads, fmt: v=>v.toString(), color:'#3b6ef8', hint:'Total de leads calificados en pipeline' },
+    { key:'discovery_tri',label:'Discoveries (trimestre)', icon:'🔭', actual:actDisc,  fmt: v=>v.toString(), color:'#6c4ef7', hint:'Deals que llegaron a etapa Discovery' },
+    { key:'demo_tri',     label:'Demos (trimestre)', icon:'📺', actual:actDemo,  fmt: v=>v.toString(), color:'#d97706', hint:'Demos realizados en el trimestre' },
+    { key:'propuesta_tri',label:'Propuestas Colocadas (trimestre)', icon:'📄', actual:actProp,  fmt: v=>v.toString(), color:'#dc2626', hint:'Propuestas enviadas a clientes' },
+  ];
+
+  const container = document.getElementById('metas-content');
+  if (!container) return;
+
+  container.innerHTML = `
+  <div class="grid-2" style="gap:16px;margin-bottom:20px">
+  ${METRICS.map(m => {
+    const goal = goals[m.key] || 0;
+    const pct  = goal > 0 ? Math.min(Math.round(m.actual / goal * 100), 100) : 0;
+    const over = goal > 0 && m.actual >= goal;
+    const barColor = over ? '#16a34a' : m.color;
+    return `<div class="card card-sm">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:18px">${m.icon}</span>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:var(--text)">${m.label}</div>
+            <div style="font-size:10px;color:var(--muted)">${m.hint}</div>
+          </div>
+        </div>
+        ${over ? '<span style="font-size:11px;background:#dcfce7;color:#15803d;border-radius:6px;padding:2px 8px;font-weight:700">🏆 META</span>' : ''}
+      </div>
+      <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:8px">
+        <span style="font-size:26px;font-weight:800;color:${m.color}">${m.fmt(m.actual)}</span>
+        <span style="font-size:13px;color:var(--muted)">/ ${goal ? m.fmt(goal) : '—'}</span>
+        ${goal ? '<span style="font-size:13px;font-weight:700;color:'+(over?'#16a34a':'var(--muted)')+'">'+pct+'%</span>' : ''}
+      </div>
+      <div style="background:#f3f4f6;border-radius:6px;height:8px;overflow:hidden;margin-bottom:10px">
+        <div style="height:100%;width:${pct}%;background:${barColor};border-radius:6px;transition:width 0.4s"></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <label style="font-size:11px;color:var(--muted);white-space:nowrap">Meta:</label>
+        <input id="goal-input-${m.key}" type="number" value="${goal||''}" placeholder="Establecer meta…"
+          style="flex:1;padding:5px 8px;border:1px solid var(--border);border-radius:7px;font-size:12px;min-width:0"
+          onkeydown="if(event.key==='Enter')saveGoals()">
+      </div>
+    </div>`;
+  }).join('')}
+  </div>
+  <div style="background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:14px 18px;font-size:12px;color:var(--muted)">
+    💡 Las metas de <strong>Leads, Discoveries, Demos y Propuestas</strong> muestran el total activo en pipeline ahora.
+    Las metas de <strong>MRR e Implementaciones</strong> se toman de los deals en etapa <em>Cerrado</em> del mes actual.
+    Presiona <strong>Enter</strong> en cualquier campo o usa el botón <em>Guardar Metas</em> para aplicar cambios.
+  </div>`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Plan Semanal — renders from live _pipeData
+// ─────────────────────────────────────────────────────────────────────────────
+function renderPlanSemanal() {
+  if (!Array.isArray(_pipeData) || _pipeData.length === 0) return;
+
+  const ACTIVE = new Set(['Weekly Hunt','Active Lead','Active lead','Calificado','Discovery','Demo','Propuesta','Close 2 close','Piloto','Cerrado']);
+  const now = new Date();
+  const todayStr = now.toISOString().slice(0,10); // YYYY-MM-DD
+  const in7days = new Date(now); in7days.setDate(in7days.getDate() + 7);
+  const in7Str  = in7days.toISOString().slice(0,10);
+  const ago7    = new Date(now); ago7.setDate(ago7.getDate() - 7);
+
+  // STAGE colors for plan items
+  const STAGE_CLR = {
+    'Close 2 close':'pt-red','Propuesta':'pt-green','Demo':'pt-blue','Discovery':'pt-blue',
+    'Calificado':'pt-yellow','Cerrado':'pt-green','Piloto':'pt-purple',
+    'Active Lead':'','Active lead':'','Weekly Hunt':''
+  };
+
+  function stageTag(s) { return `<span class="plan-tag ${STAGE_CLR[s]||''}" style="font-size:10px">${s}</span>`; }
+  function ownerTag(o) { return o ? `<span class="owner-tag">${o.split(' ')[0]}</span>` : ''; }
+  function fmtDateShort(d) {
+    if (!d) return '—';
+    const dt = new Date(d + 'T00:00:00');
+    return dt.toLocaleDateString('es-MX', {day:'numeric', month:'short'});
+  }
+  function diffDays(dateStr) {
+    const d = new Date(dateStr + 'T00:00:00');
+    return Math.round((d - now) / 86400000);
+  }
+  function acvChip(r) {
+    const v = parseFloat(r.acv)||0;
+    if (!v) return '';
+    return `<span class="plan-tag pt-green" style="font-size:10px">$${v.toLocaleString()} ACV</span>`;
+  }
+
+  const overdue = [], today = [], upcoming = [], newRecords = [];
+
+  for (const r of _pipeData) {
+    const nt = r.next_touchpoint;
+    const created = r.created_at ? r.created_at.slice(0,10) : null;
+
+    // New records (last 7 days, active stages)
+    if (created && created >= ago7.toISOString().slice(0,10) && ACTIVE.has(r.status||'')) {
+      newRecords.push(r);
+    }
+    if (!nt) continue;
+    const diff = diffDays(nt);
+    if (diff < 0) { overdue.push({r, diff}); }
+    else if (nt === todayStr) { today.push({r, diff}); }
+    else if (nt <= in7Str)   { upcoming.push({r, diff}); }
+  }
+
+  // Sort overdue by most overdue first, upcoming by soonest first
+  overdue.sort((a,b) => a.diff - b.diff);
+  upcoming.sort((a,b) => a.diff - b.diff);
+  newRecords.sort((a,b) => (b.created_at||'').localeCompare(a.created_at||''));
+
+  function planItem(r, diffDays) {
+    const isToday = diffDays === 0;
+    const isOverdue = diffDays < 0;
+    const urgencyTag = isToday
+      ? `<span class="plan-tag pt-red" style="font-size:10px">Hoy ✅</span>`
+      : isOverdue
+        ? `<span class="plan-tag pt-red" style="font-size:10px">🚨 ${Math.abs(diffDays)}d vencido</span>`
+        : `<span class="plan-tag" style="font-size:10px;background:#f3f4f6;color:#374151">${fmtDateShort(r.next_touchpoint)}</span>`;
+    const acv = parseFloat(r.acv)||0;
+    const estrategia = r.estrategia ? `<div style="font-size:11px;color:var(--muted);margin-top:2px">${r.estrategia}</div>` : '';
+    return `<div class="plan-item">
+      <div class="plan-check" onclick="this.classList.toggle('done')"></div>
+      <div class="plan-content">
+        <div class="plan-title">${r.opportunity_name||'(sin nombre)'} ${acv ? '— $'+acv.toLocaleString()+' ACV' : ''}</div>
+        ${estrategia}
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">Próximo toque: ${fmtDateShort(r.next_touchpoint)} · ${r.status}</div>
+        <div class="plan-meta">${stageTag(r.status||'')}${ownerTag(r.owner)}${urgencyTag}${acvChip(r)}</div>
+      </div>
+    </div>`;
+  }
+
+  // HOY column
+  const hoyEl = document.getElementById('plan-hoy-col');
+  if (hoyEl) {
+    if (today.length === 0) {
+      hoyEl.innerHTML = `<div style="padding:12px;color:var(--muted);font-size:12px;text-align:center">Sin touchpoints programados para hoy</div>`;
+    } else {
+      hoyEl.innerHTML = today.map(({r,diff}) => planItem(r, diff)).join('');
+    }
+  }
+
+  // SEMANA column
+  const semEl = document.getElementById('plan-semana-col');
+  const weekLabel = document.getElementById('plan-week-label');
+  if (semEl) {
+    const end7 = in7days.toLocaleDateString('es-MX', {day:'numeric', month:'short'});
+    if (weekLabel) weekLabel.textContent = `PRÓXIMOS 7 DÍAS · hasta ${end7}`;
+    if (upcoming.length === 0) {
+      semEl.innerHTML = `<div style="padding:12px;color:var(--muted);font-size:12px;text-align:center">Sin touchpoints programados esta semana</div>`;
+    } else {
+      semEl.innerHTML = upcoming.map(({r,diff}) => planItem(r, diff)).join('');
+    }
+  }
+
+  // OVERDUE list
+  const ovEl = document.getElementById('plan-overdue-list');
+  if (ovEl) {
+    if (overdue.length === 0) {
+      ovEl.innerHTML = `<div style="padding:12px;color:#16a34a;font-size:12px">✅ Sin toques vencidos</div>`;
+    } else {
+      // Show top 10 overdue sorted by ACV desc within same urgency
+      const top = overdue.slice(0,15);
+      ovEl.innerHTML = top.map(({r,diff}) => {
+        const acv = parseFloat(r.acv)||0;
+        const dotCls = diff <= -3 ? 'rd-red' : 'rd-orange';
+        return `<div class="risk-row" style="cursor:pointer" onclick="switchTab('deals',null)">
+          <div class="risk-dot ${dotCls}"></div>
+          <div style="flex:1;min-width:0">
+            <div class="risk-deal">${r.opportunity_name||'—'}</div>
+            <div class="risk-reason">${fmtDateShort(r.next_touchpoint)} · ${r.status} · ${Math.abs(diff)}d vencido · ${r.owner||'—'}</div>
+          </div>
+          <div class="risk-acv-val" style="color:${diff <= -3 ? 'var(--red)' : 'var(--orange)'}">${acv ? '$'+Math.round(acv/1000)+'K' : '—'}</div>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  // NUEVOS column
+  const newEl = document.getElementById('plan-nuevos-col');
+  if (newEl) {
+    if (newRecords.length === 0) {
+      newEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">Sin registros nuevos en los últimos 7 días</div>`;
+    } else {
+      newEl.innerHTML = `<div style="font-size:12px;color:var(--muted);margin-bottom:8px">${newRecords.length} nuevo${newRecords.length!==1?'s':''} en los últimos 7 días</div>` +
+        newRecords.slice(0,15).map(r => {
+          return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;background:var(--bg2);border-radius:7px;margin-bottom:4px">
+            <span style="font-size:12px;font-weight:600">${r.opportunity_name||'—'}</span>
+            <div style="display:flex;gap:4px;align-items:center">
+              <span style="font-size:10px;color:var(--muted)">${fmtDateShort(r.created_at ? r.created_at.slice(0,10) : null)}</span>
+              ${stageTag(r.status||'')}
+            </div>
+          </div>`;
+        }).join('');
+    }
+  }
+
+  // Banner
+  const banner = document.getElementById('plan-semanal-banner');
+  if (banner) {
+    const todayFmt = now.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    const todayFmtCap = todayFmt.charAt(0).toUpperCase() + todayFmt.slice(1);
+    const overdueUrgent = overdue.filter(x => x.diff <= -3).length;
+    banner.innerHTML = `📅 <strong>${todayFmtCap}</strong> · ${today.length} touchpoint${today.length!==1?'s':''} HOY · ${upcoming.length} próximos 7 días · <span style="color:#dc2626;font-weight:700">${overdue.length} overdue${overdueUrgent ? ' ('+overdueUrgent+' críticos)' : ''}</span>`;
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
