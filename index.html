@@ -3388,8 +3388,26 @@ function renderDashboard(d) {
 
 function buildCerradoMonthOptions() {
   const sel = document.getElementById('cerrado-month-select');
-  if (!sel || sel.options.length > 0) return;
+  if (!sel) return;
+  // Always rebuild so auto-select can pick the right default based on live data
+  const currentMonth = new Date().toISOString().slice(0,7);
   const now = new Date();
+
+  // Find the most recent month that has Cerrado data (to auto-select it)
+  let bestMonth = currentMonth;
+  if (Array.isArray(_pipeData) && _pipeData.length > 0) {
+    const allCerrado = _pipeData.filter(r => r.status === 'Cerrado');
+    if (allCerrado.length > 0) {
+      const months = allCerrado
+        .map(r => (r.cierre_date || r.updated_at || r.created_at || '').slice(0, 7))
+        .filter(Boolean)
+        .sort();
+      if (months.length) bestMonth = months[months.length - 1]; // most recent
+    }
+  }
+
+  // Rebuild options (clear first so selector always reflects freshest data)
+  sel.innerHTML = '';
   for (let i = 0; i < 13; i++) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const val = d.toISOString().slice(0,7);
@@ -3397,8 +3415,8 @@ function buildCerradoMonthOptions() {
     const label = raw.charAt(0).toUpperCase() + raw.slice(1);
     const opt = document.createElement('option');
     opt.value = val;
-    opt.textContent = i === 0 ? label + ' (actual)' : label;
-    if (i === 0) opt.selected = true;
+    opt.textContent = val === currentMonth ? label + ' (actual)' : label;
+    opt.selected = (val === bestMonth);
     sel.appendChild(opt);
   }
 }
@@ -3607,22 +3625,65 @@ function renderMetasTab() {
   buildMetasQuarterOptions();
   const goals = loadGoals();
 
-  // Actual values from pipeline
-  const d = Array.isArray(_pipeData) && _pipeData.length ? parseSupabaseData(_pipeData) : null;
-  const actMRR   = d ? d.cerradoMRR : 0;
-  const actImpl  = d ? d.cerradoImpl : 0;
-  const actLeads = d ? ((d.stageCounts['Calificado']||0)+(d.stageCounts['Active lead']||0)+(d.stageCounts['Active Lead']||0)) : 0;
-  const actDisc  = d ? (d.stageCounts['Discovery']||0) : 0;
-  const actDemo  = d ? (d.stageCounts['Demo']||0) : 0;
-  const actProp  = d ? (d.stageCounts['Propuesta']||0) : 0;
+  // Parse selected quarter → date range (YYYY-MM-DD)
+  const sel = document.getElementById('metas-quarter-select');
+  const qVal = sel ? sel.value : '';           // e.g. "2026-Q2"
+  const [qYear, qTag] = qVal.split('-Q');
+  const qn = parseInt(qTag) || Math.ceil((new Date().getMonth()+1)/3);
+  const yr = parseInt(qYear) || new Date().getFullYear();
+  const qStartMonth = (qn-1)*3 + 1;           // Q2 → 4
+  const qStart = `${yr}-${String(qStartMonth).padStart(2,'0')}-01`;
+  const qEndMonth = qn*3;                      // Q2 → 6
+  const qEndDay = new Date(yr, qEndMonth, 0).getDate(); // last day of month
+  const qEnd = `${yr}-${String(qEndMonth).padStart(2,'0')}-${qEndDay}`;
+
+  // MRR + Impl: filter Cerrado deals whose close date falls within the quarter
+  // Uses same priority as renderCerradosTab: cierre_date → updated_at → created_at
+  let actMRR = 0, actImpl = 0;
+  if (Array.isArray(_pipeData)) {
+    for (const r of _pipeData) {
+      if (r.status !== 'Cerrado') continue;
+      const dateStr = (r.cierre_date || r.updated_at || r.created_at || '').slice(0, 10);
+      if (dateStr >= qStart && dateStr <= qEnd) {
+        actMRR  += parseFloat(r.mrr)||0;
+        actImpl += parseFloat(r.implementaciones)||0;
+      }
+    }
+  }
+
+  // Activity metrics (Leads, Discovery, Demo, Propuesta):
+  // Use kpi_logs filtered by date within the quarter (most accurate for tracking activity)
+  // Fall back to current pipeline snapshot if logs are empty
+  let actLeads = 0, actDisc = 0, actDemo = 0, actProp = 0;
+  const logs = Array.isArray(_kpiLogs) ? _kpiLogs : [];
+  const logsInQ = logs.filter(l => {
+    const d = (l.date || l.created_at || '').slice(0,10);
+    return d >= qStart && d <= qEnd;
+  });
+  if (logsInQ.length > 0) {
+    actLeads = logsInQ.filter(l => l.type === 'lead'      || l.type === 'Calificado').length;
+    actDisc  = logsInQ.filter(l => l.type === 'discovery' || l.type === 'Discovery').length;
+    actDemo  = logsInQ.filter(l => l.type === 'demo'      || l.type === 'Demo').length;
+    actProp  = logsInQ.filter(l => l.type === 'propuesta' || l.type === 'Propuesta').length;
+  } else {
+    // Fallback: pipeline snapshot (current stage counts — not quarter-filtered)
+    const d = Array.isArray(_pipeData) && _pipeData.length ? parseSupabaseData(_pipeData) : null;
+    actLeads = d ? ((d.stageCounts['Calificado']||0)+(d.stageCounts['Active lead']||0)+(d.stageCounts['Active Lead']||0)) : 0;
+    actDisc  = d ? (d.stageCounts['Discovery']||0) : 0;
+    actDemo  = d ? (d.stageCounts['Demo']||0) : 0;
+    actProp  = d ? (d.stageCounts['Propuesta']||0) : 0;
+  }
+
+  // Quarter label for display
+  const qLabel = `Q${qn} ${yr} (${new Date(yr, qStartMonth-1, 1).toLocaleDateString('es-MX',{month:'short'})}–${new Date(yr,qEndMonth-1,1).toLocaleDateString('es-MX',{month:'short'})})`;
 
   const METRICS = [
-    { key:'mrr_mensual',  label:'MRR Cerrado (mensual)', icon:'💰', actual:actMRR,  fmt: v=>'$'+v.toLocaleString(), color:'#16a34a', hint:'Meta de MRR nuevo cerrado por mes' },
-    { key:'impl_mensual', label:'Implementaciones (mensual)', icon:'🔧', actual:actImpl, fmt: v=>'$'+v.toLocaleString(), color:'#7c3aed', hint:'Meta de ingresos por setup/onboarding' },
-    { key:'leads_tri',    label:'Leads Calificados (trimestre)', icon:'🎯', actual:actLeads, fmt: v=>v.toString(), color:'#3b6ef8', hint:'Total de leads calificados en pipeline' },
-    { key:'discovery_tri',label:'Discoveries (trimestre)', icon:'🔭', actual:actDisc,  fmt: v=>v.toString(), color:'#6c4ef7', hint:'Deals que llegaron a etapa Discovery' },
-    { key:'demo_tri',     label:'Demos (trimestre)', icon:'📺', actual:actDemo,  fmt: v=>v.toString(), color:'#d97706', hint:'Demos realizados en el trimestre' },
-    { key:'propuesta_tri',label:'Propuestas Colocadas (trimestre)', icon:'📄', actual:actProp,  fmt: v=>v.toString(), color:'#dc2626', hint:'Propuestas enviadas a clientes' },
+    { key:'mrr_mensual',  label:'MRR Cerrado · '+qLabel, icon:'💰', actual:actMRR,  fmt: v=>'$'+v.toLocaleString(), color:'#16a34a', hint:'Deals cerrados en el trimestre seleccionado' },
+    { key:'impl_mensual', label:'Implementaciones · '+qLabel, icon:'🔧', actual:actImpl, fmt: v=>'$'+v.toLocaleString(), color:'#7c3aed', hint:'Setup/onboarding facturado en el trimestre' },
+    { key:'leads_tri',    label:'Leads Calificados · '+qLabel, icon:'🎯', actual:actLeads, fmt: v=>v.toString(), color:'#3b6ef8', hint:'Leads registrados en KPI log del trimestre' },
+    { key:'discovery_tri',label:'Discoveries · '+qLabel, icon:'🔭', actual:actDisc,  fmt: v=>v.toString(), color:'#6c4ef7', hint:'Discoveries registrados en KPI log del trimestre' },
+    { key:'demo_tri',     label:'Demos · '+qLabel, icon:'📺', actual:actDemo,  fmt: v=>v.toString(), color:'#d97706', hint:'Demos registrados en KPI log del trimestre' },
+    { key:'propuesta_tri',label:'Propuestas · '+qLabel, icon:'📄', actual:actProp,  fmt: v=>v.toString(), color:'#dc2626', hint:'Propuestas registradas en KPI log del trimestre' },
   ];
 
   const container = document.getElementById('metas-content');
