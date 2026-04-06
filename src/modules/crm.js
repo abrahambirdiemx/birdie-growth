@@ -3,6 +3,8 @@ import { showToast } from './utils.js';
 
 let _crmData     = [];  // shared CRM state (loaded from Supabase)
 let _crmFiltered = [];
+let crmSortKey   = 'n';
+let crmSortAsc   = true;
 
 const ST_BADGE = {
   'Lead':        'st-badge st-lead',
