@@ -431,8 +431,6 @@ function pipeExport() {
 const CRM_KEY  = 'birdie_crm_v1';
 const CRM_PAGE_SIZE = 50;
 let crmPage    = 1;
-let crmSortKey = 'n';
-let crmSortAsc = true;
 
 export { pipeLoad, pipeRender, pipeUpdateField, pipeSave, pipeDeleteCurrent,
          pipeSort, pipeGoPage, pipeNewDeal, pipeOpenEdit, pipeToggleGroup,
