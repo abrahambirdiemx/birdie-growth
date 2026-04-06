@@ -23,7 +23,10 @@ function parseSupabaseData(data) {
 
     if (status==='Cerrado') {
       const impl = parseFloat(r.implementaciones)||0;
-      cerradoMRR+=mrr; cerradoACV+=acv; cerradoImpl+=impl;
+      const cierreMonth = (r.cierre_date||'').slice(0,7);
+      if (cierreMonth === today) {
+        cerradoMRR+=mrr; cerradoACV+=acv; cerradoImpl+=impl;
+      }
       cerradoAccounts.push({ name:r.opportunity_name||'(sin nombre)', mrr, acv, impl, owner:r.owner||'—', nextT:r.next_touchpoint||null, dias:r.ingreso_lead?daysBetween(r.ingreso_lead):null, cierre:r.cierre_date||null });
     }
     if (status==='Cliente') {
