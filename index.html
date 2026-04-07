@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Birdie — Growth Dashboard · Marzo 2026</title>
+<title>Birdie — Growth Dashboard</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
   :root {
@@ -845,7 +845,7 @@
   </div>
 
   <!-- Funnel + Metas -->
-  <div class="section-title" style="margin-top:18px">Embudo & Metas de Marzo</div>
+  <div class="section-title" style="margin-top:18px" id="funnel-section-title">Embudo & Metas del Mes</div>
   <div class="grid-2-1">
     <div class="card">
       <div class="card-title" id="funnel-title">Embudo · Actualizado <span id="funnel-date">…</span></div>
@@ -899,42 +899,12 @@
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-title">Metas Marzo · Progreso</div>
-      <div class="goal-item">
-        <div class="goal-header"><div class="goal-label">Leads Calificados</div><div class="goal-nums"><span id="g-calificado">87</span> / 150</div></div>
-        <div class="progress-track"><div class="progress-fill fill-blue" id="gf-calificado" style="width:58%"></div></div>
-        <div style="font-size:10px;color:var(--muted);margin-top:3px" id="gs-calificado">58% · +7 esta semana · faltan 63</div>
-      </div>
-      <div class="goal-item">
-        <div class="goal-header"><div class="goal-label">Discovery</div><div class="goal-nums"><span id="g-discovery">20</span> / 50</div></div>
-        <div class="progress-track"><div class="progress-fill fill-purple" id="gf-discovery" style="width:40%"></div></div>
-        <div style="font-size:10px;color:var(--muted);margin-top:3px" id="gs-discovery">40% · +2 esta semana · faltan 30</div>
-      </div>
-      <div class="goal-item">
-        <div class="goal-header"><div class="goal-label">Demos</div><div class="goal-nums"><span id="g-demo">9</span> / 25</div></div>
-        <div class="progress-track"><div class="progress-fill fill-yellow" id="gf-demo" style="width:36%"></div></div>
-        <div style="font-size:10px;color:var(--muted);margin-top:3px" id="gs-demo">36% · faltan 16</div>
-      </div>
-      <div class="goal-item">
-        <div class="goal-header"><div class="goal-label">Propuestas</div><div class="goal-nums"><span id="g-propuesta">10</span> / 25</div></div>
-        <div class="progress-track"><div class="progress-fill fill-red" id="gf-propuesta" style="width:40%"></div></div>
-        <div style="font-size:10px;color:var(--muted);margin-top:3px" id="gs-propuesta">40% · faltan 15</div>
-      </div>
-      <div class="goal-item">
-        <div class="goal-header"><div class="goal-label">🎯 Nuevo MRR Cerrado</div><div class="goal-nums"><span id="g-mrr">$9,310</span> / $7,000</div></div>
-        <div class="progress-track"><div class="progress-fill fill-green" id="gf-mrr" style="width:100%"></div></div>
-        <div style="font-size:10px;color:var(--green-text);margin-top:3px;font-weight:700" id="gs-mrr">✅ META SUPERADA · 133%</div>
-      </div>
-      <div style="margin-top:14px;background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #bbf7d0;border-radius:10px;padding:12px 14px;">
-        <div style="font-size:10px;font-weight:700;color:#15803d;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">🏆 Lamex + STULZ cerraron esta semana</div>
-        <div style="font-size:18px;font-weight:800;color:#15803d">+$1,750/mo nuevos <span style="font-size:11px;font-weight:600">en 4 días</span></div>
-        <div style="font-size:10px;color:#16a34a;margin-top:2px">Total acumulado: $9,310/mo confirmados</div>
-      </div>
+    <div class="card" id="dashboard-goals-card">
+      <div style="color:var(--muted);font-size:12px;padding:20px;text-align:center">Cargando metas…</div>
     </div>
   </div>
 
-  <!-- Charts -->
+  <!-- Charts row 1 -->
   <div class="grid-2">
     <div class="card">
       <div class="card-title">ACV por Etapa (actualizado)</div>
@@ -946,8 +916,21 @@
     </div>
   </div>
 
+  <!-- Canal / Estrategia distribution chart -->
+  <div class="section-title" style="margin-top:18px">📡 Distribución por Canal / Estrategia</div>
+  <div class="card" style="padding:20px">
+    <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start">
+      <div style="flex:1;min-width:320px">
+        <div style="height:260px;position:relative"><canvas id="chartCanal"></canvas></div>
+      </div>
+      <div style="flex:1;min-width:260px" id="canal-stage-breakdown">
+        <div style="color:var(--muted);font-size:12px">Cargando…</div>
+      </div>
+    </div>
+  </div>
+
   <!-- Top Deals -->
-  <div class="section-title">Top Deals · Estado Actual 20 Mar</div>
+  <div class="section-title" id="top-deals-title">Top Deals · Estado Actual</div>
   <div class="card">
     <div class="table-wrap">
       <table class="deals-table">
@@ -3099,12 +3082,16 @@ function parseSupabaseData(data) {
   const ACTIVE = new Set(['Weekly Hunt','Active Lead','Active lead','Calificado','Discovery','Demo','Propuesta','Close 2 close','Piloto']);
   const stageCounts = {}, stageACV = {};
   let totalACV=0, totalMRR=0, cerradoMRR=0, cerradoACV=0, cerradoImpl=0;
+  // Month-scoped cerrado totals (current calendar month only)
+  let cerradoMRRMonth=0, cerradoACVMonth=0, cerradoImplMonth=0, cerradoCountMonth=0;
   let clienteMRR=0, clienteACV=0, clienteCount=0;
   let activeCount=0;
   const cerradoAccounts=[], clienteAccounts=[];
   // projected MRR by month: { 'YYYY-MM': { mrr, deals:[] } }
   const projectedByMonth = {};
-  const today = new Date().toISOString().slice(0,7); // YYYY-MM
+  // canal/estrategia breakdown: { canal: { stageName: count } }
+  const canalByStage = {};
+  const currentMonth = new Date().toISOString().slice(0,7); // YYYY-MM
 
   for (const r of data) {
     const status = r.status||'';
@@ -3115,9 +3102,21 @@ function parseSupabaseData(data) {
     stageACV[status] = (stageACV[status]||0)+acv;
     if (ACTIVE.has(status)) { activeCount++; totalACV+=acv; totalMRR+=mrr; }
 
+    // Canal breakdown (all non-empty estrategia)
+    const canal = (r.estrategia||'').trim();
+    if (canal) {
+      if (!canalByStage[canal]) canalByStage[canal] = {};
+      canalByStage[canal][status] = (canalByStage[canal][status]||0)+1;
+    }
+
     if (status==='Cerrado') {
       const impl = parseFloat(r.implementaciones)||0;
       cerradoMRR+=mrr; cerradoACV+=acv; cerradoImpl+=impl;
+      // Month-scoped: use same priority chain as renderCerradosTab
+      const dealMonth = (r.cierre_date || r.updated_at || r.created_at || '').slice(0,7);
+      if (dealMonth === currentMonth) {
+        cerradoMRRMonth+=mrr; cerradoACVMonth+=acv; cerradoImplMonth+=impl; cerradoCountMonth++;
+      }
       cerradoAccounts.push({ name:r.opportunity_name||'(sin nombre)', mrr, acv, impl, owner:r.owner||'—', nextT:r.next_touchpoint||null, dias:r.ingreso_lead?daysBetween(r.ingreso_lead):null, cierre:r.cierre_date||null });
     }
     if (status==='Cliente') {
@@ -3127,7 +3126,7 @@ function parseSupabaseData(data) {
     // Projected MRR: deals with a future cierre_date and mrr
     if (mrr > 0 && r.cierre_date) {
       const cMonth = r.cierre_date.slice(0,7);
-      if (cMonth >= today) {
+      if (cMonth >= currentMonth) {
         const prob = (r.probability ?? STAGE_PROB[status] ?? 50) / 100;
         if (!projectedByMonth[cMonth]) projectedByMonth[cMonth] = { projMRR:0, deals:[] };
         projectedByMonth[cMonth].projMRR += mrr * prob;
@@ -3140,10 +3139,11 @@ function parseSupabaseData(data) {
     total: data.length, activeCount,
     totalACV, totalMRR,
     cerradoMRR, cerradoACV, cerradoImpl,
+    cerradoMRRMonth, cerradoACVMonth, cerradoImplMonth, cerradoCountMonth,
     clienteMRR, clienteACV, clienteCount, clienteAccounts,
     stageCounts, stageACV,
     cerradoAccounts: cerradoAccounts.sort((a,b)=>b.mrr-a.mrr),
-    projectedByMonth,
+    projectedByMonth, canalByStage,
   };
 }
 
@@ -3156,13 +3156,22 @@ function fmtMRR(n) { return '$' + n.toLocaleString() + '/mo'; }
 
 function renderDashboard(d) {
   // ── KPIs — todos los 4 cards
-  const cerradoCnt = d.stageCounts['Cerrado'] || 0;
   const _goals = loadGoals();
   const _mrrGoal = _goals.mrr_mensual || 7000;
-  const mrrGoalPct = _mrrGoal > 0 ? Math.round(d.cerradoMRR / _mrrGoal * 100) : 0;
+  // MRR Confirmado: current month only
+  const mrrMonth = d.cerradoMRRMonth || 0;
+  const mrrMonthCount = d.cerradoCountMonth || 0;
+  const mrrGoalPct = _mrrGoal > 0 ? Math.round(mrrMonth / _mrrGoal * 100) : 0;
 
   function setEl(id, val) { const e = document.getElementById(id); if (e) e.textContent = val; }
   function setClass(id, cls) { const e = document.getElementById(id); if (e) { e.className = 'stat-delta ' + cls; } }
+
+  // Current month label for section titles
+  const now = new Date();
+  const mesLabel = now.toLocaleDateString('es-MX', {month:'long', year:'numeric'});
+  const mesLabelCap = mesLabel.charAt(0).toUpperCase() + mesLabel.slice(1);
+  const secTitle = document.getElementById('funnel-section-title');
+  if (secTitle) secTitle.textContent = 'Embudo & Metas · ' + mesLabelCap;
 
   // ACV Total
   setEl('kpi-acv',       fmt$(d.totalACV));
@@ -3182,38 +3191,65 @@ function renderDashboard(d) {
   setEl('kpi-activos-delta', '📊 ' + Object.keys(d.stageCounts).length + ' etapas · última sync ahora');
   setClass('kpi-activos-delta', 'delta-new');
 
-  // MRR Confirmado (Dashboard tab KPI)
-  setEl('kpi-mrr-confirmed',       '$' + d.cerradoMRR.toLocaleString());
-  setEl('kpi-mrr-confirmed-sub',   '/mes · ' + cerradoCnt + ' cuenta' + (cerradoCnt !== 1 ? 's' : '') + ' cerrada' + (cerradoCnt !== 1 ? 's' : ''));
+  // MRR Confirmado (Dashboard KPI) — current month only
+  setEl('kpi-mrr-confirmed',       '$' + mrrMonth.toLocaleString());
+  setEl('kpi-mrr-confirmed-sub',   '/mes · ' + mrrMonthCount + ' cuenta' + (mrrMonthCount !== 1 ? 's' : '') + ' · ' + mesLabelCap);
   setEl('kpi-mrr-confirmed-delta', mrrGoalPct >= 100 ? '🏆 META SUPERADA · '+mrrGoalPct+'%' : '→ '+mrrGoalPct+'% de meta $'+_mrrGoal.toLocaleString());
   setClass('kpi-mrr-confirmed-delta', mrrGoalPct >= 100 ? 'delta-ok' : 'delta-warn');
 
-  // Tab badge (Cerrados & MRR) — updated from dashboard KPI source of truth
+  // Tab badge (Cerrados & MRR) — uses current-month %
   const tabBadge = document.getElementById('cerrado-tab-badge');
   if (tabBadge) tabBadge.textContent = mrrGoalPct + '%';
-  // Note: ck-* and cf-* elements are now owned by renderCerradosTab() for month-filtered accuracy
 
-  // ── Goals (Metas de Marzo)
-  // Las metas miden avance acumulado del mes, no el snapshot actual por etapa.
-  // Solo se actualiza el MRR confirmado (dato exacto desde Cerrado).
-  // Los conteos de leads/discovery/demo/propuesta se deben actualizar manualmente
-  // desde la pestaña KPIs → Registro de Actividad.
-  const mrrPct = Math.min(mrrGoalPct, 999);
-  const gMrr = document.getElementById('g-mrr');
-  const gfMrr = document.getElementById('gf-mrr');
-  const gsMrr = document.getElementById('gs-mrr');
-  const gGoalEl = document.querySelector('.goal-item .goal-nums span+span');  // goal denominator
-  if (gMrr) gMrr.textContent = '$' + d.cerradoMRR.toLocaleString();
-  // Update goal denominator label in existing Metas card
-  const mrrGoalNums = document.querySelector('#g-mrr')?.closest('.goal-header')?.querySelector('.goal-nums');
-  if (mrrGoalNums) mrrGoalNums.innerHTML = '<span id="g-mrr">$'+d.cerradoMRR.toLocaleString()+'</span> / $'+_mrrGoal.toLocaleString();
-  if (gfMrr) gfMrr.style.width = Math.min(mrrPct, 100) + '%';
-  if (gsMrr) {
-    gsMrr.textContent = mrrPct >= 100
-      ? '✅ META SUPERADA · ' + mrrPct + '% · ' + cerradoCnt + ' cuentas'
-      : mrrPct + '% · ' + cerradoCnt + ' cuentas · faltan $' + Math.max(_mrrGoal - d.cerradoMRR, 0).toLocaleString();
-    gsMrr.style.color = mrrPct >= 100 ? 'var(--green-text)' : '';
-    gsMrr.style.fontWeight = mrrPct >= 100 ? '700' : '';
+  // ── Dynamic Goals Card (current month pipeline snapshot)
+  const goalsCard = document.getElementById('dashboard-goals-card');
+  if (goalsCard) {
+    const sc = d.stageCounts || {};
+    const activeLead  = (sc['Active Lead']||0) + (sc['Active lead']||0);
+    const calificados = sc['Calificado'] || 0;
+    const discoveries = sc['Discovery'] || 0;
+    const demos       = sc['Demo'] || 0;
+    const propuestas  = sc['Propuesta'] || 0;
+    const mrrPct      = Math.min(mrrGoalPct, 100);
+
+    const goalAL   = _goals.leads_tri      || 0;
+    const goalDisc = _goals.discovery_tri  || 0;
+    const goalDemo = _goals.demo_tri       || 0;
+    const goalProp = _goals.propuesta_tri  || 0;
+
+    function goalRow(label, actual, goal, fillCls, fmtFn) {
+      fmtFn = fmtFn || (v => v);
+      const pct = goal > 0 ? Math.min(Math.round(actual/goal*100), 100) : null;
+      return `<div class="goal-item">
+        <div class="goal-header">
+          <div class="goal-label">${label}</div>
+          <div class="goal-nums">${fmtFn(actual)}${goal?' / '+fmtFn(goal):''}</div>
+        </div>
+        <div class="progress-track"><div class="progress-fill ${fillCls}" style="width:${pct||0}%"></div></div>
+        <div style="font-size:10px;color:var(--muted);margin-top:3px">${pct!=null?pct+'%'+(!goal?' (sin meta)':''):''} ${goal&&actual>=goal?'✅':''}</div>
+      </div>`;
+    }
+
+    goalsCard.innerHTML = `
+      <div class="card-title">Metas · ${mesLabelCap}</div>
+      ${goalRow('🎯 Active Leads en Pipeline', activeLead, goalAL, 'fill-blue')}
+      ${goalRow('🔭 Discovery', discoveries, goalDisc, 'fill-purple')}
+      ${goalRow('💻 Demos', demos, goalDemo, 'fill-yellow')}
+      ${goalRow('📄 Propuestas', propuestas, goalProp, 'fill-red')}
+      <div class="goal-item">
+        <div class="goal-header">
+          <div class="goal-label">💰 MRR Cerrado · ${mesLabelCap}</div>
+          <div class="goal-nums">$${mrrMonth.toLocaleString()} / $${_mrrGoal.toLocaleString()}</div>
+        </div>
+        <div class="progress-track"><div class="progress-fill fill-green" style="width:${mrrPct}%"></div></div>
+        <div style="font-size:10px;color:${mrrGoalPct>=100?'var(--green-text)':'var(--muted)'};margin-top:3px;font-weight:${mrrGoalPct>=100?700:400}" id="gs-mrr">
+          ${mrrGoalPct>=100?'✅ META SUPERADA · '+mrrGoalPct+'%':mrrGoalPct+'% · faltan $'+Math.max(_mrrGoal-mrrMonth,0).toLocaleString()}
+        </div>
+      </div>
+      <div style="margin-top:12px;font-size:10px;color:var(--muted);background:var(--bg2);border-radius:8px;padding:8px 10px;line-height:1.5">
+        💡 Active Leads, Discovery, Demos y Propuestas muestran el snapshot actual del pipeline.
+        MRR Cerrado filtra solo cierres del mes en curso.
+      </div>`;
   }
 
   // ── Funnel rows
@@ -3348,13 +3384,86 @@ function renderDashboard(d) {
     }
   }
 
+  // ── Canal / Estrategia chart
+  (function renderCanalChart() {
+    const cbs = d.canalByStage || {};
+    const canales = Object.keys(cbs).sort();
+    if (canales.length === 0) {
+      const bd = document.getElementById('canal-stage-breakdown');
+      if (bd) bd.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:10px 0">Sin datos de canal registrados en el pipeline todavía.</div>';
+      return;
+    }
+
+    // Active stages only (exclude Weekly Hunt clutter if desired — include all for now)
+    const STAGE_COLORS_CANAL = {
+      'Active Lead':'#2563eb','Active lead':'#2563eb','Calificado':'#3b6ef8',
+      'Discovery':'#7c3aed','Demo':'#5b21b6','Propuesta':'#c2410c',
+      'Close 2 close':'#15803d','Cerrado':'#1d4ed8','Piloto':'#4338ca',
+      'Cliente':'#d97706','Weekly Hunt':'#94a3b8',
+    };
+
+    // Compute totals per canal
+    const canalTotals = canales.map(c => {
+      const stages = cbs[c];
+      return { canal:c, total: Object.values(stages).reduce((s,v)=>s+v,0), stages };
+    }).sort((a,b) => b.total - a.total);
+
+    // Doughnut: deals per canal
+    const ctx = document.getElementById('chartCanal');
+    if (ctx) {
+      if (window._chartCanalInst) { window._chartCanalInst.destroy(); }
+      const PALETTE = ['#3b6ef8','#6c4ef7','#16a34a','#d97706','#dc2626','#0891b2','#7c3aed','#059669','#b45309','#64748b'];
+      window._chartCanalInst = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: canalTotals.map(c => c.canal),
+          datasets: [{
+            data: canalTotals.map(c => c.total),
+            backgroundColor: PALETTE.slice(0, canalTotals.length),
+            borderColor: '#ffffff', borderWidth: 3, hoverOffset: 8,
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'right', labels: { color:'#1e2235', font:{size:11}, padding:10,
+              generateLabels: ch => ch.data.labels.map((l,i)=>({
+                text: l + '  ' + ch.data.datasets[0].data[i],
+                fillStyle: ch.data.datasets[0].backgroundColor[i], strokeStyle:'#fff', lineWidth:2, index:i
+              }))
+            }},
+            tooltip: { callbacks: { label: c => ` ${c.label}: ${c.raw} deals` } }
+          }
+        }
+      });
+    }
+
+    // Right panel: stage breakdown per canal
+    const bd = document.getElementById('canal-stage-breakdown');
+    if (bd) {
+      bd.innerHTML = `<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Etapas por Canal</div>` +
+      canalTotals.map(c => {
+        const stageRows = Object.entries(c.stages)
+          .sort((a,b)=>b[1]-a[1])
+          .map(([s,n]) => {
+            const clr = STAGE_COLORS_CANAL[s] || '#64748b';
+            return `<span style="display:inline-flex;align-items:center;gap:3px;background:${clr}18;color:${clr};border:1px solid ${clr}30;border-radius:8px;padding:1px 7px;font-size:10px;font-weight:700;margin:1px">${s} <span style="background:${clr};color:#fff;border-radius:6px;padding:0 4px">${n}</span></span>`;
+          }).join('');
+        return `<div style="margin-bottom:10px">
+          <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px">${c.canal} <span style="color:var(--muted);font-weight:400">${c.total} deals</span></div>
+          <div style="display:flex;flex-wrap:wrap;gap:2px">${stageRows}</div>
+        </div>`;
+      }).join('');
+    }
+  })();
+
   // ── Live banner — update stats from real data
   (function updateBanner() {
     function setB(id, txt) { const e = document.getElementById(id); if (e) e.textContent = txt; }
     const cerradoCntB = d.stageCounts['Cerrado'] || 0;
     const calCnt      = d.stageCounts['Calificado'] || 0;
     const c2cCnt      = d.stageCounts['Close 2 close'] || 0;
-    setB('banner-mrr',        'MRR confirmado: $' + d.cerradoMRR.toLocaleString() + '/mo');
+    setB('banner-mrr',        'MRR confirmado: $' + mrrMonth.toLocaleString() + '/mo · ' + mesLabelCap);
     setB('banner-registros',  'Total registros: ' + d.total);
     setB('banner-activos',    'Activos: ' + d.activeCount);
     setB('banner-calificados','Calificados: ' + calCnt);
@@ -3389,24 +3498,27 @@ function renderDashboard(d) {
 function buildCerradoMonthOptions() {
   const sel = document.getElementById('cerrado-month-select');
   if (!sel) return;
-  // Always rebuild so auto-select can pick the right default based on live data
   const currentMonth = new Date().toISOString().slice(0,7);
   const now = new Date();
 
-  // Find the most recent month that has Cerrado data (to auto-select it)
+  // Preserve current user selection (empty string on first load)
+  const prevValue = sel.value;
+
+  // Auto-detect best default ONLY when no selection exists yet
   let bestMonth = currentMonth;
-  if (Array.isArray(_pipeData) && _pipeData.length > 0) {
-    const allCerrado = _pipeData.filter(r => r.status === 'Cerrado');
-    if (allCerrado.length > 0) {
-      const months = allCerrado
-        .map(r => (r.cierre_date || r.updated_at || r.created_at || '').slice(0, 7))
-        .filter(Boolean)
-        .sort();
-      if (months.length) bestMonth = months[months.length - 1]; // most recent
+  if (!prevValue) {
+    if (Array.isArray(_pipeData) && _pipeData.length > 0) {
+      const allCerrado = _pipeData.filter(r => r.status === 'Cerrado');
+      if (allCerrado.length > 0) {
+        const months = allCerrado
+          .map(r => (r.cierre_date || r.updated_at || r.created_at || '').slice(0, 7))
+          .filter(Boolean).sort();
+        if (months.length) bestMonth = months[months.length - 1];
+      }
     }
   }
 
-  // Rebuild options (clear first so selector always reflects freshest data)
+  // Rebuild options list
   sel.innerHTML = '';
   for (let i = 0; i < 13; i++) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
@@ -3416,8 +3528,14 @@ function buildCerradoMonthOptions() {
     const opt = document.createElement('option');
     opt.value = val;
     opt.textContent = val === currentMonth ? label + ' (actual)' : label;
-    opt.selected = (val === bestMonth);
     sel.appendChild(opt);
+  }
+
+  // Restore user selection if still valid; otherwise use bestMonth
+  if (prevValue && [...sel.options].some(o => o.value === prevValue)) {
+    sel.value = prevValue;
+  } else {
+    sel.value = bestMonth;
   }
 }
 
@@ -3461,21 +3579,25 @@ function renderCerradosTab() {
   }
   const cnt = deals.length;
 
-  // Goal for current quarter (from localStorage)
+  // Meta: only show goal comparison for the CURRENT month
+  // Historical months just show actuals (no goal %)
+  const isCurrentMonth = selectedMonth === currentMonth;
   const goals = loadGoals();
   const mrrGoal = goals.mrr_mensual || 7000;
-  const mrrGoalPct = mrrGoal > 0 ? Math.round(totalMRR / mrrGoal * 100) : 0;
+  const mrrGoalPct = (isCurrentMonth && mrrGoal > 0) ? Math.round(totalMRR / mrrGoal * 100) : null;
 
-  // Header sub
+  // Month label
   const d15 = new Date(selectedMonth + '-15');
   const monthFmt = d15.toLocaleDateString('es-MX', {month:'long', year:'numeric'});
   const monthLabel = monthFmt.charAt(0).toUpperCase() + monthFmt.slice(1);
-  setEl('cerrado-header-sub', cnt + ' cuenta' + (cnt!==1?'s':'') + ' cerrada' + (cnt!==1?'s':'') + ' · ' + monthLabel);
+  setEl('cerrado-header-sub', cnt + ' cuenta' + (cnt!==1?'s':'') + ' cerrada' + (cnt!==1?'s':'') + ' · ' + monthLabel + (isCurrentMonth?' (mes actual)':' · historial'));
 
   // KPI cards
   setEl('ck-mrr',      '$' + totalMRR.toLocaleString());
-  setEl('ck-mrr-sub',  cnt + ' cuenta' + (cnt!==1?'s':'') + (selectedMonth===currentMonth?' · mes actual':' · historial'));
-  setEl('ck-mrr-delta', mrrGoalPct >= 100 ? '🏆 Meta $'+mrrGoal.toLocaleString()+' superada · '+mrrGoalPct+'%' : '→ '+mrrGoalPct+'% de meta $'+mrrGoal.toLocaleString());
+  setEl('ck-mrr-sub',  cnt + ' cuenta' + (cnt!==1?'s':'') + (isCurrentMonth?' · mes actual':' · historial'));
+  setEl('ck-mrr-delta', isCurrentMonth
+    ? (mrrGoalPct >= 100 ? '🏆 Meta $'+mrrGoal.toLocaleString()+' superada · '+mrrGoalPct+'%' : '→ '+mrrGoalPct+'% de meta $'+mrrGoal.toLocaleString())
+    : '📋 Historial — ' + monthLabel);
   setEl('ck-acv',      '$' + totalACV.toLocaleString());
   setEl('ck-acv-sub',  'Valor anual combinado');
   setEl('ck-acv-delta', cnt + ' cuenta' + (cnt!==1?'s':'') + ' cerrada' + (cnt!==1?'s':''));
@@ -3486,11 +3608,16 @@ function renderCerradosTab() {
   setEl('ckf-mrr',  '$' + totalMRR.toLocaleString() + ' / mes');
   setEl('ckf-impl', '$' + totalImpl.toLocaleString());
   setEl('ckf-acv',  '$' + totalACV.toLocaleString());
-  setEl('ckf-meta-label', 'Meta $' + mrrGoal.toLocaleString() + ' MRR');
-  setEl('ckf-meta-pct', mrrGoalPct + '%' + (mrrGoalPct >= 100 ? ' ✅' : ''));
+  if (isCurrentMonth) {
+    setEl('ckf-meta-label', 'Meta $' + mrrGoal.toLocaleString() + ' MRR');
+    setEl('ckf-meta-pct', mrrGoalPct + '%' + (mrrGoalPct >= 100 ? ' ✅' : ''));
+  } else {
+    setEl('ckf-meta-label', monthLabel);
+    setEl('ckf-meta-pct', '📋 Historial');
+  }
 
   // Tab badge (current month only)
-  if (selectedMonth === currentMonth) {
+  if (isCurrentMonth && mrrGoalPct !== null) {
     const badge = document.getElementById('cerrado-tab-badge');
     if (badge) badge.textContent = mrrGoalPct + '%';
   }
@@ -3651,27 +3778,18 @@ function renderMetasTab() {
     }
   }
 
-  // Activity metrics (Leads, Discovery, Demo, Propuesta):
-  // Use kpi_logs filtered by date within the quarter (most accurate for tracking activity)
-  // Fall back to current pipeline snapshot if logs are empty
+  // Activity metrics from current pipeline snapshot:
+  // Active Leads = deals currently in 'Active Lead' / 'Active lead' stage
+  // Discovery, Demo, Propuesta = current stage counts
   let actLeads = 0, actDisc = 0, actDemo = 0, actProp = 0;
-  const logs = Array.isArray(_kpiLogs) ? _kpiLogs : [];
-  const logsInQ = logs.filter(l => {
-    const d = (l.date || l.created_at || '').slice(0,10);
-    return d >= qStart && d <= qEnd;
-  });
-  if (logsInQ.length > 0) {
-    actLeads = logsInQ.filter(l => l.type === 'lead'      || l.type === 'Calificado').length;
-    actDisc  = logsInQ.filter(l => l.type === 'discovery' || l.type === 'Discovery').length;
-    actDemo  = logsInQ.filter(l => l.type === 'demo'      || l.type === 'Demo').length;
-    actProp  = logsInQ.filter(l => l.type === 'propuesta' || l.type === 'Propuesta').length;
-  } else {
-    // Fallback: pipeline snapshot (current stage counts — not quarter-filtered)
-    const d = Array.isArray(_pipeData) && _pipeData.length ? parseSupabaseData(_pipeData) : null;
-    actLeads = d ? ((d.stageCounts['Calificado']||0)+(d.stageCounts['Active lead']||0)+(d.stageCounts['Active Lead']||0)) : 0;
-    actDisc  = d ? (d.stageCounts['Discovery']||0) : 0;
-    actDemo  = d ? (d.stageCounts['Demo']||0) : 0;
-    actProp  = d ? (d.stageCounts['Propuesta']||0) : 0;
+  if (Array.isArray(_pipeData) && _pipeData.length > 0) {
+    for (const r of _pipeData) {
+      const st = r.status || '';
+      if (st === 'Active Lead' || st === 'Active lead') actLeads++;
+      if (st === 'Discovery') actDisc++;
+      if (st === 'Demo')      actDemo++;
+      if (st === 'Propuesta') actProp++;
+    }
   }
 
   // Quarter label for display
@@ -3680,10 +3798,10 @@ function renderMetasTab() {
   const METRICS = [
     { key:'mrr_mensual',  label:'MRR Cerrado · '+qLabel, icon:'💰', actual:actMRR,  fmt: v=>'$'+v.toLocaleString(), color:'#16a34a', hint:'Deals cerrados en el trimestre seleccionado' },
     { key:'impl_mensual', label:'Implementaciones · '+qLabel, icon:'🔧', actual:actImpl, fmt: v=>'$'+v.toLocaleString(), color:'#7c3aed', hint:'Setup/onboarding facturado en el trimestre' },
-    { key:'leads_tri',    label:'Leads Calificados · '+qLabel, icon:'🎯', actual:actLeads, fmt: v=>v.toString(), color:'#3b6ef8', hint:'Leads registrados en KPI log del trimestre' },
-    { key:'discovery_tri',label:'Discoveries · '+qLabel, icon:'🔭', actual:actDisc,  fmt: v=>v.toString(), color:'#6c4ef7', hint:'Discoveries registrados en KPI log del trimestre' },
-    { key:'demo_tri',     label:'Demos · '+qLabel, icon:'📺', actual:actDemo,  fmt: v=>v.toString(), color:'#d97706', hint:'Demos registrados en KPI log del trimestre' },
-    { key:'propuesta_tri',label:'Propuestas · '+qLabel, icon:'📄', actual:actProp,  fmt: v=>v.toString(), color:'#dc2626', hint:'Propuestas registradas en KPI log del trimestre' },
+    { key:'leads_tri',    label:'Active Leads · Pipeline actual', icon:'🎯', actual:actLeads, fmt: v=>v.toString(), color:'#3b6ef8', hint:'Deals en etapa Active Lead en el pipeline ahora' },
+    { key:'discovery_tri',label:'Discoveries · Pipeline actual', icon:'🔭', actual:actDisc,  fmt: v=>v.toString(), color:'#6c4ef7', hint:'Deals en etapa Discovery en el pipeline ahora' },
+    { key:'demo_tri',     label:'Demos · Pipeline actual', icon:'📺', actual:actDemo,  fmt: v=>v.toString(), color:'#d97706', hint:'Deals en etapa Demo en el pipeline ahora' },
+    { key:'propuesta_tri',label:'Propuestas · Pipeline actual', icon:'📄', actual:actProp,  fmt: v=>v.toString(), color:'#dc2626', hint:'Deals en etapa Propuesta en el pipeline ahora' },
   ];
 
   const container = document.getElementById('metas-content');
@@ -3725,8 +3843,8 @@ function renderMetasTab() {
   }).join('')}
   </div>
   <div style="background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:14px 18px;font-size:12px;color:var(--muted)">
-    💡 Las metas de <strong>Leads, Discoveries, Demos y Propuestas</strong> muestran el total activo en pipeline ahora.
-    Las metas de <strong>MRR e Implementaciones</strong> se toman de los deals en etapa <em>Cerrado</em> del mes actual.
+    💡 <strong>Active Leads, Discoveries, Demos y Propuestas</strong> muestran el snapshot actual del pipeline (no acumulado histórico).
+    <strong>MRR e Implementaciones</strong> se calculan de deals cerrados dentro del trimestre seleccionado.
     Presiona <strong>Enter</strong> en cualquier campo o usa el botón <em>Guardar Metas</em> para aplicar cambios.
   </div>`;
 }
