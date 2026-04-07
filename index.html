@@ -3482,7 +3482,6 @@ function renderDashboard(d) {
   })();
 
   // ── Topbar + footer
-  const now = new Date();
   const timeStr = now.toLocaleTimeString('es-MX', {hour:'2-digit',minute:'2-digit'});
   const dateStr = now.toLocaleDateString('es-MX', {weekday:'long',day:'numeric',month:'long',year:'numeric'});
   // topbar-sub is managed by startLiveClock() — updates every minute automatically
