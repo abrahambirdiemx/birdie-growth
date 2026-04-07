@@ -3387,26 +3387,34 @@ function renderDashboard(d) {
   // ── Canal / Estrategia chart
   (function renderCanalChart() {
     const cbs = d.canalByStage || {};
-    const canales = Object.keys(cbs).sort();
-    if (canales.length === 0) {
-      const bd = document.getElementById('canal-stage-breakdown');
-      if (bd) bd.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:10px 0">Sin datos de canal registrados en el pipeline todavía.</div>';
-      return;
-    }
 
-    // Active stages only (exclude Weekly Hunt clutter if desired — include all for now)
+    // Only show these stages in the chart
+    const ALLOWED_STAGES = new Set(['Active Lead','Active lead','Discovery','Demo','Propuesta','Cerrado','Piloto','Cliente']);
+
     const STAGE_COLORS_CANAL = {
-      'Active Lead':'#2563eb','Active lead':'#2563eb','Calificado':'#3b6ef8',
+      'Active Lead':'#2563eb','Active lead':'#2563eb',
       'Discovery':'#7c3aed','Demo':'#5b21b6','Propuesta':'#c2410c',
-      'Close 2 close':'#15803d','Cerrado':'#1d4ed8','Piloto':'#4338ca',
-      'Cliente':'#d97706','Weekly Hunt':'#94a3b8',
+      'Cerrado':'#1d4ed8','Piloto':'#4338ca','Cliente':'#d97706',
     };
 
-    // Compute totals per canal
-    const canalTotals = canales.map(c => {
-      const stages = cbs[c];
-      return { canal:c, total: Object.values(stages).reduce((s,v)=>s+v,0), stages };
-    }).sort((a,b) => b.total - a.total);
+    // Filter each canal's stage map to only allowed stages, then compute totals
+    const canalTotals = Object.keys(cbs)
+      .map(canal => {
+        const filteredStages = {};
+        for (const [s, n] of Object.entries(cbs[canal])) {
+          if (ALLOWED_STAGES.has(s)) filteredStages[s] = n;
+        }
+        const total = Object.values(filteredStages).reduce((s,v)=>s+v,0);
+        return { canal, total, stages: filteredStages };
+      })
+      .filter(c => c.total > 0)           // drop canales with 0 relevant deals
+      .sort((a,b) => b.total - a.total);
+
+    if (canalTotals.length === 0) {
+      const bd = document.getElementById('canal-stage-breakdown');
+      if (bd) bd.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:10px 0">Sin datos de canal en las etapas seleccionadas.</div>';
+      return;
+    }
 
     // Doughnut: deals per canal
     const ctx = document.getElementById('chartCanal');
@@ -3450,7 +3458,7 @@ function renderDashboard(d) {
             return `<span style="display:inline-flex;align-items:center;gap:3px;background:${clr}18;color:${clr};border:1px solid ${clr}30;border-radius:8px;padding:1px 7px;font-size:10px;font-weight:700;margin:1px">${s} <span style="background:${clr};color:#fff;border-radius:6px;padding:0 4px">${n}</span></span>`;
           }).join('');
         return `<div style="margin-bottom:10px">
-          <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px">${c.canal} <span style="color:var(--muted);font-weight:400">${c.total} deals</span></div>
+          <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px">${c.canal} <span style="color:var(--muted);font-weight:400">${c.total} deal${c.total!==1?'s':''}</span></div>
           <div style="display:flex;flex-wrap:wrap;gap:2px">${stageRows}</div>
         </div>`;
       }).join('');
