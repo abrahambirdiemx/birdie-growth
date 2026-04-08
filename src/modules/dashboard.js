@@ -16,13 +16,13 @@ function parseSupabaseData(data) {
     const status = r.status||'';
     if (!status) continue;
     stageCounts[status] = (stageCounts[status]||0)+1;
-    const acv  = parseFloat(r.acv)||0;
-    const mrr  = parseFloat(r.mrr)||0;
+    const acv  = parsePipeMoney(r.acv);
+    const mrr  = parsePipeMoney(r.mrr);
     stageACV[status] = (stageACV[status]||0)+acv;
     if (ACTIVE.has(status)) { activeCount++; totalACV+=acv; totalMRR+=mrr; }
 
     if (status==='Cerrado') {
-      const impl = parseFloat(r.implementaciones)||0;
+      const impl = parsePipeMoney(r.implementaciones);
       const cierreMonth = (r.cierre_date||'').slice(0,7);
       cerradoMRR+=mrr; cerradoACV+=acv; cerradoImpl+=impl;
       if (cierreMonth === today) {
