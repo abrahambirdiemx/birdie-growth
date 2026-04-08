@@ -269,4 +269,5 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 export { crmLoad, crmRender, crmSave, crmDeleteId, crmDeleteCurrent,
-         crmGet, crmNextId, crmOpenEdit, crmExportCSV, crmSort, crmGoPage };
+         crmGet, crmNextId, crmOpenEdit, crmExportCSV, crmSort, crmGoPage,
+         crmCloseModal };

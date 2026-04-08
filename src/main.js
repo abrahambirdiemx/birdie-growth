@@ -1,22 +1,72 @@
 // ── Birdie Growth Dashboard — Entry Point
 import './styles/main.css';
 import { checkSession, doLogin, doLogout, refreshToken } from './modules/auth.js';
-import { pipeLoad, pipeRender, setPipeChangeCb }         from './modules/pipeline.js';
-import { crmLoad, crmRender }                            from './modules/crm.js';
-import { kpiLogsLoad, renderKPITab, updateGoalsFromLogs } from './modules/kpi.js';
-import { renderDashboard, parseSupabaseData }            from './modules/dashboard.js';
+import { pipeLoad, pipeRender, setPipeChangeCb,
+         pipeUpdateField, pipeSave, pipeDeleteCurrent, pipeSort, pipeGoPage,
+         pipeNewDeal, pipeOpenEdit, pipeToggleGroup, pipeToggleStageCollapse,
+         pipeStatusChange, pipeSaveCierreMonth, promptDateEvent, saveDateEvent,
+         pipeExport, crmDealSearch, crmDealSelect }      from './modules/pipeline.js';
+import { crmLoad, crmRender, crmSort, crmGoPage, crmOpenEdit,
+         crmSave, crmDeleteCurrent, crmCloseModal, crmExportCSV } from './modules/crm.js';
+import { kpiLogsLoad, renderKPITab, updateGoalsFromLogs,
+         setActType, submitLogEntry, deleteLogEntry,
+         clearLogForm, exportKPILog, addCard }           from './modules/kpi.js';
+import { renderDashboard, parseSupabaseData, showProjDeals } from './modules/dashboard.js';
 import { showToast, debounce }                           from './modules/utils.js';
 import { sbFetch }                                       from './api/supabase.js';
 
 // Wire dashboard refresh to pipeline data changes
 setPipeChangeCb(data => renderDashboard(parseSupabaseData(data)));
 
+// ── UI utility functions (used by inline HTML onclick handlers)
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  const tab = document.getElementById('tab-' + id);
+  if (tab) tab.classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+function openModal(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.add('open');
+}
+function closeModal(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.remove('open');
+}
+function toggleAccount(header) {
+  const detail = header.nextElementSibling;
+  if (!detail) return;
+  detail.classList.toggle('open');
+  const chevron = header.querySelector('.account-chevron');
+  if (chevron) chevron.textContent = detail.classList.contains('open') ? '▲' : '▼';
+}
+const pipeRenderDebounced = debounce(pipeRender, 200);
+
 // ── Expose globals needed by inline HTML onclick handlers
 // (In Vite these are module-scoped; we expose on window for compatibility
 //  until the HTML templates are fully componentized)
 Object.assign(window, {
-  doLogin, doLogout, pipeLoad, pipeRender, crmLoad, crmRender,
-  kpiLogsLoad, renderKPITab, updateGoalsFromLogs, renderDashboard,
+  // Auth
+  doLogin, doLogout,
+  // UI utilities
+  switchTab, openModal, closeModal, toggleAccount,
+  // Pipeline
+  pipeLoad, pipeRender, pipeRenderDebounced,
+  pipeUpdateField, pipeSave, pipeDeleteCurrent, pipeSort, pipeGoPage,
+  pipeNewDeal, pipeOpenEdit, pipeToggleGroup, pipeToggleStageCollapse,
+  pipeStatusChange, pipeSaveCierreMonth, promptDateEvent, saveDateEvent,
+  pipeExport, crmDealSearch, crmDealSelect,
+  // CRM
+  crmLoad, crmRender, crmSort, crmGoPage, crmOpenEdit,
+  crmSave, crmDeleteCurrent, crmCloseModal, crmExportCSV,
+  // KPI
+  kpiLogsLoad, renderKPITab, updateGoalsFromLogs,
+  setActType, submitLogEntry, deleteLogEntry,
+  clearLogForm, exportKPILog, addCard,
+  // Dashboard
+  renderDashboard, showProjDeals,
+  // Utils
   showToast, debounce,
 });
 
@@ -62,7 +112,7 @@ function startAutoSync(ms = 30_000) {
   _syncTimer = setInterval(async () => {
     try {
       const [pipe, crm, kpi] = await Promise.all([
-        sbFetch('GET', `pipeline?select=id,opportunity_name,status,mrr,acv,owner,cierre_date,probability,ingreso_lead,discovery_date,demo_date,proposal_date,next_touchpoint,estrategia,size,notes,created_at,updated_at&order=created_at.desc&limit=2000`),
+        sbFetch('GET', `pipeline?select=*&order=created_at.desc&limit=2000`),
         sbFetch('GET', `crm?select=id,n,r,st,ind,e,sz,c,p,em,tel,mrr,acv,notes,created_at&order=created_at.desc&limit=5000`),
         sbFetch('GET', `kpi_logs?select=id,date,seller,type,company,canal,acv,mrr,impl,notes,created_at&order=created_at.desc&limit=2000`),
       ]);

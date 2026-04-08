@@ -1,6 +1,7 @@
 import { sbFetch } from '../api/supabase.js';
 import { showToast, fmtMonth, parsePipeMoney, debounce } from './utils.js';
 import { STAGE_COLORS, STAGE_ORDER_LIST, STAGE_PROB, ACTIVE_STAGES, DATE_TRIGGER, DATE_LABELS, MONTH_NAMES_ES } from './config.js';
+import { crmGet } from './crm.js';
 
 // ─── PIPELINE (Supabase) ─────────────────────────────────────────────────
 let _pipeData    = [];
@@ -22,7 +23,7 @@ async function pipeLoad() {
   const btn = document.getElementById('syncBtn');
   if (btn) { btn.classList.add('syncing'); btn.textContent='⏳ Sync'; }
   try {
-    const data = await sbFetch('GET','pipeline?select=id,opportunity_name,status,mrr,acv,owner,cierre_date,probability,ingreso_lead,discovery_date,demo_date,proposal_date,next_touchpoint,estrategia,size,notes,created_at,updated_at&order=created_at.desc&limit=2000');
+    const data = await sbFetch('GET','pipeline?select=*&order=created_at.desc&limit=2000');
     _pipeData = Array.isArray(data) ? data : [];
     const _syncTime = new Date().toLocaleTimeString('es-MX', {hour:'2-digit', minute:'2-digit'});
     window._lastSyncLabel = _syncTime;
@@ -362,7 +363,6 @@ async function pipeSave() {
   const owner = document.getElementById('pf-owner-f').value;
   if (!name)  { showToast('⚠ Ingresa el nombre del deal','err'); return; }
   if (!owner) { showToast('⚠ Selecciona un owner','err'); return; }
-  if (!SB_URL){ showToast('Conecta Supabase primero','err'); return; }
   const editId = parseInt(document.getElementById('pipe-edit-id').value)||0;
   const rec = {
     opportunity_name: name,
@@ -435,4 +435,4 @@ let crmPage    = 1;
 export { pipeLoad, pipeRender, pipeUpdateField, pipeSave, pipeDeleteCurrent,
          pipeSort, pipeGoPage, pipeNewDeal, pipeOpenEdit, pipeToggleGroup,
          pipeToggleStageCollapse, pipeStatusChange, pipeSaveCierreMonth,
-         promptDateEvent, saveDateEvent };
+         promptDateEvent, saveDateEvent, pipeExport, crmDealSearch, crmDealSelect };

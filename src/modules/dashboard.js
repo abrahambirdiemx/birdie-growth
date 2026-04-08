@@ -4,7 +4,7 @@ import { fmt$, fmtMonth, parsePipeMoney, daysBetween } from './utils.js';
 function parseSupabaseData(data) {
   const ACTIVE = new Set(['Weekly Hunt','Active Lead','Active lead','Calificado','Discovery','Demo','Propuesta','Close 2 close','Piloto']);
   const stageCounts = {}, stageACV = {};
-  let totalACV=0, totalMRR=0, cerradoMRR=0, cerradoACV=0, cerradoImpl=0;
+  let totalACV=0, totalMRR=0, cerradoMRR=0, cerradoMRRThisMonth=0, cerradoACV=0, cerradoImpl=0;
   let clienteMRR=0, clienteACV=0, clienteCount=0;
   let activeCount=0;
   const cerradoAccounts=[], clienteAccounts=[];
@@ -24,8 +24,9 @@ function parseSupabaseData(data) {
     if (status==='Cerrado') {
       const impl = parseFloat(r.implementaciones)||0;
       const cierreMonth = (r.cierre_date||'').slice(0,7);
+      cerradoMRR+=mrr; cerradoACV+=acv; cerradoImpl+=impl;
       if (cierreMonth === today) {
-        cerradoMRR+=mrr; cerradoACV+=acv; cerradoImpl+=impl;
+        cerradoMRRThisMonth+=mrr;
       }
       cerradoAccounts.push({ name:r.opportunity_name||'(sin nombre)', mrr, acv, impl, owner:r.owner||'—', nextT:r.next_touchpoint||null, dias:r.ingreso_lead?daysBetween(r.ingreso_lead):null, cierre:r.cierre_date||null });
     }
@@ -48,7 +49,7 @@ function parseSupabaseData(data) {
   return {
     total: data.length, activeCount,
     totalACV, totalMRR,
-    cerradoMRR, cerradoACV, cerradoImpl,
+    cerradoMRR, cerradoMRRThisMonth, cerradoACV, cerradoImpl,
     clienteMRR, clienteACV, clienteCount, clienteAccounts,
     stageCounts, stageACV,
     cerradoAccounts: cerradoAccounts.sort((a,b)=>b.mrr-a.mrr),
@@ -59,7 +60,7 @@ function parseSupabaseData(data) {
 function renderDashboard(d) {
   // ── KPIs — todos los 4 cards
   const cerradoCnt = d.stageCounts['Cerrado'] || 0;
-  const mrrGoalPct = Math.round(d.cerradoMRR / 7000 * 100);
+  const mrrGoalPct = Math.round(d.cerradoMRRThisMonth / 7000 * 100);
 
   function setEl(id, val) { const e = document.getElementById(id); if (e) e.textContent = val; }
   function setClass(id, cls) { const e = document.getElementById(id); if (e) { e.className = 'stat-delta ' + cls; } }
@@ -85,25 +86,25 @@ function renderDashboard(d) {
   // MRR Confirmado
   setEl('kpi-mrr-confirmed',       '$' + d.cerradoMRR.toLocaleString());
   setEl('kpi-mrr-confirmed-sub',   '/mes · ' + cerradoCnt + ' cuenta' + (cerradoCnt !== 1 ? 's' : '') + ' cerrada' + (cerradoCnt !== 1 ? 's' : ''));
-  setEl('kpi-mrr-confirmed-delta', mrrGoalPct >= 100 ? '🏆 META SUPERADA · ' + mrrGoalPct + '%' : '→ ' + mrrGoalPct + '% de meta $7K');
-  setClass('kpi-mrr-confirmed-delta', mrrGoalPct >= 100 ? 'delta-ok' : 'delta-warn');
+  setEl('kpi-mrr-confirmed-delta', d.cerradoMRRThisMonth > 0 ? '🏆 +$' + d.cerradoMRRThisMonth.toLocaleString() + ' nuevos este mes' : 'Acumulado · sin cierres este mes');
+  setClass('kpi-mrr-confirmed-delta', d.cerradoMRRThisMonth > 0 ? 'delta-ok' : 'delta-new');
 
   // ── Goals (Metas de Marzo)
   // Las metas miden avance acumulado del mes, no el snapshot actual por etapa.
   // Solo se actualiza el MRR confirmado (dato exacto desde Cerrado).
   // Los conteos de leads/discovery/demo/propuesta se deben actualizar manualmente
   // desde la pestaña KPIs → Registro de Actividad.
-  const mrrPct = Math.min(Math.round(d.cerradoMRR / 7000 * 100), 133);
+  const mrrPct = Math.min(Math.round(d.cerradoMRRThisMonth / 7000 * 100), 133);
   const gMrr = document.getElementById('g-mrr');
   const gfMrr = document.getElementById('gf-mrr');
   const gsMrr = document.getElementById('gs-mrr');
-  if (gMrr) gMrr.textContent = '$' + d.cerradoMRR.toLocaleString();
+  if (gMrr) gMrr.textContent = '$' + d.cerradoMRRThisMonth.toLocaleString();
   if (gfMrr) gfMrr.style.width = Math.min(mrrPct, 100) + '%';
   if (gsMrr) {
     const cerradoCnt = d.stageCounts['Cerrado'] || 0;
     gsMrr.textContent = mrrPct >= 100
       ? '✅ META SUPERADA · ' + mrrPct + '% · ' + cerradoCnt + ' cuentas'
-      : mrrPct + '% · ' + cerradoCnt + ' cuentas · faltan $' + Math.max(7000 - d.cerradoMRR, 0).toLocaleString();
+      : mrrPct + '% · ' + cerradoCnt + ' cuentas · faltan $' + Math.max(7000 - d.cerradoMRRThisMonth, 0).toLocaleString();
     gsMrr.style.color = mrrPct >= 100 ? 'var(--green-text)' : '';
     gsMrr.style.fontWeight = mrrPct >= 100 ? '700' : '';
   }
@@ -144,7 +145,7 @@ function renderDashboard(d) {
   const ck = document.getElementById('cerrado-kpis');
   if (ck) {
     const cerradoCnt = d.stageCounts['Cerrado'] || 0;
-    const mrrGoalPct = Math.round(d.cerradoMRR / 7000 * 100);
+    const mrrGoalPct = Math.round(d.cerradoMRRThisMonth / 7000 * 100);
     ck.innerHTML = `
       <div class="cerrado-kpi green">
         <div class="cerrado-kpi-value">$${d.cerradoMRR.toLocaleString()}</div>
