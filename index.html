@@ -1961,7 +1961,7 @@ function startAutoSync(intervalMs = 60000) {
   if (_autoSyncTimer) clearInterval(_autoSyncTimer);
   _autoSyncTimer = setInterval(async () => {
     try {
-      const data = await sbFetch('GET','pipeline?select=id,opportunity_name,status,mrr,acv,owner,cierre_date,probability,ingreso_lead,discovery_date,demo_date,proposal_date,next_touchpoint,estrategia,size,notes,created_at,updated_at&order=created_at.desc&limit=2000');
+      const data = await sbFetch('GET','pipeline?select=id,opportunity_name,status,mrr,acv,implementaciones,owner,cierre_date,probability,ingreso_lead,discovery_date,demo_date,proposal_date,next_touchpoint,estrategia,size,notes,created_at,updated_at&order=created_at.desc&limit=2000');
       _pipeData = Array.isArray(data) ? data : [];
       pipeRender();
       renderDashboard(parseSupabaseData(_pipeData));
@@ -2041,7 +2041,7 @@ async function pipeLoad() {
   const btn = document.getElementById('syncBtn');
   if (btn) { btn.classList.add('syncing'); btn.textContent='⏳ Sync'; }
   try {
-    const data = await sbFetch('GET','pipeline?select=id,opportunity_name,status,mrr,acv,owner,cierre_date,probability,ingreso_lead,discovery_date,demo_date,proposal_date,next_touchpoint,estrategia,size,notes,created_at,updated_at&order=created_at.desc&limit=2000');
+    const data = await sbFetch('GET','pipeline?select=id,opportunity_name,status,mrr,acv,implementaciones,owner,cierre_date,probability,ingreso_lead,discovery_date,demo_date,proposal_date,next_touchpoint,estrategia,size,notes,created_at,updated_at&order=created_at.desc&limit=2000');
     _pipeData = Array.isArray(data) ? data : [];
     const _syncTime = new Date().toLocaleTimeString('es-MX', {hour:'2-digit', minute:'2-digit'});
     window._lastSyncLabel = _syncTime;
