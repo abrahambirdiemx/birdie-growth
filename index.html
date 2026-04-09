@@ -1402,6 +1402,7 @@
           <th class="col-status"onclick="pipeSort('status')">Etapa ↕</th>
           <th class="col-mrr"   onclick="pipeSort('mrr')">MRR ↕</th>
           <th class="col-acv"   onclick="pipeSort('acv')">ACV ↕</th>
+          <th style="width:80px" onclick="pipeSort('implementaciones')">Impl. ↕</th>
           <th class="col-date">Ingreso Lead</th>
           <th class="col-date" style="color:#7c3aed">Discovery</th>
           <th class="col-date" style="color:#5b21b6">Demo</th>
@@ -1415,7 +1416,7 @@
         </tr>
       </thead>
       <tbody id="pipe-tbody">
-        <tr><td colspan="16" style="text-align:center;padding:40px;color:var(--muted)">Conecta Supabase para ver el pipeline en vivo →</td></tr>
+        <tr><td colspan="17" style="text-align:center;padding:40px;color:var(--muted)">Conecta Supabase para ver el pipeline en vivo →</td></tr>
       </tbody>
     </table>
     <div class="pipe-pagination" id="pipe-pagination"></div>
@@ -1474,12 +1475,13 @@
             <option>Cliente</option><option>Cool Off</option><option>Churn</option>
           </select></div>
         <div class="crm-field"><label>Canal / Estrategia</label>
-          <select id="pf-canal-f">
-            <option value="">—</option><option>Cold Calling</option><option>Paid Ads</option>
+          <input type="text" id="pf-canal-f" list="canal-datalist-options" placeholder="Selecciona o escribe nuevo…" autocomplete="off" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--card);color:var(--text)">
+          <datalist id="canal-datalist-options">
+            <option>Cold Calling</option><option>Paid Ads</option>
             <option>Network</option><option>CRM Reach</option><option>Linkedin</option>
             <option>Panjiva</option><option>Landing page</option><option>Outbound</option>
             <option>Referral</option><option>Evento</option>
-          </select></div>
+          </datalist></div>
         <div class="crm-field"><label>MRR ($/mes)</label><input type="number" id="pf-mrr-f" placeholder="0" min="0"></div>
         <div class="crm-field"><label>ACV ($)</label><input type="number" id="pf-acv-f" placeholder="0" min="0"></div>
         <div class="crm-field"><label>Implementaciones ($)</label><input type="number" id="pf-impl-f" placeholder="0" min="0"></div>
@@ -2167,6 +2169,7 @@ function pipeRender() {
       </td>
       <td><span class="cell cell-money">${mrr?'$'+mrr.toLocaleString():''}</span></td>
       <td><span class="cell cell-money acv">${acv?'$'+acv.toLocaleString():''}</span></td>
+      <td><span class="cell cell-money" style="color:#7c3aed">${parsePipeMoney(r.implementaciones)?'$'+parsePipeMoney(r.implementaciones).toLocaleString():''}</span></td>
       <td class="cell-date">${dInline(r.ingreso_lead,'ingreso_lead','')}</td>
       <td class="cell-date">${dInline(r.discovery_date,'discovery_date','#7c3aed')}</td>
       <td class="cell-date">${dInline(r.demo_date,'demo_date','#5b21b6')}</td>
@@ -2203,7 +2206,7 @@ function pipeRender() {
       const groupACV = group.reduce((s,r)=>s+parsePipeMoney(r.acv),0);
       const projMRR  = group.reduce((s,r)=>s+parsePipeMoney(r.mrr)*((r.probability??STAGE_PROB[r.status]??50)/100),0);
       html += `<tr style="background:${col}18;border-top:2px solid ${col}40;cursor:pointer" onclick="pipeToggleStageCollapse('${stage.replace(/'/g,"\\'")}')">
-        <td colspan="16" style="padding:9px 14px;font-weight:700;font-size:12px;color:${col};user-select:none">
+        <td colspan="17" style="padding:9px 14px;font-weight:700;font-size:12px;color:${col};user-select:none">
           <span style="margin-right:8px;font-size:10px">${collapsed?'▶':'▼'}</span>${stage}
           <span style="font-weight:400;color:var(--muted);margin-left:8px">${group.length} deal${group.length!==1?'s':''}</span>
           ${groupMRR?`<span style="margin-left:16px;color:#16a34a;font-weight:600">MRR $${Math.round(groupMRR).toLocaleString()}/mo</span>`:''}
@@ -2213,7 +2216,7 @@ function pipeRender() {
         </td></tr>`;
       if (!collapsed) html += group.map(r=>buildRow(r)).join('');
     }
-    tbody.innerHTML = html || '<tr><td colspan="16" style="text-align:center;padding:40px;color:var(--muted)">Sin deals para este filtro.</td></tr>';
+    tbody.innerHTML = html || '<tr><td colspan="17" style="text-align:center;padding:40px;color:var(--muted)">Sin deals para este filtro.</td></tr>';
     pag.innerHTML = `<span style="color:var(--muted);font-size:12px">${tot} deals · ${stageCount} etapas · Clic en etapa para colapsar/expandir</span>`;
   } else {
     // ── Flat paginated mode ─────────────────────────────────────────────────
@@ -2223,7 +2226,7 @@ function pipeRender() {
     const page=filt.slice(start,start+PIPE_PAGE);
     tbody.innerHTML = page.length
       ? page.map(r=>buildRow(r)).join('')
-      : '<tr><td colspan="16" style="text-align:center;padding:40px;color:var(--muted)">Sin deals para este filtro.</td></tr>';
+      : '<tr><td colspan="17" style="text-align:center;padding:40px;color:var(--muted)">Sin deals para este filtro.</td></tr>';
     const totP = Math.ceil(tot/PIPE_PAGE)||1;
     let btns='';
     for (let i=1;i<=totP;i++) {
