@@ -280,9 +280,9 @@
   .pipe-kpi-v { font-size:22px; font-weight:800; letter-spacing:-.5px; }
   .pipe-kpi-l { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); margin-top:2px; }
   /* Grid table */
-  .grid-wrap { overflow-x:auto; border:1px solid var(--border); border-radius:12px; background:var(--card); box-shadow:var(--shadow); }
+  .grid-wrap { overflow-x:auto; overflow-y:auto; max-height:calc(100vh - 260px); border:1px solid var(--border); border-radius:12px; background:var(--card); box-shadow:var(--shadow); }
   .grid-table { width:100%; border-collapse:collapse; font-size:12px; table-layout:fixed; }
-  .grid-table th { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); padding:9px 10px; text-align:left; background:var(--card2); border-bottom:2px solid var(--border); position:sticky; top:0; z-index:2; white-space:nowrap; cursor:pointer; user-select:none; }
+  .grid-table th { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); padding:9px 10px; text-align:left; background:var(--card2); border-bottom:2px solid var(--border); position:sticky; top:0; z-index:10; white-space:nowrap; cursor:pointer; user-select:none; box-shadow:0 1px 0 var(--border); }
   .grid-table th:hover { color:var(--accent); }
   .grid-table td { padding:0; border-bottom:1px solid var(--border); vertical-align:middle; }
   .grid-table tr:last-child td { border-bottom:none; }
