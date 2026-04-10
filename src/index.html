@@ -547,50 +547,16 @@
     <div style="font-size:13px;color:var(--muted)">Seguimiento de proyectos estratégicos de Growth. Asigna responsable, status y notas en cada tarjeta.</div>
   </div>
   <div class="initiative-board">
-    <!-- En Progreso -->
     <div class="initiative-col" id="col-progreso">
       <div class="initiative-col-title"><span class="col-dot" style="background:#d97706"></span>En Progreso</div>
-      <div class="initiative-card">
-        <div class="initiative-emoji">🎬</div>
-        <div class="initiative-title">Videos para Redes Sociales</div>
-        <div class="initiative-desc">Contenido de video para LinkedIn, Instagram y YouTube. Demos del producto, casos de éxito y thought leadership.</div>
-        <span class="initiative-priority ip-alta">🔴 Prioridad Alta</span>
-        <div class="initiative-field"><label>Responsable</label><select onchange="saveInit('video-owner',this.value)"><option value="">— Asignar —</option><option>Abraham Lopez</option><option>Héctor Nícola</option><option>Daniel Luna</option><option>Equipo Marketing</option><option>Agencia / Freelancer</option></select></div>
-        <div class="initiative-field"><label>Status</label><select onchange="saveInit('video-status',this.value)"><option>En progreso</option><option>Planeación</option><option>En revisión</option><option>Listo para publicar</option><option>Publicado ✓</option></select></div>
-        <div class="initiative-field"><label>Fecha límite</label><input type="date" value="2026-03-28" onchange="saveInit('video-date',this.value)"></div>
-        <div class="initiative-field"><label>Notas</label><textarea onchange="saveInit('video-notes',this.value)">Script inicial pendiente. Coordinar con diseño para branding.</textarea></div>
-      </div>
-      <div class="initiative-card">
-        <div class="initiative-emoji">📣</div>
-        <div class="initiative-title">Lanzamiento Campaña Promocional</div>
-        <div class="initiative-desc">Nueva campaña de adquisición. Paid Ads, email y LinkedIn. Audiencia: importadoras y distribuidoras con +200 ops/mes.</div>
-        <span class="initiative-priority ip-alta">🔴 Prioridad Alta</span>
-        <div class="initiative-field"><label>Responsable</label><select onchange="saveInit('campana-owner',this.value)"><option value="">— Asignar —</option><option>Abraham Lopez</option><option>Héctor Nícola</option><option>Daniel Luna</option><option>Equipo Marketing</option><option>Agencia / Freelancer</option></select></div>
-        <div class="initiative-field"><label>Status</label><select onchange="saveInit('campana-status',this.value)"><option>En progreso</option><option>Planeación</option><option>Creativos en revisión</option><option>Aprobada — pendiente lanzar</option><option>Activa ✓</option></select></div>
-        <div class="initiative-field"><label>Fecha de lanzamiento</label><input type="date" value="2026-03-24" onchange="saveInit('campana-fecha',this.value)"></div>
-        <div class="initiative-field"><label>Notas</label><textarea onchange="saveInit('campana-notes',this.value)">Definir oferta de descuento o trial. Creativos en revisión con agencia.</textarea></div>
-      </div>
       <button class="add-initiative-btn" onclick="addCard('col-progreso')">+ Agregar iniciativa</button>
     </div>
-    <!-- Planeación -->
     <div class="initiative-col" id="col-planeacion">
       <div class="initiative-col-title"><span class="col-dot" style="background:#3b6ef8"></span>Planeación</div>
-      <div class="initiative-card">
-        <div class="initiative-emoji">🧮</div>
-        <div class="initiative-title">Lead Magnet: Calculadora de Eficiencia</div>
-        <div class="initiative-desc">Herramienta interactiva que muestra ROI y horas ahorradas al implementar Birdie. Inputs: ops/mes, equipo, horas de seguimiento.</div>
-        <span class="initiative-priority ip-media">🟡 Prioridad Media</span>
-        <div class="initiative-field"><label>Responsable</label><select onchange="saveInit('lm-owner',this.value)"><option value="">— Asignar —</option><option>Abraham Lopez</option><option>Héctor Nícola</option><option>Daniel Luna</option><option>Equipo Marketing</option><option>Dev</option></select></div>
-        <div class="initiative-field"><label>Status</label><select onchange="saveInit('lm-status',this.value)"><option>Planeación</option><option>Diseño UX</option><option>Desarrollo</option><option>Testing</option><option>Publicado ✓</option></select></div>
-        <div class="initiative-field"><label>Fecha objetivo</label><input type="date" value="2026-04-15" onchange="saveInit('lm-fecha',this.value)"></div>
-        <div class="initiative-field"><label>Notas</label><textarea onchange="saveInit('lm-notes',this.value)">Output: $ ahorrado + ROI proyectado. Distribuir en cold outreach y LinkedIn para calificar leads.</textarea></div>
-      </div>
       <button class="add-initiative-btn" onclick="addCard('col-planeacion')">+ Agregar iniciativa</button>
     </div>
-    <!-- Completado -->
     <div class="initiative-col" id="col-completado">
       <div class="initiative-col-title"><span class="col-dot" style="background:#16a34a"></span>Completado</div>
-      <div style="text-align:center;padding:30px 16px;color:var(--muted2);font-size:13px;"><div style="font-size:28px;margin-bottom:8px">🎯</div><div>Las iniciativas completadas<br>aparecerán aquí</div></div>
       <button class="add-initiative-btn" onclick="addCard('col-completado')">+ Agregar iniciativa</button>
     </div>
   </div>

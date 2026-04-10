@@ -318,24 +318,100 @@ function exportKPILog() {
   a.click(); URL.revokeObjectURL(url);
 }
 
-function addCard(colId) {
-  const col = document.getElementById(colId);
-  const btn = col.querySelector('.add-initiative-btn');
-  const ph = col.querySelector('div[style*="text-align:center"]');
-  if(ph) ph.remove();
-  const card = document.createElement('div');
-  card.className = 'initiative-card';
-  card.innerHTML = `
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-      <input style="font-size:20px;width:40px;border:1px solid var(--border2);border-radius:6px;padding:2px;background:var(--card2)" value="📌">
-      <input style="flex:1;border:1px solid var(--border2);border-radius:7px;padding:6px 10px;font-size:13px;font-weight:700;background:var(--card2)" placeholder="Nombre de la iniciativa">
+// ── INITIATIVES BOARD ────────────────────────────────────────────────────────
+const INIT_KEY = 'birdie_initiatives';
+
+// Default seeded initiatives (used only on first load)
+const DEFAULT_INITIATIVES = [
+  { id: 'video',   emoji:'🎬', title:'Videos para Redes Sociales',       desc:'Contenido de video para LinkedIn, Instagram y YouTube. Demos del producto, casos de éxito y thought leadership.', priority:'alta',  owner:'', status:'En Progreso', date:'2026-04-30', notes:'Script inicial pendiente. Coordinar con diseño para branding.' },
+  { id: 'campana', emoji:'📣', title:'Lanzamiento Campaña Promocional',  desc:'Nueva campaña de adquisición. Paid Ads, email y LinkedIn. Audiencia: importadoras y distribuidoras con +200 ops/mes.', priority:'alta',  owner:'', status:'En Progreso', date:'2026-04-24', notes:'Definir oferta de descuento o trial. Creativos en revisión con agencia.' },
+  { id: 'lm',      emoji:'🧮', title:'Lead Magnet: Calculadora de Eficiencia', desc:'Herramienta interactiva que muestra ROI y horas ahorradas al implementar Birdie.', priority:'media', owner:'', status:'Planeación', date:'2026-04-30', notes:'Output: $ ahorrado + ROI proyectado. Distribuir en cold outreach y LinkedIn.' },
+];
+
+const COL_FOR_STATUS = {
+  'Planeación':    'col-planeacion',
+  'En Progreso':   'col-progreso',
+  'En Revisión':   'col-progreso',
+  'Completado ✓':  'col-completado',
+};
+
+function _loadInits() {
+  try { return JSON.parse(localStorage.getItem(INIT_KEY) || 'null') || DEFAULT_INITIATIVES; }
+  catch { return DEFAULT_INITIATIVES; }
+}
+function _saveInits(arr) { localStorage.setItem(INIT_KEY, JSON.stringify(arr)); }
+
+function _buildInitCard(init) {
+  const STATUSES = ['Planeación', 'En Progreso', 'En Revisión', 'Completado ✓'];
+  const OWNERS   = ['— Asignar —', 'Abraham Lopez', 'Héctor Nícola', 'Daniel Luna', 'Equipo Marketing', 'Agencia / Freelancer'];
+  const PRI_MAP  = { alta:'🔴 Alta', media:'🟡 Media', baja:'🟢 Baja' };
+  const PRI_CLS  = { alta:'ip-alta', media:'ip-media', baja:'ip-baja' };
+  const sOpts = STATUSES.map(s => `<option${init.status===s?' selected':''}>${s}</option>`).join('');
+  const oOpts = OWNERS.map(o   => `<option${init.owner===o?' selected':''}>${o}</option>`).join('');
+  const id = init.id;
+  return `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+      <span style="font-size:22px">${init.emoji}</span>
+      <div style="flex:1;font-size:13px;font-weight:700">${init.title}</div>
     </div>
-    <div class="initiative-field"><label>Responsable</label><select><option value="">— Asignar —</option><option>Abraham Lopez</option><option>Héctor Nícola</option><option>Daniel Luna</option><option>Equipo Marketing</option></select></div>
-    <div class="initiative-field"><label>Status</label><select><option>Planeación</option><option>En progreso</option><option>En revisión</option><option>Completado ✓</option></select></div>
-    <div class="initiative-field"><label>Fecha límite</label><input type="date"></div>
-    <div class="initiative-field"><label>Notas</label><textarea placeholder="Notas, links, blockers..."></textarea></div>
-    <button onclick="this.closest('.initiative-card').remove()" style="width:100%;padding:6px;border:1px solid #fecaca;background:#fef2f2;color:#dc2626;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;margin-top:6px">🗑 Eliminar</button>`;
-  col.insertBefore(card, btn);
+    ${init.desc ? `<div class="initiative-desc">${init.desc}</div>` : ''}
+    <span class="initiative-priority ${PRI_CLS[init.priority]||'ip-media'}">● ${PRI_MAP[init.priority]||'Media'}</span>
+    <div class="initiative-field"><label>Responsable</label><select onchange="saveInit('${id}','owner',this.value)">${oOpts}</select></div>
+    <div class="initiative-field"><label>Status</label><select onchange="saveInit('${id}','status',this.value)">${sOpts}</select></div>
+    <div class="initiative-field"><label>Fecha límite</label><input type="date" value="${init.date||''}" onchange="saveInit('${id}','date',this.value)"></div>
+    <div class="initiative-field"><label>Notas</label><textarea onchange="saveInit('${id}','notes',this.value)">${init.notes||''}</textarea></div>
+    <button onclick="deleteInit('${id}')" style="width:100%;padding:6px;border:1px solid #fecaca;background:#fef2f2;color:#dc2626;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;margin-top:8px">🗑 Eliminar iniciativa</button>`;
+}
+
+function renderInitBoard() {
+  const inits = _loadInits();
+  const colIds = ['col-progreso', 'col-planeacion', 'col-completado'];
+  for (const colId of colIds) {
+    const col = document.getElementById(colId);
+    if (!col) continue;
+    const btn = col.querySelector('.add-initiative-btn');
+    col.querySelectorAll('.initiative-card').forEach(c => c.remove());
+    col.querySelectorAll('.init-empty').forEach(e => e.remove());
+    const mine = inits.filter(i => (COL_FOR_STATUS[i.status] || 'col-planeacion') === colId);
+    if (mine.length === 0) {
+      const ph = document.createElement('div');
+      ph.className = 'init-empty';
+      ph.style.cssText = 'text-align:center;padding:24px 16px;color:var(--muted2);font-size:12px';
+      ph.innerHTML = '<div style="font-size:24px;margin-bottom:6px">🎯</div>Vacío';
+      col.insertBefore(ph, btn);
+    } else {
+      for (const init of mine) {
+        const card = document.createElement('div');
+        card.className = 'initiative-card';
+        card.dataset.initId = init.id;
+        card.innerHTML = _buildInitCard(init);
+        col.insertBefore(card, btn);
+      }
+    }
+  }
+}
+
+function saveInit(id, field, value) {
+  const inits = _loadInits();
+  const item  = inits.find(i => i.id === id);
+  if (!item) return;
+  item[field] = value;
+  _saveInits(inits);
+  if (field === 'status') renderInitBoard(); // move card to correct column
+}
+
+function deleteInit(id) {
+  if (!confirm('¿Eliminar esta iniciativa?')) return;
+  _saveInits(_loadInits().filter(i => i.id !== id));
+  renderInitBoard();
+}
+
+function addCard(colId) {
+  const STATUS_FOR_COL = { 'col-progreso':'En Progreso', 'col-planeacion':'Planeación', 'col-completado':'Completado ✓' };
+  const inits = _loadInits();
+  inits.push({ id:'init_'+Date.now(), emoji:'📌', title:'Nueva iniciativa', desc:'', priority:'media', owner:'', status:STATUS_FOR_COL[colId]||'Planeación', date:'', notes:'' });
+  _saveInits(inits);
+  renderInitBoard();
 }
 
 // Used by auto-sync in main.js to update module state without toast spam
@@ -348,4 +424,5 @@ function kpiSetData(data) {
 export { kpiLogsLoad, kpiSetData, getKPILogs, submitLogEntry, deleteLogEntry,
          renderKPITab, renderLogTable, updateGoalsFromLogs,
          renderSellerCards, renderChannelBreakdown, setActType,
-         clearLogForm, exportKPILog, addCard };
+         clearLogForm, exportKPILog, addCard,
+         renderInitBoard, saveInit, deleteInit };

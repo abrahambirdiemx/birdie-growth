@@ -10,7 +10,8 @@ import { crmLoad, crmRender, crmSetData, crmSort, crmGoPage, crmOpenEdit,
          crmSave, crmDeleteCurrent, crmCloseModal, crmExportCSV } from './modules/crm.js';
 import { kpiLogsLoad, kpiSetData, renderKPITab, updateGoalsFromLogs,
          setActType, submitLogEntry, deleteLogEntry,
-         clearLogForm, exportKPILog, addCard }           from './modules/kpi.js';
+         clearLogForm, exportKPILog, addCard,
+         renderInitBoard, saveInit, deleteInit }          from './modules/kpi.js';
 import { renderDashboard, parseSupabaseData, showProjDeals } from './modules/dashboard.js';
 import { showToast, debounce }                           from './modules/utils.js';
 import { sbFetch }                                       from './api/supabase.js';
@@ -64,6 +65,8 @@ Object.assign(window, {
   kpiLogsLoad, renderKPITab, updateGoalsFromLogs,
   setActType, submitLogEntry, deleteLogEntry,
   clearLogForm, exportKPILog, addCard,
+  // Initiatives board
+  renderInitBoard, saveInit, deleteInit,
   // Dashboard
   renderDashboard, showProjDeals,
   // Utils
@@ -85,6 +88,7 @@ export function startApp(user) {
   pipeLoad();
   crmLoad();
   kpiLogsLoad();
+  renderInitBoard();
   startAutoSync(30000);
   startLiveClock();
 
