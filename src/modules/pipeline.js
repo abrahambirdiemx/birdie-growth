@@ -432,7 +432,14 @@ const CRM_KEY  = 'birdie_crm_v1';
 const CRM_PAGE_SIZE = 50;
 let crmPage    = 1;
 
-export { pipeLoad, pipeRender, pipeUpdateField, pipeSave, pipeDeleteCurrent,
+// Used by auto-sync in main.js to update module state without toast spam
+function pipeSetData(data) {
+  _pipeData = Array.isArray(data) ? data : [];
+  pipeRender();
+  _onPipeChange?.(_pipeData);
+}
+
+export { pipeLoad, pipeRender, pipeSetData, pipeUpdateField, pipeSave, pipeDeleteCurrent,
          pipeSort, pipeGoPage, pipeNewDeal, pipeOpenEdit, pipeToggleGroup,
          pipeToggleStageCollapse, pipeStatusChange, pipeSaveCierreMonth,
          promptDateEvent, saveDateEvent, pipeExport, crmDealSearch, crmDealSelect };

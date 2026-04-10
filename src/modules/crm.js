@@ -268,6 +268,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // crmLoad() is called from showApp() after login
 });
 
-export { crmLoad, crmRender, crmSave, crmDeleteId, crmDeleteCurrent,
+// Used by auto-sync in main.js to update module state without toast spam
+function crmSetData(data) {
+  _crmData = Array.isArray(data) ? data : [];
+  crmRender();
+}
+
+export { crmLoad, crmRender, crmSetData, crmSave, crmDeleteId, crmDeleteCurrent,
          crmGet, crmNextId, crmOpenEdit, crmExportCSV, crmSort, crmGoPage,
          crmCloseModal };

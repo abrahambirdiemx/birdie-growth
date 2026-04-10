@@ -338,7 +338,14 @@ function addCard(colId) {
   col.insertBefore(card, btn);
 }
 
-export { kpiLogsLoad, getKPILogs, submitLogEntry, deleteLogEntry,
+// Used by auto-sync in main.js to update module state without toast spam
+function kpiSetData(data) {
+  _kpiLogs = Array.isArray(data) ? data : [];
+  renderLogTable();
+  updateGoalsFromLogs();
+}
+
+export { kpiLogsLoad, kpiSetData, getKPILogs, submitLogEntry, deleteLogEntry,
          renderKPITab, renderLogTable, updateGoalsFromLogs,
          renderSellerCards, renderChannelBreakdown, setActType,
          clearLogForm, exportKPILog, addCard };

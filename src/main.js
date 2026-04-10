@@ -1,14 +1,14 @@
 // ── Birdie Growth Dashboard — Entry Point
 import './styles/main.css';
 import { checkSession, doLogin, doLogout, refreshToken } from './modules/auth.js';
-import { pipeLoad, pipeRender, setPipeChangeCb,
+import { pipeLoad, pipeRender, pipeSetData, setPipeChangeCb,
          pipeUpdateField, pipeSave, pipeDeleteCurrent, pipeSort, pipeGoPage,
          pipeNewDeal, pipeOpenEdit, pipeToggleGroup, pipeToggleStageCollapse,
          pipeStatusChange, pipeSaveCierreMonth, promptDateEvent, saveDateEvent,
          pipeExport, crmDealSearch, crmDealSelect }      from './modules/pipeline.js';
-import { crmLoad, crmRender, crmSort, crmGoPage, crmOpenEdit,
+import { crmLoad, crmRender, crmSetData, crmSort, crmGoPage, crmOpenEdit,
          crmSave, crmDeleteCurrent, crmCloseModal, crmExportCSV } from './modules/crm.js';
-import { kpiLogsLoad, renderKPITab, updateGoalsFromLogs,
+import { kpiLogsLoad, kpiSetData, renderKPITab, updateGoalsFromLogs,
          setActType, submitLogEntry, deleteLogEntry,
          clearLogForm, exportKPILog, addCard }           from './modules/kpi.js';
 import { renderDashboard, parseSupabaseData, showProjDeals } from './modules/dashboard.js';
@@ -105,9 +105,9 @@ function startLiveClock() {
   setInterval(tick, 60_000);
 }
 
-// ── Background auto-sync every 30s
+// ── Background auto-sync every 2 minutes (silent — no toasts)
 let _syncTimer = null;
-function startAutoSync(ms = 30_000) {
+function startAutoSync(ms = 120_000) {
   if (_syncTimer) clearInterval(_syncTimer);
   _syncTimer = setInterval(async () => {
     try {
@@ -116,12 +116,12 @@ function startAutoSync(ms = 30_000) {
         sbFetch('GET', `crm?select=id,n,r,st,ind,e,sz,c,p,em,tel,mrr,acv,notes,created_at&order=created_at.desc&limit=5000`),
         sbFetch('GET', `kpi_logs?select=id,date,seller,type,company,canal,acv,mrr,impl,notes,created_at&order=created_at.desc&limit=2000`),
       ]);
-      // Update global caches (modules export these setters)
-      if (Array.isArray(pipe)) { window._pipeData = pipe; pipeRender(); renderDashboard(parseSupabaseData(pipe)); }
-      if (Array.isArray(crm))  window._crmData = crm;
-      if (Array.isArray(kpi))  { window._kpiLogs = kpi; updateGoalsFromLogs(); }
+      // Update module-scoped caches via proper setters (window.* doesn't reach module scope)
+      if (Array.isArray(pipe)) pipeSetData(pipe);  // renders pipeline + fires dashboard callback
+      if (Array.isArray(crm))  crmSetData(crm);    // renders CRM table
+      if (Array.isArray(kpi))  kpiSetData(kpi);    // renders KPI log + goals
       window._lastSyncLabel = new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }) + ' (auto)';
-    } catch { /* silent fail */ }
+    } catch { /* silent — no toast spam on background sync */ }
   }, ms);
 }
 
