@@ -14,7 +14,9 @@ import { kpiLogsLoad, kpiSetData, renderKPITab, updateGoalsFromLogs,
          renderInitBoard, saveInit, deleteInit }          from './modules/kpi.js';
 import { renderDashboard, parseSupabaseData, showProjDeals } from './modules/dashboard.js';
 import { showToast, debounce }                           from './modules/utils.js';
-import { sbFetch }                                       from './api/supabase.js';
+import { sbFetch, sbRealtime, sbRealtimeStop }           from './api/supabase.js';
+import { goalsLoad, goalsSave, currentQuarter,
+         goalsHandleRealtimeChange }                     from './modules/goals.js';
 
 // Wire dashboard refresh to pipeline data changes
 setPipeChangeCb(data => renderDashboard(parseSupabaseData(data)));
@@ -71,6 +73,8 @@ Object.assign(window, {
   renderDashboard, showProjDeals,
   // Utils
   showToast, debounce,
+  // Goals
+  goalsLoad, goalsSave, currentQuarter,
 });
 
 // ── App bootstrap
@@ -79,6 +83,9 @@ export function startApp(user) {
   document.getElementById('login-screen')?.classList.add('hidden');
   const appRoot = document.getElementById('app-root');
   if (appRoot) appRoot.style.display = 'block';
+
+  // Store user email for audit fields
+  window._sbUserEmail = user.email;
 
   // Show user in topbar
   const greet = document.getElementById('topbar-user');
@@ -89,11 +96,75 @@ export function startApp(user) {
   crmLoad();
   kpiLogsLoad();
   renderInitBoard();
-  startAutoSync(30000);
   startLiveClock();
+
+  // ── Realtime: replace polling with WebSocket push ────────────────────────
+  // Supabase pushes changes instantly — no more 30-60s polling lag.
+  // Falls back to poll if WebSocket fails (e.g. corporate firewall).
+  startRealtime();
+
+  // Fallback polling (60s) — only fires if realtime fails/lags
+  startAutoSync(60_000);
 
   // Refresh auth token every 50 minutes (tokens expire in 60m)
   setInterval(refreshToken, 50 * 60 * 1000);
+}
+
+// ── Realtime subscriptions ────────────────────────────────────────────────────
+let _realtime = null;
+function startRealtime() {
+  if (_realtime) _realtime.close();
+  _realtime = sbRealtime({
+    // Pipeline changes — agent writes a deal, dashboard updates instantly
+    pipeline: ({ eventType, record, old_record }) => {
+      if (!window._pipeData) return;
+      if (eventType === 'INSERT') {
+        window._pipeData = [record, ...window._pipeData];
+      } else if (eventType === 'UPDATE') {
+        window._pipeData = window._pipeData.map(r => r.id === record.id ? record : r);
+      } else if (eventType === 'DELETE') {
+        window._pipeData = window._pipeData.filter(r => r.id !== old_record?.id);
+      }
+      pipeRender();
+      renderDashboard(parseSupabaseData(window._pipeData));
+      window._lastSyncLabel = new Date().toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit' }) + ' (live)';
+    },
+
+    // Goals updated by another user or agent — refresh progress bars
+    goals: (payload) => {
+      goalsHandleRealtimeChange(payload);
+      updateGoalsFromLogs();
+    },
+
+    // Agent events — new post-call intelligence or agent action
+    agent_events: ({ eventType, record }) => {
+      if (eventType === 'INSERT' && record?.status === 'pending') {
+        showAgentEventNotification(record);
+      }
+    },
+  });
+}
+
+// ── Agent event notification (Action Sidebar) ─────────────────────────────────
+function showAgentEventNotification(event) {
+  const icons = {
+    call_completed: '📞',
+    deal_created:   '🆕',
+    stage_changed:  '🔄',
+    proposal_sent:  '📄',
+  };
+  const icon = icons[event.event_type] || '⚡';
+  const company = event.company ? ` — ${event.company}` : '';
+  showToast(`${icon} ${event.event_type}${company}`, 'ok');
+
+  // Update the agent events badge in the UI (if sidebar exists)
+  const badge = document.getElementById('agent-events-badge');
+  if (badge) {
+    const count = parseInt(badge.dataset.count || '0') + 1;
+    badge.dataset.count = count;
+    badge.textContent = count;
+    badge.style.display = 'flex';
+  }
 }
 
 // ── Live clock — updates topbar every minute

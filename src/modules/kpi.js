@@ -1,6 +1,7 @@
 import { sbFetch } from '../api/supabase.js';
 import { showToast } from './utils.js';
 import { SELLERS, STAGE_PROB } from './config.js';
+import { goalsLoad, getAllGoals, goalsSave, currentQuarter } from './goals.js';
 
 // ─── KPI TAB ──────────────────────────────────────────────────────────────
 
@@ -73,8 +74,11 @@ async function submitLogEntry() {
 
 let _kpiLogs = [];  // KPI log cache (loaded from Supabase)
 
-// ── kpiLogsLoad: fetch logs from Supabase, migrate localStorage on first run
+// ── kpiLogsLoad: fetch logs from Supabase + load goals for current quarter
 async function kpiLogsLoad() {
+  // Load goals from Supabase (replaces localStorage GOALS_KEY)
+  await goalsLoad(currentQuarter());
+
   try {
     const data = await sbFetch('GET', 'kpi_logs?select=id,date,seller,type,company,canal,acv,mrr,impl,notes,created_at&order=created_at.desc&limit=2000');
     _kpiLogs = Array.isArray(data) ? data : [];
@@ -194,21 +198,25 @@ function updateGoalsFromLogs() {
     titleEl.textContent = 'Metas ' + monthName.charAt(0).toUpperCase() + monthName.slice(1) + ' · Progreso';
   }
 
+  const goals = getAllGoals();
   const MAP = [
-    { id: 'calificado', type: 'lead',      goal: 150 },
-    { id: 'discovery',  type: 'discovery', goal: 50  },
-    { id: 'demo',       type: 'demo',      goal: 25  },
-    { id: 'propuesta',  type: 'propuesta', goal: 25  },
+    { id: 'calificado', type: 'lead',      goalKey: 'new_leads'   },
+    { id: 'discovery',  type: 'discovery', goalKey: 'discovery'   },
+    { id: 'demo',       type: 'demo',      goalKey: 'demo'        },
+    { id: 'propuesta',  type: 'propuesta', goalKey: 'propuesta'   },
   ];
   MAP.forEach(m => {
+    const goal  = goals[m.goalKey] || 0;
     const count = logs.filter(e => e.type === m.type).length;
-    const pct = Math.min(Math.round(count / m.goal * 100), 100);
+    const pct   = goal > 0 ? Math.min(Math.round(count / goal * 100), 100) : 0;
     const el   = document.getElementById('g-' + m.id);
     const fill = document.getElementById('gf-' + m.id);
     const sub  = document.getElementById('gs-' + m.id);
     if (el)   el.textContent = count;
     if (fill) fill.style.width = pct + '%';
-    if (sub)  sub.textContent = pct + '% de meta ' + m.goal + ' · faltan ' + Math.max(m.goal - count, 0);
+    if (sub)  sub.textContent = goal
+      ? `${pct}% de meta ${goal} · faltan ${Math.max(goal - count, 0)}`
+      : `${count} registrados — sin meta definida`;
   });
 }
 

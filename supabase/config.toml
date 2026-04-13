@@ -1,0 +1,43 @@
+# Supabase project configuration
+# Reference: https://supabase.com/docs/guides/cli/config
+
+[api]
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15
+
+[studio]
+port = 54323
+
+[inbucket]
+port = 54324
+
+[storage]
+file_size_limit = "50MiB"
+
+[auth]
+site_url = "https://abrahambirdiemx.github.io/birdie-growth/"
+additional_redirect_urls = ["https://abrahambirdiemx.github.io"]
+jwt_expiry = 3600
+refresh_token_reuse_interval = 10
+enable_signup = false       # Internal tool — no self-signup
+
+[auth.email]
+enable_signup = false
+double_confirm_changes = false
+enable_confirmations = false
+
+[edge_runtime]
+policy = "per_worker"
+
+[functions.agent-api]
+verify_jwt = false          # Auth handled by X-Agent-Key header in function code
+
+[functions.webhook-granola]
+verify_jwt = false          # Auth handled by x-webhook-secret header in function code
