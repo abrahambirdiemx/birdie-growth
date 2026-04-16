@@ -1768,36 +1768,37 @@ function openModal(id) { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('click', e => { if(e.target===m) m.classList.remove('open'); }));
 
-// ─── INICIATIVAS CLAVE — localStorage persistence ────────────────────────────
-var INIT_KEY = 'birdie_initiatives_v2';
+// ─── INICIATIVAS CLAVE — Supabase (shared across team) ──────────────────────
+// In-memory cache: { 'col-progreso': [...], 'col-planeacion': [...], 'col-completado': [...] }
+var _initData = { 'col-progreso': [], 'col-planeacion': [], 'col-completado': [] };
+// Debounce timer per card field (avoids spamming Supabase on every keystroke)
+var _initDebounceTimers = {};
 
-var INIT_DEFAULTS = {
-  'col-progreso': [
-    { id: 'init-1', emoji: '🎥', title: 'Videos de Producto', responsable: 'Equipo Marketing', status: 'En progreso', deadline: '', notes: 'Producir 3 videos demo para LinkedIn y website.' },
-    { id: 'init-2', emoji: '📧', title: 'Campaña Email Q2', responsable: 'Abraham Lopez', status: 'En progreso', deadline: '', notes: 'Secuencia de 5 correos para leads calificados.' },
-  ],
-  'col-planeacion': [
-    { id: 'init-3', emoji: '🧲', title: 'Lead Magnet: Guía RRHH', responsable: 'Héctor Nícola', status: 'Planeación', deadline: '', notes: 'Ebook descargable para captura de leads.' },
-  ],
-  'col-completado': [],
-};
-
-function _initLoad() {
-  try { return JSON.parse(localStorage.getItem(INIT_KEY) || 'null'); } catch(e) { return null; }
-}
-function _initSave(data) {
-  try { localStorage.setItem(INIT_KEY, JSON.stringify(data)); } catch(e) {}
-}
-function _initGet() {
-  return _initLoad() || JSON.parse(JSON.stringify(INIT_DEFAULTS));
+async function initLoad() {
+  try {
+    const rows = await sbFetch('GET', 'initiatives?select=*&order=position.asc,created_at.asc');
+    _initData = { 'col-progreso': [], 'col-planeacion': [], 'col-completado': [] };
+    if (Array.isArray(rows)) {
+      rows.forEach(r => {
+        const colId = r.col_id;
+        if (_initData[colId]) _initData[colId].push({
+          id: r.id, emoji: r.emoji, title: r.title,
+          responsable: r.responsable, status: r.status,
+          deadline: r.deadline || '', notes: r.notes,
+        });
+      });
+    }
+  } catch(e) {
+    console.warn('initiatives load error:', e.message);
+  }
+  renderInitBoard();
 }
 
 function renderInitBoard() {
-  const data = _initGet();
   ['col-progreso', 'col-planeacion', 'col-completado'].forEach(colId => {
     const container = document.getElementById(colId + '-cards');
     if (!container) return;
-    const cards = data[colId] || [];
+    const cards = _initData[colId] || [];
     container.innerHTML = cards.map(c => _buildInitCard(c, colId)).join('');
   });
 }
@@ -1821,43 +1822,60 @@ function _buildInitCard(c, colId) {
 }
 
 function updateInitField(cardId, colId, field, value) {
-  const data = _initGet();
-  const cards = data[colId] || [];
+  // Update cache immediately (optimistic)
+  const cards = _initData[colId] || [];
   const card = cards.find(c => c.id === cardId);
-  if (card) { card[field] = value; _initSave(data); }
+  if (card) card[field] = value;
+  // Debounce Supabase write (300ms) to avoid hitting API on every keystroke
+  const timerKey = cardId + '_' + field;
+  clearTimeout(_initDebounceTimers[timerKey]);
+  _initDebounceTimers[timerKey] = setTimeout(async () => {
+    try {
+      const patch = { updated_at: new Date().toISOString() };
+      patch[field] = value || null;
+      await sbFetch('PATCH', `initiatives?id=eq.${encodeURIComponent(cardId)}`, patch);
+    } catch(e) { console.warn('initiative update error:', e.message); }
+  }, 300);
 }
 
-function deleteInitCard(cardId, colId) {
+async function deleteInitCard(cardId, colId) {
   if (!confirm('¿Eliminar esta iniciativa?')) return;
-  const data = _initGet();
-  data[colId] = (data[colId] || []).filter(c => c.id !== cardId);
-  _initSave(data);
+  // Remove from cache and re-render immediately
+  _initData[colId] = (_initData[colId] || []).filter(c => c.id !== cardId);
   renderInitBoard();
+  try {
+    await sbFetch('DELETE', `initiatives?id=eq.${encodeURIComponent(cardId)}`);
+  } catch(e) { console.warn('initiative delete error:', e.message); showToast('Error al eliminar','err'); }
 }
 
-function addCard(colId) {
-  const data = _initGet();
-  if (!data[colId]) data[colId] = [];
+async function addCard(colId) {
+  const position = (_initData[colId] || []).length;
   const newCard = {
     id: 'init-' + Date.now(),
+    col_id: colId,
     emoji: '📌',
     title: '',
     responsable: '',
     status: 'Planeación',
-    deadline: '',
+    deadline: null,
     notes: '',
+    position,
   };
-  data[colId].push(newCard);
-  _initSave(data);
+  // Optimistic: add to cache and render right away
+  _initData[colId].push({ ...newCard, deadline: '' });
   renderInitBoard();
-  // Focus the title input of the new card
+  // Focus the new card's title input
   setTimeout(() => {
-    const col = document.getElementById(colId + '-cards');
-    if (col) {
-      const inputs = col.querySelectorAll('input[placeholder="Nombre de la iniciativa"]');
-      if (inputs.length) inputs[inputs.length-1].focus();
+    const container = document.getElementById(colId + '-cards');
+    if (container) {
+      const inputs = container.querySelectorAll('input[placeholder="Nombre de la iniciativa"]');
+      if (inputs.length) inputs[inputs.length - 1].focus();
     }
   }, 50);
+  // Persist to Supabase
+  try {
+    await sbFetch('POST', 'initiatives', newCard);
+  } catch(e) { console.warn('initiative insert error:', e.message); }
 }
 // Auto-load pipeline on page start + init goals from log
 // ─── AUTH (Supabase Auth — no passwords in code) ─────────────────────────────
@@ -1939,7 +1957,7 @@ function showApp(user) {
   pipeLoad();
   crmLoad();
   kpiLogsLoad();
-  renderInitBoard();
+  initLoad();
   startAutoSync(30000);
 }
 
@@ -2029,6 +2047,19 @@ function startAutoSync(intervalMs = 60000) {
       const kpiData = await sbFetch('GET', 'kpi_logs?select=id,date,seller,type,company,canal,acv,mrr,impl,notes,created_at&order=created_at.desc&limit=2000');
       if (Array.isArray(kpiData)) { _kpiLogs = kpiData; }
       updateGoalsFromLogs();
+      // Silent initiatives refresh (keeps board in sync for whole team)
+      const initRows = await sbFetch('GET', 'initiatives?select=*&order=position.asc,created_at.asc');
+      if (Array.isArray(initRows)) {
+        _initData = { 'col-progreso': [], 'col-planeacion': [], 'col-completado': [] };
+        initRows.forEach(r => {
+          if (_initData[r.col_id]) _initData[r.col_id].push({
+            id: r.id, emoji: r.emoji, title: r.title,
+            responsable: r.responsable, status: r.status,
+            deadline: r.deadline || '', notes: r.notes,
+          });
+        });
+        renderInitBoard();
+      }
       window._lastSyncLabel = new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}) + ' (auto)';
     } catch(e) { /* silent fail on auto-sync */ }
   }, intervalMs);
