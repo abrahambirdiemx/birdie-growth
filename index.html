@@ -325,6 +325,9 @@
   .col-date { width:105px; }
   .col-touch { width:105px; }
   .col-canal { width:110px; }
+  /* Responsive columns — hide progressively on smaller screens */
+  @media (max-width: 1400px) { .col-hide-lg { display: none !important; } }
+  @media (max-width: 1150px) { .col-hide-md { display: none !important; } }
 
   /* CRM Section */
   .crm-stats { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin-bottom:18px; }
@@ -557,14 +560,102 @@
 <div class="modal-overlay" id="modalUpdates">
   <div class="modal">
     <div class="modal-header">
-      <h3>🔄 Actualizaciones · Semana actual</h3>
+      <h3>🔄 Cambios de Estatus · 16→20 Mar</h3>
       <button class="modal-close" onclick="closeModal('modalUpdates')">✕</button>
     </div>
     <div class="modal-body">
-      <div style="text-align:center;padding:32px 16px;color:var(--muted)">
-        <div style="font-size:32px;margin-bottom:8px">📋</div>
-        <div style="font-size:14px">Sin actualizaciones registradas esta semana.</div>
-        <div style="font-size:12px;margin-top:4px">Los cambios de estatus del pipeline aparecerán aquí.</div>
+      <div class="modal-section">🏆 Nuevos Cierres (¡2 deals pasaron a Cerrado!)</div>
+      <div class="update-item">
+        <div class="update-dot ud-win"></div>
+        <div class="update-text">
+          <div class="update-title">Lamex → Cerrado 🔓 <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:6px;font-size:10px;font-weight:700">NUEVO CIERRE</span></div>
+          <div class="update-sub">Antes: Close 2 close → Ahora: Cerrado · ACV $16,200 · MRR $1,350/mo · Impl $1,700 · Abraham Lopez</div>
+        </div>
+        <div class="update-date">Mar 17–20</div>
+      </div>
+      <div class="update-item">
+        <div class="update-dot ud-win"></div>
+        <div class="update-text">
+          <div class="update-title">STULZ → Cerrado 🔓 <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:6px;font-size:10px;font-weight:700">NUEVO CIERRE</span></div>
+          <div class="update-sub">Antes: Close 2 close → Ahora: Cerrado · ACV $4,800 · MRR $400/mo · Impl $720 · Abraham Lopez</div>
+        </div>
+        <div class="update-date">Mar 17–20</div>
+      </div>
+
+      <div class="modal-section">📈 Avances de Etapa</div>
+      <div class="update-item">
+        <div class="update-dot ud-stage"></div>
+        <div class="update-text">
+          <div class="update-title">Calificados: 80 → 87 (+7 nuevos calificados)</div>
+          <div class="update-sub">7 deals avanzaron o fueron calificados esta semana</div>
+        </div>
+        <div class="update-date">Esta semana</div>
+      </div>
+      <div class="update-item">
+        <div class="update-dot ud-stage"></div>
+        <div class="update-text">
+          <div class="update-title">Discovery: 18 → 20 (+2)</div>
+          <div class="update-sub">2 deals avanzaron a etapa de Discovery (incl. AXALTA — nuevo hoy)</div>
+        </div>
+        <div class="update-date">Esta semana</div>
+      </div>
+      <div class="update-item">
+        <div class="update-dot ud-stage"></div>
+        <div class="update-text">
+          <div class="update-title">Arista Int — Touchpoint activo</div>
+          <div class="update-sub">Último toque: 13 Mar · Next touch: HOY 20 Mar · ACV $7,020 · Abraham</div>
+        </div>
+        <div class="update-date">Mar 13</div>
+      </div>
+      <div class="update-item">
+        <div class="update-dot ud-stage"></div>
+        <div class="update-text">
+          <div class="update-title">RC+Químicos — Touchpoint reciente</div>
+          <div class="update-sub">Último toque: 13 Mar · ACV $4,800 · Propuesta · Abraham</div>
+        </div>
+        <div class="update-date">Mar 13</div>
+      </div>
+
+      <div class="modal-section">⚠️ Alertas — Next Touches Vencidos</div>
+      <div class="update-item">
+        <div class="update-dot ud-risk"></div>
+        <div class="update-text">
+          <div class="update-title">Sigma Laredo* — Next touch 17 Mar (3 días vencido)</div>
+          <div class="update-sub">Close 2 close · ACV $66,000 · Sin touchpoint registrado · Abraham</div>
+        </div>
+        <div class="update-date">Vencido 3d</div>
+      </div>
+      <div class="update-item">
+        <div class="update-dot ud-risk"></div>
+        <div class="update-text">
+          <div class="update-title">Sigma — Next touch 18 Mar (2 días vencido)</div>
+          <div class="update-sub">Close 2 close · ACV $36,000 · Pilot $12,500 · Abraham</div>
+        </div>
+        <div class="update-date">Vencido 2d</div>
+      </div>
+      <div class="update-item">
+        <div class="update-dot ud-risk"></div>
+        <div class="update-text">
+          <div class="update-title">Grupo Alta / Divine Flavor — 4 días sin seguimiento</div>
+          <div class="update-sub">Close 2 close · ACV $22,560 · Next touch era Mar 16 · Héctor</div>
+        </div>
+        <div class="update-date">Vencido 4d</div>
+      </div>
+      <div class="update-item">
+        <div class="update-dot ud-risk"></div>
+        <div class="update-text">
+          <div class="update-title">Agrosuper* — 10 días desde next touch</div>
+          <div class="update-sub">Propuesta · ACV $21,600 · Next era 10 Mar · Abraham</div>
+        </div>
+        <div class="update-date">Vencido 10d</div>
+      </div>
+      <div class="update-item">
+        <div class="update-dot ud-risk"></div>
+        <div class="update-text">
+          <div class="update-title">VEGUSA — Next touch 17 Mar (3 días vencido)</div>
+          <div class="update-sub">Propuesta · ACV $7,200 · Daniel</div>
+        </div>
+        <div class="update-date">Vencido 3d</div>
       </div>
     </div>
   </div>
@@ -573,14 +664,66 @@
 <div class="modal-overlay" id="modalNew">
   <div class="modal">
     <div class="modal-header">
-      <h3>✨ Nuevos Registros · Semana actual</h3>
+      <h3>✨ Nuevos Registros · 16–20 Mar (11)</h3>
       <button class="modal-close" onclick="closeModal('modalNew')">✕</button>
     </div>
     <div class="modal-body">
-      <div style="text-align:center;padding:32px 16px;color:var(--muted)">
-        <div style="font-size:32px;margin-bottom:8px">✨</div>
-        <div style="font-size:14px">Sin nuevos registros esta semana.</div>
-        <div style="font-size:12px;margin-top:4px">Los deals nuevos del pipeline aparecerán aquí.</div>
+      <div class="modal-section" id="modal-updates-date">Hoy · <span id="modal-today-date">…</span></div>
+      <div class="update-item">
+        <div class="update-dot ud-new"></div>
+        <div class="update-text"><div class="update-title">AXALTA · Discovery</div><div class="update-sub">Entró directo a Discovery — Daniel Luna</div></div>
+        <div class="update-date">Hoy</div>
+      </div>
+      <div class="update-item">
+        <div class="update-dot ud-new"></div>
+        <div class="update-text"><div class="update-title">ALPURA · Active lead</div><div class="update-sub">Daniel Luna</div></div>
+        <div class="update-date">Hoy</div>
+      </div>
+      <div class="update-item">
+        <div class="update-dot ud-new"></div>
+        <div class="update-text"><div class="update-title">PRISMA · Active lead</div><div class="update-sub">Daniel Luna</div></div>
+        <div class="update-date">Hoy</div>
+      </div>
+      <div class="update-item">
+        <div class="update-dot ud-new"></div>
+        <div class="update-text"><div class="update-title">MOTRIX · Active lead</div><div class="update-sub">Daniel Luna</div></div>
+        <div class="update-date">Hoy</div>
+      </div>
+      <div class="update-item">
+        <div class="update-dot ud-new"></div>
+        <div class="update-text"><div class="update-title">MAARBA LOGISTICS · Active lead</div><div class="update-sub">Daniel Luna</div></div>
+        <div class="update-date">Hoy</div>
+      </div>
+      <div class="update-item">
+        <div class="update-dot ud-new"></div>
+        <div class="update-text"><div class="update-title">LUTHERR · Active lead</div><div class="update-sub">Daniel Luna</div></div>
+        <div class="update-date">Hoy</div>
+      </div>
+      <div class="update-item">
+        <div class="update-dot ud-new"></div>
+        <div class="update-text"><div class="update-title">ZF Frenos y mecanismos · Weekly Hunt</div><div class="update-sub">Daniel Luna</div></div>
+        <div class="update-date">Hoy</div>
+      </div>
+      <div class="update-item">
+        <div class="update-dot ud-new"></div>
+        <div class="update-text"><div class="update-title">IMCD MEXICO · Weekly Hunt</div><div class="update-sub">Daniel Luna</div></div>
+        <div class="update-date">Hoy</div>
+      </div>
+      <div class="update-item">
+        <div class="update-dot ud-new"></div>
+        <div class="update-text"><div class="update-title">HERAEUS ELECTRO NITE · Weekly Hunt</div><div class="update-sub">Daniel Luna</div></div>
+        <div class="update-date">Hoy</div>
+      </div>
+      <div class="update-item">
+        <div class="update-dot ud-new"></div>
+        <div class="update-text"><div class="update-title">ITASA AMERICAS / MATIV · Weekly Hunt</div><div class="update-sub">Daniel Luna</div></div>
+        <div class="update-date">Hoy</div>
+      </div>
+      <div class="modal-section">Jueves 17 Marzo (1 nuevo)</div>
+      <div class="update-item">
+        <div class="update-dot ud-new"></div>
+        <div class="update-text"><div class="update-title">QUIMICOS Y POLIMEROS CORPORATION · Active lead</div><div class="update-sub">Daniel Luna</div></div>
+        <div class="update-date">17 Mar</div>
       </div>
     </div>
   </div>
@@ -611,8 +754,8 @@
     </div>
   </div>
   <div class="topbar-right">
-    <button class="btn btn-outline" onclick="openModal('modalNew')">✨ Nuevos registros</button>
-    <button class="btn btn-primary" onclick="openModal('modalUpdates')">🔄 Actualizaciones</button>
+    <button class="btn btn-outline" onclick="openModal('modalNew')">✨ Nuevos registros <span class="badge-count" style="background:#3b6ef8;color:#fff">11</span></button>
+    <button class="btn btn-primary" onclick="openModal('modalUpdates')">🔄 Actualizaciones <span class="badge-count" style="background:rgba(255,255,255,0.25)">9</span></button>
     <button class="btn btn-green" id="syncBtn" onclick="pipeLoad()" title="Recargar datos de Supabase">🔄 Sync</button>
     <div class="health-pill" id="health-pill">⚠ Health: 38/100</div>
     <span id="topbar-user" style="font-size:12px;color:var(--muted);margin-left:4px"></span>
@@ -950,54 +1093,23 @@
 ══════════════════════════════════════ -->
 <div class="tab-content" id="tab-iniciativas">
   <div style="margin-bottom:20px;">
-    <div style="font-size:15px;font-weight:700;margin-bottom:4px">🚀 Iniciativas Clave · Abril 2026</div>
+    <div style="font-size:15px;font-weight:700;margin-bottom:4px">🚀 Iniciativas Clave · Marzo 2026</div>
     <div style="font-size:13px;color:var(--muted)">Seguimiento de proyectos estratégicos de Growth. Asigna responsable, status y notas en cada tarjeta.</div>
   </div>
   <div class="initiative-board">
-    <!-- En Progreso -->
     <div class="initiative-col" id="col-progreso">
       <div class="initiative-col-title"><span class="col-dot" style="background:#d97706"></span>En Progreso</div>
-      <div class="initiative-card">
-        <div class="initiative-emoji">🎬</div>
-        <div class="initiative-title">Videos para Redes Sociales</div>
-        <div class="initiative-desc">Contenido de video para LinkedIn, Instagram y YouTube. Demos del producto, casos de éxito y thought leadership.</div>
-        <span class="initiative-priority ip-alta">🔴 Prioridad Alta</span>
-        <div class="initiative-field"><label>Responsable</label><select onchange="saveInit('video-owner',this.value)"><option value="">— Asignar —</option><option>Abraham Lopez</option><option>Héctor Nícola</option><option>Daniel Luna</option><option>Equipo Marketing</option><option>Agencia / Freelancer</option></select></div>
-        <div class="initiative-field"><label>Status</label><select onchange="saveInit('video-status',this.value)"><option>En progreso</option><option>Planeación</option><option>En revisión</option><option>Listo para publicar</option><option>Publicado ✓</option></select></div>
-        <div class="initiative-field"><label>Fecha límite</label><input type="date" value="2026-03-28" onchange="saveInit('video-date',this.value)"></div>
-        <div class="initiative-field"><label>Notas</label><textarea onchange="saveInit('video-notes',this.value)">Script inicial pendiente. Coordinar con diseño para branding.</textarea></div>
-      </div>
-      <div class="initiative-card">
-        <div class="initiative-emoji">📣</div>
-        <div class="initiative-title">Lanzamiento Campaña Promocional</div>
-        <div class="initiative-desc">Nueva campaña de adquisición. Paid Ads, email y LinkedIn. Audiencia: importadoras y distribuidoras con +200 ops/mes.</div>
-        <span class="initiative-priority ip-alta">🔴 Prioridad Alta</span>
-        <div class="initiative-field"><label>Responsable</label><select onchange="saveInit('campana-owner',this.value)"><option value="">— Asignar —</option><option>Abraham Lopez</option><option>Héctor Nícola</option><option>Daniel Luna</option><option>Equipo Marketing</option><option>Agencia / Freelancer</option></select></div>
-        <div class="initiative-field"><label>Status</label><select onchange="saveInit('campana-status',this.value)"><option>En progreso</option><option>Planeación</option><option>Creativos en revisión</option><option>Aprobada — pendiente lanzar</option><option>Activa ✓</option></select></div>
-        <div class="initiative-field"><label>Fecha de lanzamiento</label><input type="date" value="2026-03-24" onchange="saveInit('campana-fecha',this.value)"></div>
-        <div class="initiative-field"><label>Notas</label><textarea onchange="saveInit('campana-notes',this.value)">Definir oferta de descuento o trial. Creativos en revisión con agencia.</textarea></div>
-      </div>
+      <div id="col-progreso-cards"></div>
       <button class="add-initiative-btn" onclick="addCard('col-progreso')">+ Agregar iniciativa</button>
     </div>
-    <!-- Planeación -->
     <div class="initiative-col" id="col-planeacion">
       <div class="initiative-col-title"><span class="col-dot" style="background:#3b6ef8"></span>Planeación</div>
-      <div class="initiative-card">
-        <div class="initiative-emoji">🧮</div>
-        <div class="initiative-title">Lead Magnet: Calculadora de Eficiencia</div>
-        <div class="initiative-desc">Herramienta interactiva que muestra ROI y horas ahorradas al implementar Birdie. Inputs: ops/mes, equipo, horas de seguimiento.</div>
-        <span class="initiative-priority ip-media">🟡 Prioridad Media</span>
-        <div class="initiative-field"><label>Responsable</label><select onchange="saveInit('lm-owner',this.value)"><option value="">— Asignar —</option><option>Abraham Lopez</option><option>Héctor Nícola</option><option>Daniel Luna</option><option>Equipo Marketing</option><option>Dev</option></select></div>
-        <div class="initiative-field"><label>Status</label><select onchange="saveInit('lm-status',this.value)"><option>Planeación</option><option>Diseño UX</option><option>Desarrollo</option><option>Testing</option><option>Publicado ✓</option></select></div>
-        <div class="initiative-field"><label>Fecha objetivo</label><input type="date" value="2026-04-15" onchange="saveInit('lm-fecha',this.value)"></div>
-        <div class="initiative-field"><label>Notas</label><textarea onchange="saveInit('lm-notes',this.value)">Output: $ ahorrado + ROI proyectado. Distribuir en cold outreach y LinkedIn para calificar leads.</textarea></div>
-      </div>
+      <div id="col-planeacion-cards"></div>
       <button class="add-initiative-btn" onclick="addCard('col-planeacion')">+ Agregar iniciativa</button>
     </div>
-    <!-- Completado -->
     <div class="initiative-col" id="col-completado">
       <div class="initiative-col-title"><span class="col-dot" style="background:#16a34a"></span>Completado</div>
-      <div style="text-align:center;padding:30px 16px;color:var(--muted2);font-size:13px;"><div style="font-size:28px;margin-bottom:8px">🎯</div><div>Las iniciativas completadas<br>aparecerán aquí</div></div>
+      <div id="col-completado-cards"></div>
       <button class="add-initiative-btn" onclick="addCard('col-completado')">+ Agregar iniciativa</button>
     </div>
   </div>
@@ -1021,7 +1133,7 @@
     <label>Período</label>
     <select id="kpi-period-filter" onchange="renderKPITab()">
       <option value="week">Esta semana</option>
-      <option value="month" selected>Este mes (Abril)</option>
+      <option value="month" selected>Este mes (Marzo)</option>
       <option value="all">Todo el tiempo</option>
     </select>
     <div class="kpi-filter-sep"></div>
@@ -1258,21 +1370,21 @@
       <thead>
         <tr>
           <th class="col-w"     onclick="pipeSort('opportunity_name')">Oportunidad ↕</th>
+          <th style="width:75px" onclick="pipeSort('size')">Tamaño ↕</th>
           <th class="col-owner" onclick="pipeSort('owner')">Owner ↕</th>
           <th class="col-status"onclick="pipeSort('status')">Etapa ↕</th>
           <th class="col-mrr"   onclick="pipeSort('mrr')">MRR ↕</th>
           <th class="col-acv"   onclick="pipeSort('acv')">ACV ↕</th>
-          <th style="width:80px" onclick="pipeSort('implementaciones')">Impl. ↕</th>
-          <th class="col-date">Ingreso Lead</th>
-          <th class="col-date" style="color:#7c3aed">Discovery</th>
-          <th class="col-date" style="color:#5b21b6">Demo</th>
-          <th class="col-date" style="color:#ea580c">Propuesta</th>
+          <th style="width:80px" onclick="pipeSort('implementaciones')" class="col-hide-md">Impl. ↕</th>
+          <th class="col-date col-hide-md">Ingreso Lead</th>
+          <th class="col-date col-hide-lg" style="color:#7c3aed">Discovery</th>
+          <th class="col-date col-hide-lg" style="color:#5b21b6">Demo</th>
+          <th class="col-date col-hide-lg" style="color:#ea580c">Propuesta</th>
           <th class="col-touch" onclick="pipeSort('next_touchpoint')">Próx. Touch ↕</th>
           <th class="col-date" style="color:#15803d;width:90px" onclick="pipeSort('cierre_date')">Cierre Mes ↕</th>
-          <th class="col-canal">Canal</th>
-          <th style="width:70px" onclick="pipeSort('size')">Tamaño ↕</th>
+          <th class="col-canal col-hide-md">Canal</th>
           <th style="width:60px" onclick="pipeSort('probability')">Prob% ↕</th>
-          <th style="width:80px">Días pipe</th>
+          <th style="width:70px" class="col-hide-md">Días pipe</th>
         </tr>
       </thead>
       <tbody id="pipe-tbody">
@@ -1656,15 +1768,97 @@ function openModal(id) { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('click', e => { if(e.target===m) m.classList.remove('open'); }));
 
-// Initiatives persist
-function saveInit(key, val) { try { sessionStorage.setItem('init_'+key, val); } catch(e) {} }
-function loadInits() {
-  document.querySelectorAll('[onchange^="saveInit"]').forEach(el => {
-    const m = el.getAttribute('onchange').match(/saveInit\('([^']+)'/);
-    if(m) { const v = sessionStorage.getItem('init_'+m[1]); if(v) el.value = v; }
+// ─── INICIATIVAS CLAVE — localStorage persistence ────────────────────────────
+var INIT_KEY = 'birdie_initiatives_v2';
+
+var INIT_DEFAULTS = {
+  'col-progreso': [
+    { id: 'init-1', emoji: '🎥', title: 'Videos de Producto', responsable: 'Equipo Marketing', status: 'En progreso', deadline: '', notes: 'Producir 3 videos demo para LinkedIn y website.' },
+    { id: 'init-2', emoji: '📧', title: 'Campaña Email Q2', responsable: 'Abraham Lopez', status: 'En progreso', deadline: '', notes: 'Secuencia de 5 correos para leads calificados.' },
+  ],
+  'col-planeacion': [
+    { id: 'init-3', emoji: '🧲', title: 'Lead Magnet: Guía RRHH', responsable: 'Héctor Nícola', status: 'Planeación', deadline: '', notes: 'Ebook descargable para captura de leads.' },
+  ],
+  'col-completado': [],
+};
+
+function _initLoad() {
+  try { return JSON.parse(localStorage.getItem(INIT_KEY) || 'null'); } catch(e) { return null; }
+}
+function _initSave(data) {
+  try { localStorage.setItem(INIT_KEY, JSON.stringify(data)); } catch(e) {}
+}
+function _initGet() {
+  return _initLoad() || JSON.parse(JSON.stringify(INIT_DEFAULTS));
+}
+
+function renderInitBoard() {
+  const data = _initGet();
+  ['col-progreso', 'col-planeacion', 'col-completado'].forEach(colId => {
+    const container = document.getElementById(colId + '-cards');
+    if (!container) return;
+    const cards = data[colId] || [];
+    container.innerHTML = cards.map(c => _buildInitCard(c, colId)).join('');
   });
 }
-loadInits();
+
+function _buildInitCard(c, colId) {
+  const statusOpts = ['Planeación','En progreso','En revisión','Completado ✓']
+    .map(s => `<option${c.status===s?' selected':''}>${s}</option>`).join('');
+  const respOpts = ['','Abraham Lopez','Héctor Nícola','Daniel Luna','Equipo Marketing']
+    .map(s => `<option value="${s}"${c.responsable===s?' selected':''}>${s||'— Asignar —'}</option>`).join('');
+  return `<div class="initiative-card" data-init-id="${c.id}" data-init-col="${colId}">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <input style="font-size:20px;width:40px;border:1px solid var(--border2);border-radius:6px;padding:2px;background:var(--card2)" value="${c.emoji||'📌'}" oninput="updateInitField('${c.id}','${colId}','emoji',this.value)">
+      <input style="flex:1;border:1px solid var(--border2);border-radius:7px;padding:6px 10px;font-size:13px;font-weight:700;background:var(--card2)" placeholder="Nombre de la iniciativa" value="${c.title||''}" oninput="updateInitField('${c.id}','${colId}','title',this.value)">
+    </div>
+    <div class="initiative-field"><label>Responsable</label><select onchange="updateInitField('${c.id}','${colId}','responsable',this.value)">${respOpts}</select></div>
+    <div class="initiative-field"><label>Status</label><select onchange="updateInitField('${c.id}','${colId}','status',this.value)">${statusOpts}</select></div>
+    <div class="initiative-field"><label>Fecha límite</label><input type="date" value="${c.deadline||''}" onchange="updateInitField('${c.id}','${colId}','deadline',this.value)"></div>
+    <div class="initiative-field"><label>Notas</label><textarea placeholder="Notas, links, blockers..." oninput="updateInitField('${c.id}','${colId}','notes',this.value)">${c.notes||''}</textarea></div>
+    <button onclick="deleteInitCard('${c.id}','${colId}')" style="width:100%;padding:6px;border:1px solid #fecaca;background:#fef2f2;color:#dc2626;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;margin-top:6px">🗑 Eliminar</button>
+  </div>`;
+}
+
+function updateInitField(cardId, colId, field, value) {
+  const data = _initGet();
+  const cards = data[colId] || [];
+  const card = cards.find(c => c.id === cardId);
+  if (card) { card[field] = value; _initSave(data); }
+}
+
+function deleteInitCard(cardId, colId) {
+  if (!confirm('¿Eliminar esta iniciativa?')) return;
+  const data = _initGet();
+  data[colId] = (data[colId] || []).filter(c => c.id !== cardId);
+  _initSave(data);
+  renderInitBoard();
+}
+
+function addCard(colId) {
+  const data = _initGet();
+  if (!data[colId]) data[colId] = [];
+  const newCard = {
+    id: 'init-' + Date.now(),
+    emoji: '📌',
+    title: '',
+    responsable: '',
+    status: 'Planeación',
+    deadline: '',
+    notes: '',
+  };
+  data[colId].push(newCard);
+  _initSave(data);
+  renderInitBoard();
+  // Focus the title input of the new card
+  setTimeout(() => {
+    const col = document.getElementById(colId + '-cards');
+    if (col) {
+      const inputs = col.querySelectorAll('input[placeholder="Nombre de la iniciativa"]');
+      if (inputs.length) inputs[inputs.length-1].focus();
+    }
+  }, 50);
+}
 // Auto-load pipeline on page start + init goals from log
 // ─── AUTH (Supabase Auth — no passwords in code) ─────────────────────────────
 const SESSION_KEY = 'birdie_session_v2';
@@ -1745,6 +1939,7 @@ function showApp(user) {
   pipeLoad();
   crmLoad();
   kpiLogsLoad();
+  renderInitBoard();
   startAutoSync(30000);
 }
 
@@ -2013,8 +2208,12 @@ function pipeRender() {
     // inline date cell helper: always shows input, empty if null
     const dInline = (val, field, color) =>
       `<input type="date" class="cell-date-input" value="${val||''}" onchange="pipeUpdateField(${r.id},'${field}',this.value||null)" style="${color?'color:'+color:''}" title="${field}">`;
-    return `<tr>
-      <td><span class="cell cell-name" title="Clic para editar" style="cursor:pointer" onclick="pipeOpenEdit(${r.id})">${r.opportunity_name||'—'}</span></td>
+    // CRM match indicator
+  const crmMatch = _crmData && _crmData.find(c => c.n && r.opportunity_name && c.n.toLowerCase().trim() === r.opportunity_name.toLowerCase().trim());
+  const crmBadge = crmMatch ? `<span title="Ligado a CRM: ${crmMatch.n}" style="margin-left:5px;font-size:10px;color:#3b6ef8;cursor:pointer" onclick="pipeOpenEdit(${r.id})">🏢</span>` : '';
+  return `<tr>
+      <td><span class="cell cell-name" title="Clic para editar" style="cursor:pointer" onclick="pipeOpenEdit(${r.id})">${r.opportunity_name||'—'}</span>${crmBadge}</td>
+      <td><span class="cell" style="font-size:11px;color:#64748b">${r.size||'—'}</span></td>
       <td class="cell-select">
         <select onchange="pipeUpdateField(${r.id},'owner',this.value)">
           <option ${r.owner==='Abraham Lopez'?'selected':''}>Abraham Lopez</option>
@@ -2029,24 +2228,23 @@ function pipeRender() {
       </td>
       <td><span class="cell cell-money">${mrr?'$'+mrr.toLocaleString():''}</span></td>
       <td><span class="cell cell-money acv">${acv?'$'+acv.toLocaleString():''}</span></td>
-      <td><span class="cell cell-money" style="color:#7c3aed">${parsePipeMoney(r.implementaciones)?'$'+parsePipeMoney(r.implementaciones).toLocaleString():''}</span></td>
-      <td class="cell-date">${dInline(r.ingreso_lead,'ingreso_lead','')}</td>
-      <td class="cell-date">${dInline(r.discovery_date,'discovery_date','#7c3aed')}</td>
-      <td class="cell-date">${dInline(r.demo_date,'demo_date','#5b21b6')}</td>
-      <td class="cell-date">${dInline(r.proposal_date,'proposal_date','#ea580c')}</td>
+      <td class="col-hide-md"><span class="cell cell-money" style="color:#7c3aed">${parsePipeMoney(r.implementaciones)?'$'+parsePipeMoney(r.implementaciones).toLocaleString():''}</span></td>
+      <td class="cell-date col-hide-md">${dInline(r.ingreso_lead,'ingreso_lead','')}</td>
+      <td class="cell-date col-hide-lg">${dInline(r.discovery_date,'discovery_date','#7c3aed')}</td>
+      <td class="cell-date col-hide-lg">${dInline(r.demo_date,'demo_date','#5b21b6')}</td>
+      <td class="cell-date col-hide-lg">${dInline(r.proposal_date,'proposal_date','#ea580c')}</td>
       <td class="cell-date"><input type="date" class="cell-date-input" value="${nextT||''}" onchange="pipeUpdateField(${r.id},'next_touchpoint',this.value||null)" style="${nextStyle}" title="Próx. touchpoint"></td>
       <td class="cell-date" style="white-space:nowrap">
         <input type="month" class="cell-date-input" value="${cierreMonth}" onchange="pipeSaveCierreMonth(${r.id},this.value)" style="color:#15803d;width:100px;max-width:100px" title="Cierre estimado mes">
       </td>
-      <td style="max-width:110px;overflow:hidden;white-space:nowrap"><span class="cell" style="color:var(--muted);font-size:11px">${r.estrategia||'—'}</span></td>
-      <td><span class="cell" style="font-size:11px;color:#64748b">${r.size||'—'}</span></td>
+      <td class="col-hide-md" style="max-width:110px;overflow:hidden;white-space:nowrap"><span class="cell" style="color:var(--muted);font-size:11px">${r.estrategia||'—'}</span></td>
       <td>
         <input type="number" class="cell-date-input" value="${prob}" min="0" max="100"
           onchange="pipeUpdateField(${r.id},'probability',parseInt(this.value)||0)"
           style="width:46px;text-align:center;font-size:12px;color:${prob>=70?'#16a34a':prob>=40?'#d97706':'#64748b'};font-weight:700"
           title="Probabilidad de cierre %">
       </td>
-      <td><span class="cell" style="color:${dias&&dias>120?'var(--orange)':dias&&dias>60?'var(--yellow)':'var(--muted)'};font-size:11px">${dias!=null?dias+'d':'—'}</span></td>
+      <td class="col-hide-md"><span class="cell" style="color:${dias&&dias>120?'var(--orange)':dias&&dias>60?'var(--yellow)':'var(--muted)'};font-size:11px">${dias!=null?dias+'d':'—'}</span></td>
     </tr>`;
   }
 
@@ -2157,9 +2355,19 @@ function pipeOpenEdit(id) {
   document.getElementById('pipe-modal-title').textContent='✏️ Editar Deal';
   document.getElementById('pipe-edit-id').value=id;
   document.getElementById('pipe-delete-btn').style.display='block';
-  // Hide CRM search section (only for new deals)
+  // Show CRM search section and auto-match by name
   const css = document.getElementById('crm-search-section');
-  if (css) css.style.display='none';
+  if (css) css.style.display='block';
+  const crmSearchInput = document.getElementById('crm-deal-search');
+  if (crmSearchInput) {
+    // Try to auto-match existing deal name against CRM
+    const crmMatch = _crmData && r.opportunity_name
+      ? _crmData.find(c => c.n && c.n.toLowerCase().trim() === r.opportunity_name.toLowerCase().trim())
+      : null;
+    crmSearchInput.value = crmMatch ? crmMatch.n : (r.opportunity_name || '');
+  }
+  const crmResults = document.getElementById('crm-deal-results');
+  if (crmResults) crmResults.style.display = 'none';
   const setV = (elId, val) => { const e=document.getElementById(elId); if(e) e.value=val||''; };
   setV('pf-name',        r.opportunity_name);
   setV('pf-owner-f',     r.owner);
@@ -3909,25 +4117,6 @@ function showProjDeals(month) {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-function addCard(colId) {
-  const col = document.getElementById(colId);
-  const btn = col.querySelector('.add-initiative-btn');
-  const ph = col.querySelector('div[style*="text-align:center"]');
-  if(ph) ph.remove();
-  const card = document.createElement('div');
-  card.className = 'initiative-card';
-  card.innerHTML = `
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-      <input style="font-size:20px;width:40px;border:1px solid var(--border2);border-radius:6px;padding:2px;background:var(--card2)" value="📌">
-      <input style="flex:1;border:1px solid var(--border2);border-radius:7px;padding:6px 10px;font-size:13px;font-weight:700;background:var(--card2)" placeholder="Nombre de la iniciativa">
-    </div>
-    <div class="initiative-field"><label>Responsable</label><select><option value="">— Asignar —</option><option>Abraham Lopez</option><option>Héctor Nícola</option><option>Daniel Luna</option><option>Equipo Marketing</option></select></div>
-    <div class="initiative-field"><label>Status</label><select><option>Planeación</option><option>En progreso</option><option>En revisión</option><option>Completado ✓</option></select></div>
-    <div class="initiative-field"><label>Fecha límite</label><input type="date"></div>
-    <div class="initiative-field"><label>Notas</label><textarea placeholder="Notas, links, blockers..."></textarea></div>
-    <button onclick="this.closest('.initiative-card').remove()" style="width:100%;padding:6px;border:1px solid #fecaca;background:#fef2f2;color:#dc2626;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;margin-top:6px">🗑 Eliminar</button>`;
-  col.insertBefore(card, btn);
-}
 // CRM Seed Data (from CRM-Database CSV — loaded once into localStorage)
 </script>
 <script id="crm-seed-script">
