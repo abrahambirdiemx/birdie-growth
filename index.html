@@ -1984,32 +1984,32 @@ var AP_CONFIG_KEY = 'birdie_autopilot_config_v1';
 
 var AP_AGENTS = [
   {
-    num: 'Agente 1', emoji: '🔍', title: 'Enriquecimiento',
-    tech: 'Lusha API', status: 'pending',
-    desc: 'Obtiene email, cargo y teléfono del tomador de decisiones.',
-    trigger: 'Diario · 8:00am',
-    file: 'agent1_lusha_enrichment.json',
+    num: 'Agente 1', emoji: '🔍', title: 'Prospecting',
+    tech: 'Lusha Company API', status: 'pending',
+    desc: 'Busca contactos por dominio de empresa. Selecciona 2 DMs (Director/Gerente) + 3 referidores internos (Coordinador/Analista).',
+    trigger: 'Diario · 7:30am',
+    file: 'agent1_company_prospecting.json',
   },
   {
     num: 'Agente 2', emoji: '🧠', title: 'Investigación',
     tech: 'Gemini 2.0 Flash', status: 'pending',
-    desc: 'Genera resumen, pain point aduanal y contexto para personalización.',
+    desc: 'Genera resumen, pain point aduanal y contexto personalizado por tipo de contacto (DM vs referidor).',
     trigger: 'Cada 2h',
     file: 'agent2_gemini_research.json',
   },
   {
-    num: 'Agente 3', emoji: '✍️', title: 'Redacción',
-    tech: 'Claude Haiku', status: 'ready',
-    desc: 'Draft personalizado ≤120 palabras firmado como Abraham. Envío automático vía Gmail.',
-    trigger: 'Trigger: estado=investigado',
-    file: 'birdie_n8n_workflow_v2.json',
+    num: 'Agente 3', emoji: '✍️', title: 'Redacción Dual',
+    tech: 'Claude Haiku', status: 'pending',
+    desc: 'DMs: email ROI-focused ≤120 palabras + CTA Calendly. Referidores: email conversacional ≤90 palabras pidiendo intro interna.',
+    trigger: 'Cada 30 min',
+    file: 'agent3_dual_email_writer.json',
   },
   {
     num: 'Agente 4', emoji: '📬', title: 'Seguimiento',
-    tech: 'Claude Haiku + Gmail', status: 'ready',
-    desc: 'Clasifica respuestas inbox. Responde con Calendly si hay interés.',
+    tech: 'Claude Haiku + Gmail', status: 'pending',
+    desc: 'DMs: clasifica + envía Calendly si interesado. Referidores: detecta "conecta_dm" y responde pidiendo intro al decisor.',
     trigger: 'Cada 4h',
-    file: 'birdie_n8n_workflow_v2.json',
+    file: 'agent4_followup_classifier.json',
   },
 ];
 
@@ -2025,14 +2025,14 @@ var AP_CHECKLIST = [
 ];
 
 var AP_FUNNEL_STATES = [
-  { key: 'nuevo',           label: 'Nuevo',           color: '#94a3b8' },
-  { key: 'enriquecido',     label: 'Enriquecido',     color: '#3b6ef8' },
-  { key: 'investigado',     label: 'Investigado',     color: '#7c3aed' },
-  { key: 'enviado',         label: 'Email enviado',   color: '#ea580c' },
-  { key: 'calendly_enviado',label: 'Calendly enviado',color: '#d97706' },
-  { key: 'demo_agendada',   label: 'Demo agendada',   color: '#16a34a' },
-  { key: 'descartado',      label: 'Descartado',      color: '#dc2626' },
-  { key: 'sin_datos',       label: 'Sin datos',       color: '#64748b' },
+  { key: 'nuevo',           label: 'Empresas nuevas',        color: '#94a3b8' },
+  { key: 'enriquecido',     label: 'Contactos descubiertos', color: '#3b6ef8' },
+  { key: 'investigado',     label: 'Investigados',           color: '#7c3aed' },
+  { key: 'enviado',         label: 'Email enviado',          color: '#ea580c' },
+  { key: 'conecta_dm',      label: 'Referidor → intro DM',   color: '#f59e0b' },
+  { key: 'calendly_enviado',label: 'Calendly enviado (DM)',  color: '#d97706' },
+  { key: 'demo_agendada',   label: 'Demo agendada ✓',        color: '#16a34a' },
+  { key: 'descartado',      label: 'Descartado',             color: '#dc2626' },
 ];
 
 var _apConfig = null;
