@@ -1985,10 +1985,10 @@ var AP_CONFIG_KEY = 'birdie_autopilot_config_v1';
 var AP_AGENTS = [
   {
     num: 'Agente 1', emoji: '🔍', title: 'Prospecting',
-    tech: 'Lusha Company API', status: 'pending',
-    desc: 'Busca contactos por dominio de empresa. Selecciona 2 DMs (Director/Gerente) + 3 referidores internos (Coordinador/Analista).',
+    tech: 'Apollo.io API', status: 'pending',
+    desc: 'Busca contactos por dominio de empresa. Selecciona 2 DMs (Director/Gerente) + 3 referidores (Coordinador/Analista). Email verificado incluido.',
     trigger: 'Diario · 7:30am',
-    file: 'agent1_company_prospecting.json',
+    file: 'agent1_apollo_prospecting.json',
   },
   {
     num: 'Agente 2', emoji: '🧠', title: 'Investigación',
@@ -2014,14 +2014,15 @@ var AP_AGENTS = [
 ];
 
 var AP_CHECKLIST = [
-  { id: 'claude',    label: 'Claude API Key',       tag: 'x-api-key header',    hint: 'console.anthropic.com' },
-  { id: 'gemini',    label: 'Gemini API Key',        tag: 'query param ?key=',   hint: 'aistudio.google.com' },
-  { id: 'lusha',     label: 'Lusha API Key',         tag: 'HTTP Header Auth',    hint: 'app.lusha.com/api' },
-  { id: 'gsheets',   label: 'Google Sheets OAuth2',  tag: 'OAuth2',              hint: 'Autorizar con Workspace' },
-  { id: 'gmail',     label: 'Gmail OAuth2',          tag: 'OAuth2',              hint: 'abraham@birdie.mx' },
-  { id: 'sheetid',   label: 'Sheet ID reemplazado',  tag: '3 nodos en n8n',      hint: 'TU_GOOGLE_SHEET_ID → real' },
-  { id: 'calendly',  label: 'Calendly URL',          tag: 'Agente 4',            hint: 'URL real de tu booking' },
-  { id: 'pipedrive', label: 'Pipedrive API Token',   tag: 'query param',         hint: 'app.pipedrive.com/settings' },
+  { id: 'claude',    label: 'Claude API Key',        tag: 'x-api-key header',    hint: 'console.anthropic.com' },
+  { id: 'gemini',    label: 'Gemini API Key',         tag: 'query param ?key=',   hint: 'aistudio.google.com' },
+  { id: 'apollo',    label: 'Apollo.io API Key',      tag: 'x-api-key header',    hint: 'app.apollo.io/settings/integrations/api' },
+  { id: 'gsheets',   label: 'Google Sheets OAuth2',   tag: 'OAuth2',              hint: 'Autorizar con Workspace' },
+  { id: 'gmail',     label: 'Gmail OAuth2',            tag: 'OAuth2',              hint: 'abraham@birdie.mx' },
+  { id: 'sheetid',   label: 'Sheet ID reemplazado',   tag: 'todos los nodos n8n', hint: 'TU_GOOGLE_SHEET_ID → real' },
+  { id: 'sheet2tab', label: '2 tabs en Sheet creados', tag: 'Empresas + Contactos', hint: 'Tab 0: Empresas, Tab 1: Contactos' },
+  { id: 'calendly',  label: 'Calendly URL',            tag: 'Agente 4',            hint: 'URL real de tu booking' },
+  { id: 'pipedrive', label: 'Pipedrive API Token',     tag: 'query param',         hint: 'app.pipedrive.com/settings' },
 ];
 
 var AP_FUNNEL_STATES = [
