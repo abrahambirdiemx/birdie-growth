@@ -525,6 +525,39 @@
   /* Hide main content until logged in */
   #app-root { display:none; }
   #app-root.visible { display:block; }
+  /* ─── AUTOPILOT ─────────────────────── */
+  .ap-agent-card { background:var(--card2);border:1.5px solid var(--border);border-radius:12px;padding:16px;transition:box-shadow 0.15s; }
+  .ap-agent-card:hover { box-shadow:0 4px 16px rgba(0,0,0,0.08); }
+  .ap-agent-status { display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:10px;font-size:10px;font-weight:700;margin-bottom:10px; }
+  .ap-status-ready   { background:#dcfce7;color:#15803d; }
+  .ap-status-pending { background:#fef3c7;color:#d97706; }
+  .ap-status-running { background:#dbeafe;color:#1d4ed8; }
+  .ap-status-error   { background:#fee2e2;color:#dc2626; }
+  .ap-agent-num { font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--muted);margin-bottom:4px; }
+  .ap-agent-title { font-size:14px;font-weight:800;color:var(--text);margin-bottom:4px; }
+  .ap-agent-tech { font-size:11px;color:var(--muted);margin-bottom:10px; }
+  .ap-agent-meta { font-size:10px;color:var(--muted);border-top:1px solid var(--border);padding-top:8px;margin-top:4px;display:flex;justify-content:space-between; }
+  .ap-funnel-row { display:flex;align-items:center;gap:8px;margin-bottom:6px; }
+  .ap-funnel-label { font-size:11px;font-weight:600;color:var(--text);width:130px;flex-shrink:0; }
+  .ap-funnel-bar-wrap { flex:1;height:18px;background:#f1f5f9;border-radius:6px;overflow:hidden; }
+  .ap-funnel-bar { height:100%;border-radius:6px;transition:width 0.4s; }
+  .ap-funnel-count { font-size:11px;font-weight:700;color:var(--text);width:28px;text-align:right;flex-shrink:0; }
+  .ap-check-row { display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border2);cursor:pointer;transition:background 0.1s; }
+  .ap-check-row:last-child { border-bottom:none; }
+  .ap-check-row:hover { background:#f8fafc;border-radius:6px;padding-left:4px; }
+  .ap-check-box { width:18px;height:18px;border-radius:5px;border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.15s; }
+  .ap-check-box.checked { background:#16a34a;border-color:#16a34a;color:white;font-size:12px; }
+  .ap-check-label { font-size:12px;color:var(--text);font-weight:500;flex:1; }
+  .ap-check-tag { font-size:10px;color:var(--muted);background:var(--border2);padding:2px 7px;border-radius:6px; }
+  .ap-event-row { display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--border2); }
+  .ap-event-row:last-child { border-bottom:none; }
+  .ap-event-icon { width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;background:#f1f5f9; }
+  .ap-event-body { flex:1; }
+  .ap-event-type { font-size:11px;font-weight:700;color:var(--text); }
+  .ap-event-detail { font-size:11px;color:var(--muted);margin-top:1px; }
+  .ap-event-time { font-size:10px;color:var(--muted);flex-shrink:0;margin-top:2px; }
+  @media(max-width:1100px){#ap-agent-cards{grid-template-columns:repeat(2,1fr)!important}}
+  @media(max-width:700px){#ap-agent-cards{grid-template-columns:1fr!important}}
 </style>
 </head>
 <body>
@@ -773,6 +806,7 @@
   <button class="tab-btn" onclick="switchTab('plan',this)">📋 Plan Semanal</button>
   <button class="tab-btn" onclick="switchTab('iniciativas',this)">🚀 Iniciativas Clave</button>
   <button class="tab-btn" onclick="switchTab('crm',this)">🏢 CRM</button>
+  <button class="tab-btn" onclick="switchTab('autopilot',this)" style="color:#7c3aed;font-weight:700">⚡ Autopilot</button>
 </div>
 
 <!-- ══════════════════════════════════════
@@ -1571,6 +1605,73 @@
 </div>
 <!-- /tab-crm -->
 
+<!-- ══════════════════════════════════════
+     TAB: AUTOPILOT
+══════════════════════════════════════ -->
+<div class="tab-content" id="tab-autopilot">
+  <div style="max-width:1200px;margin:0 auto;padding:0 4px">
+
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+      <div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:26px">⚡</span>
+          <div>
+            <div style="font-size:18px;font-weight:800;color:var(--text)">Autopilot</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:1px">Pipeline automatizado · n8n + Claude + Gemini + Lusha</div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div id="ap-system-badge" style="display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;background:#fef3c7;color:#d97706;border:1px solid #fde68a">
+          <span style="width:8px;height:8px;border-radius:50%;background:#d97706;display:inline-block"></span>
+          <span id="ap-system-label">Configurando</span>
+        </div>
+        <button onclick="loadAgentEvents()" style="padding:7px 14px;background:#7c3aed;color:white;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">↻ Actualizar</button>
+      </div>
+    </div>
+
+    <!-- Agent Cards Row -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px" id="ap-agent-cards">
+      <!-- Rendered by JS -->
+    </div>
+
+    <!-- Middle Row: Pipeline Funnel + Config Checklist -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+
+      <!-- Pipeline Funnel -->
+      <div class="card2" style="padding:18px">
+        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:14px">📊 Estados del Pipeline Automático</div>
+        <div id="ap-funnel">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+
+      <!-- Configuration Checklist -->
+      <div class="card2" style="padding:18px">
+        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:14px">⚙️ Configuración n8n</div>
+        <div id="ap-checklist"><!-- Rendered by JS --></div>
+        <div style="margin-top:12px;padding:10px;background:#f0fdf4;border-radius:8px;border:1px solid #bbf7d0;font-size:11px;color:#15803d">
+          <strong>Instrucción:</strong> Abre n8n → cada workflow → busca el texto <code>TU_GOOGLE_SHEET_ID</code> y reemplaza por tu Sheet ID real.
+        </div>
+      </div>
+    </div>
+
+    <!-- Activity Log -->
+    <div class="card2" style="padding:18px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div style="font-size:13px;font-weight:700;color:var(--text)">🕐 Actividad Reciente</div>
+        <div style="font-size:11px;color:var(--muted)" id="ap-events-sub">Desde Supabase agent_events</div>
+      </div>
+      <div id="ap-events-list" style="font-size:12px;color:var(--muted);text-align:center;padding:20px 0">
+        Cargando eventos…
+      </div>
+    </div>
+
+  </div>
+</div>
+<!-- /tab-autopilot -->
+
 <!-- CRM New/Edit Modal -->
 <div class="modal-overlay" id="modalCRMNew">
   <div class="modal crm-modal">
@@ -1752,9 +1853,10 @@ function switchTab(id, btn) {
   if (id === 'crm')      crmRender();
   if (id === 'kpis')     renderKPITab();
   if (id === 'deals')    pipeRender();
-  if (id === 'cerrados') renderCerradosTab();
-  if (id === 'metas')    renderMetasTab();
-  if (id === 'plan')     renderPlanSemanal();
+  if (id === 'cerrados')  renderCerradosTab();
+  if (id === 'metas')     renderMetasTab();
+  if (id === 'plan')      renderPlanSemanal();
+  if (id === 'autopilot') renderAutopilot();
 }
 
 // Accordion
@@ -1877,6 +1979,215 @@ async function addCard(colId) {
     await sbFetch('POST', 'initiatives', newCard);
   } catch(e) { console.warn('initiative insert error:', e.message); }
 }
+// ─── AUTOPILOT ───────────────────────────────────────────────────────────────
+var AP_CONFIG_KEY = 'birdie_autopilot_config_v1';
+
+var AP_AGENTS = [
+  {
+    num: 'Agente 1', emoji: '🔍', title: 'Enriquecimiento',
+    tech: 'Lusha API', status: 'pending',
+    desc: 'Obtiene email, cargo y teléfono del tomador de decisiones.',
+    trigger: 'Diario · 8:00am',
+    file: 'agent1_lusha_enrichment.json',
+  },
+  {
+    num: 'Agente 2', emoji: '🧠', title: 'Investigación',
+    tech: 'Gemini 2.0 Flash', status: 'pending',
+    desc: 'Genera resumen, pain point aduanal y contexto para personalización.',
+    trigger: 'Cada 2h',
+    file: 'agent2_gemini_research.json',
+  },
+  {
+    num: 'Agente 3', emoji: '✍️', title: 'Redacción',
+    tech: 'Claude Haiku', status: 'ready',
+    desc: 'Draft personalizado ≤120 palabras firmado como Abraham. Envío automático vía Gmail.',
+    trigger: 'Trigger: estado=investigado',
+    file: 'birdie_n8n_workflow_v2.json',
+  },
+  {
+    num: 'Agente 4', emoji: '📬', title: 'Seguimiento',
+    tech: 'Claude Haiku + Gmail', status: 'ready',
+    desc: 'Clasifica respuestas inbox. Responde con Calendly si hay interés.',
+    trigger: 'Cada 4h',
+    file: 'birdie_n8n_workflow_v2.json',
+  },
+];
+
+var AP_CHECKLIST = [
+  { id: 'claude',    label: 'Claude API Key',       tag: 'x-api-key header',    hint: 'console.anthropic.com' },
+  { id: 'gemini',    label: 'Gemini API Key',        tag: 'query param ?key=',   hint: 'aistudio.google.com' },
+  { id: 'lusha',     label: 'Lusha API Key',         tag: 'HTTP Header Auth',    hint: 'app.lusha.com/api' },
+  { id: 'gsheets',   label: 'Google Sheets OAuth2',  tag: 'OAuth2',              hint: 'Autorizar con Workspace' },
+  { id: 'gmail',     label: 'Gmail OAuth2',          tag: 'OAuth2',              hint: 'abraham@birdie.mx' },
+  { id: 'sheetid',   label: 'Sheet ID reemplazado',  tag: '3 nodos en n8n',      hint: 'TU_GOOGLE_SHEET_ID → real' },
+  { id: 'calendly',  label: 'Calendly URL',          tag: 'Agente 4',            hint: 'URL real de tu booking' },
+  { id: 'pipedrive', label: 'Pipedrive API Token',   tag: 'query param',         hint: 'app.pipedrive.com/settings' },
+];
+
+var AP_FUNNEL_STATES = [
+  { key: 'nuevo',           label: 'Nuevo',           color: '#94a3b8' },
+  { key: 'enriquecido',     label: 'Enriquecido',     color: '#3b6ef8' },
+  { key: 'investigado',     label: 'Investigado',     color: '#7c3aed' },
+  { key: 'enviado',         label: 'Email enviado',   color: '#ea580c' },
+  { key: 'calendly_enviado',label: 'Calendly enviado',color: '#d97706' },
+  { key: 'demo_agendada',   label: 'Demo agendada',   color: '#16a34a' },
+  { key: 'descartado',      label: 'Descartado',      color: '#dc2626' },
+  { key: 'sin_datos',       label: 'Sin datos',       color: '#64748b' },
+];
+
+var _apConfig = null;
+
+function _apLoadConfig() {
+  try { return JSON.parse(localStorage.getItem(AP_CONFIG_KEY) || '{}'); } catch(e) { return {}; }
+}
+function _apSaveConfig(cfg) {
+  try { localStorage.setItem(AP_CONFIG_KEY, JSON.stringify(cfg)); } catch(e) {}
+}
+
+function renderAutopilot() {
+  _apConfig = _apLoadConfig();
+  _renderAgentCards();
+  _renderFunnel();
+  _renderChecklist();
+  loadAgentEvents();
+  _updateSystemBadge();
+}
+
+function _renderAgentCards() {
+  const container = document.getElementById('ap-agent-cards');
+  if (!container) return;
+  container.innerHTML = AP_AGENTS.map(a => {
+    const statusClass = { ready:'ap-status-ready', pending:'ap-status-pending', running:'ap-status-running', error:'ap-status-error' }[a.status] || 'ap-status-pending';
+    const statusLabel = { ready:'✅ Listo', pending:'🟡 Pendiente', running:'🔵 Corriendo', error:'🔴 Error' }[a.status] || '🟡 Pendiente';
+    return `<div class="ap-agent-card">
+      <div class="ap-agent-num">${a.num}</div>
+      <div style="font-size:22px;margin-bottom:6px">${a.emoji}</div>
+      <div class="ap-agent-title">${a.title}</div>
+      <div class="ap-agent-tech">${a.tech}</div>
+      <div class="ap-agent-status ${statusClass}">${statusLabel}</div>
+      <div style="font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:8px">${a.desc}</div>
+      <div class="ap-agent-meta">
+        <span>⏱ ${a.trigger}</span>
+        <span style="color:#7c3aed;cursor:pointer;font-size:10px" title="${a.file}">📄 JSON</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function _renderFunnel() {
+  const el = document.getElementById('ap-funnel');
+  if (!el) return;
+  // Try to get counts from agent_events; fall back to 0
+  el.innerHTML = AP_FUNNEL_STATES.map(s => {
+    const count = window._apFunnelCounts ? (window._apFunnelCounts[s.key] || 0) : 0;
+    const maxCount = window._apFunnelCounts ? Math.max(...Object.values(window._apFunnelCounts), 1) : 1;
+    const pct = Math.max(4, Math.round((count / maxCount) * 100));
+    return `<div class="ap-funnel-row">
+      <div class="ap-funnel-label">${s.label}</div>
+      <div class="ap-funnel-bar-wrap">
+        <div class="ap-funnel-bar" style="width:${pct}%;background:${s.color}"></div>
+      </div>
+      <div class="ap-funnel-count">${count}</div>
+    </div>`;
+  }).join('') + `<div style="font-size:10px;color:var(--muted);margin-top:10px;text-align:center">
+    Conecta Google Sheets para ver conteos reales · n8n escribe stats a Supabase automáticamente
+  </div>`;
+}
+
+function _renderChecklist() {
+  const el = document.getElementById('ap-checklist');
+  if (!el) return;
+  const cfg = _apConfig || {};
+  const checked = AP_CHECKLIST.filter(c => cfg[c.id]).length;
+  el.innerHTML = `<div style="font-size:11px;color:var(--muted);margin-bottom:10px">${checked}/${AP_CHECKLIST.length} completados</div>` +
+    AP_CHECKLIST.map(item => {
+      const isDone = !!cfg[item.id];
+      return `<div class="ap-check-row" onclick="apToggleCheck('${item.id}')">
+        <div class="ap-check-box ${isDone ? 'checked' : ''}">
+          ${isDone ? '✓' : ''}
+        </div>
+        <div class="ap-check-label">${item.label}</div>
+        <div class="ap-check-tag" title="${item.hint}">${item.tag}</div>
+      </div>`;
+    }).join('');
+}
+
+function apToggleCheck(id) {
+  const cfg = _apLoadConfig();
+  cfg[id] = !cfg[id];
+  _apSaveConfig(cfg);
+  _apConfig = cfg;
+  _renderChecklist();
+  _updateSystemBadge();
+}
+
+function _updateSystemBadge() {
+  const cfg = _apConfig || {};
+  const done = AP_CHECKLIST.filter(c => cfg[c.id]).length;
+  const total = AP_CHECKLIST.length;
+  const badge = document.getElementById('ap-system-badge');
+  const label = document.getElementById('ap-system-label');
+  if (!badge || !label) return;
+  if (done === total) {
+    badge.style.background = '#dcfce7'; badge.style.color = '#15803d'; badge.style.borderColor = '#bbf7d0';
+    badge.querySelector('span').style.background = '#16a34a';
+    label.textContent = 'Operativo';
+  } else if (done >= 5) {
+    badge.style.background = '#dbeafe'; badge.style.color = '#1d4ed8'; badge.style.borderColor = '#bfdbfe';
+    badge.querySelector('span').style.background = '#3b6ef8';
+    label.textContent = 'Casi listo (' + done + '/' + total + ')';
+  } else {
+    badge.style.background = '#fef3c7'; badge.style.color = '#d97706'; badge.style.borderColor = '#fde68a';
+    badge.querySelector('span').style.background = '#d97706';
+    label.textContent = 'Configurando (' + done + '/' + total + ')';
+  }
+}
+
+var AP_EVENT_ICONS = {
+  agent1_enrichment: '🔍',
+  agent2_research:   '🧠',
+  email_sent:        '📧',
+  reply_classified:  '📬',
+  calendly_sent:     '📅',
+  followup_sent:     '🔁',
+  pipedrive_deal_created: '💼',
+};
+
+async function loadAgentEvents() {
+  const el = document.getElementById('ap-events-list');
+  const sub = document.getElementById('ap-events-sub');
+  if (!el) return;
+  try {
+    const rows = await sbFetch('GET', 'agent_events?select=id,type,payload,created_at&order=created_at.desc&limit=30');
+    if (!Array.isArray(rows) || rows.length === 0) {
+      el.innerHTML = '<div style="padding:24px 0;color:var(--muted);text-align:center">No hay eventos aún · Los agentes de n8n escribirán aquí automáticamente</div>';
+      return;
+    }
+    if (sub) sub.textContent = rows.length + ' eventos · Actualizado hace un momento';
+    el.innerHTML = rows.map(e => {
+      const icon = AP_EVENT_ICONS[e.type] || '⚙️';
+      const payload = e.payload || {};
+      let detail = '';
+      if (e.type === 'agent1_enrichment') detail = `Procesados: ${payload.processed||0} · Enriquecidos: ${payload.enriched||0} · Sin datos: ${payload.no_data||0}`;
+      else if (e.type === 'agent2_research') detail = `Procesados: ${payload.processed||0} · Investigados: ${payload.investigated||0} · Errores: ${payload.errors||0}`;
+      else if (e.type === 'pipedrive_deal_created') detail = `${payload.empresa||''} → Deal ${payload.deal_id||''}`;
+      else if (e.type === 'followup_sent') detail = `${payload.empresa||''}`;
+      else detail = JSON.stringify(payload).slice(0, 80);
+      const timeStr = new Date(e.created_at).toLocaleString('es-MX', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+      return `<div class="ap-event-row">
+        <div class="ap-event-icon">${icon}</div>
+        <div class="ap-event-body">
+          <div class="ap-event-type">${e.type.replace(/_/g,' ')}</div>
+          <div class="ap-event-detail">${detail}</div>
+        </div>
+        <div class="ap-event-time">${timeStr}</div>
+      </div>`;
+    }).join('');
+  } catch(err) {
+    el.innerHTML = '<div style="padding:16px 0;color:#dc2626;text-align:center">Error cargando eventos: ' + err.message + '</div>';
+  }
+}
+
 // Auto-load pipeline on page start + init goals from log
 // ─── AUTH (Supabase Auth — no passwords in code) ─────────────────────────────
 const SESSION_KEY = 'birdie_session_v2';
