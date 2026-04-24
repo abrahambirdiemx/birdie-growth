@@ -2180,8 +2180,14 @@ var KPI_FLOW = [
   },
   {
     id:'propuestas',
-    ask: () => '📄 ¿Cuántas <strong>propuestas</strong> enviaste?',
+    ask: () => '📄 ¿Cuántas <strong>propuestas</strong> enviaste esta semana?',
     type:'number', field:'propuestas',
+  },
+  {
+    id:'prop_mrr',
+    ask: (d) => `¿Cuál fue el <strong>MRR total</strong> de ${d.propuestas > 1 ? 'esas ' + d.propuestas + ' propuestas' : 'esa propuesta'}?<br><small style="color:#94a3b8">En USD/mes, solo el número (ej: 2500)</small>`,
+    type:'number', field:'prop_mrr',
+    skip: (d) => d.propuestas === 0,
   },
   {
     id:'cerrados',
@@ -2353,7 +2359,7 @@ function _kpiShowSummary() {
     <div>🎯 <strong>Leads:</strong> ${d.leads||0}${d.canales_raw && d.canales_raw.toLowerCase()!=='listo' ? ' · ' + d.canales_raw : ''}</div>
     <div>🔭 <strong>Discoveries:</strong> ${d.disc_agendados||0} agendados esta semana · ${d.disc_realizados||0} realizados esta semana</div>
     <div>💻 <strong>Demos:</strong> ${d.demos_agendados||0} agendados esta semana · ${d.demos_realizados||0} realizados esta semana</div>
-    <div>📄 <strong>Propuestas:</strong> ${d.propuestas||0}</div>
+    <div>📄 <strong>Propuestas:</strong> ${d.propuestas||0}${d.prop_mrr ? ' · $'+Number(d.prop_mrr).toLocaleString()+'/mo MRR' : ''}</div>
     <div>🏆 <strong>Deals cerrados:</strong> ${d.cerrados||0}${d.acv_total?' · $'+Number(d.acv_total).toLocaleString()+' ACV':''}</div>
     ${d.notas&&d.notas.toLowerCase()!=='listo'?`<div>📝 ${d.notas}</div>`:''}
   </div>`;
@@ -2377,11 +2383,11 @@ async function kpiChatProcess() {
   const weekLabel = _kpiGetWeekLabel();
   const entries = [];
   let _idSeq = 0;
-  const makeEntry = (type, canal, acv) => ({
+  const makeEntry = (type, canal, acv, mrr) => ({
     id: Date.now() * 10000 + (++_idSeq),   // bigint-safe unique integer
     date: today, seller, type,
     company: weekLabel,
-    canal: canal||'', acv: acv||0, mrr:0, impl:0,
+    canal: canal||'', acv: acv||0, mrr: mrr||0, impl:0,
     notes: weekLabel,
   });
   // Leads by channel
@@ -2397,7 +2403,10 @@ async function kpiChatProcess() {
   for (let i=0;i<(d.demos_agendados||0);i++) entries.push(makeEntry('demo_agendado','',0));
   for (let i=0;i<(d.demos_realizados||0);i++) entries.push(makeEntry('demo','',0));
   // Propuestas
-  for (let i=0;i<(d.propuestas||0);i++) entries.push(makeEntry('propuesta','',0));
+  if ((d.propuestas||0) > 0) {
+    const mrrPerProp = d.prop_mrr ? Math.round(d.prop_mrr / d.propuestas) : 0;
+    for (let i=0;i<d.propuestas;i++) entries.push(makeEntry('propuesta','',0,mrrPerProp));
+  }
   // Deals cerrados
   if ((d.cerrados||0) > 0) {
     const acvEach = Math.round(((d.acv_total||0)) / d.cerrados);
