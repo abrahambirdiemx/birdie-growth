@@ -2382,8 +2382,9 @@ async function kpiChatProcess() {
   const today = new Date().toISOString().slice(0,10);
   const weekLabel = _kpiGetWeekLabel();
   const entries = [];
+  let _idSeq = 0;
   const makeEntry = (type, canal, acv) => ({
-    id: Date.now() + '_' + Math.floor(Math.random()*9999),
+    id: Date.now() * 10000 + (++_idSeq),   // bigint-safe unique integer
     date: today, seller, type,
     company: weekLabel,
     canal: canal||'', acv: acv||0, mrr:0, impl:0,
@@ -3773,21 +3774,18 @@ function renderLogTable() {
   if (seller !== 'all') logs = logs.filter(e => e.seller === seller);
   logs = filterByPeriod(logs, period);
   if (!logs.length) {
-    tbody.innerHTML = '<tr><td colspan="10" class="no-data">Sin registros para este filtro.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="no-data">Sin registros para este filtro.</td></tr>';
     return;
   }
   tbody.innerHTML = logs.map(e => {
-    const cfg = ACT_CONFIG[e.type] || { label: e.type, cls:'' };
+    const cfg = ACT_CONFIG[e.type] || { label: e.type.replace(/_/g,' '), cls:'' };
     return `<tr>
       <td style="white-space:nowrap;font-size:11px">${e.date}</td>
       <td><span class="owner-chip">${(e.seller||'').split(' ')[0]}</span></td>
       <td><span class="act-badge ${cfg.cls}">${cfg.label}</span></td>
-      <td style="font-weight:600;font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${e.company||''}">${e.company||'—'}</td>
-      <td style="color:var(--muted);font-size:11px">${e.canal || '—'}</td>
-      <td style="font-weight:700">${e.acv ? '$'+e.acv.toLocaleString() : '—'}</td>
-      <td style="color:var(--green-text);font-weight:700">${e.mrr ? '$'+e.mrr.toLocaleString()+'/mo' : '—'}</td>
-      <td style="color:#7c3aed;font-weight:700">${e.impl ? '$'+e.impl.toLocaleString() : '—'}</td>
-      <td style="color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${e.notes}">${e.notes || '—'}</td>
+      <td style="font-size:11px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)" title="${e.company||''}">${e.company||'—'}</td>
+      <td style="font-size:11px;color:var(--muted)">${e.canal || '—'}</td>
+      <td style="font-weight:700;font-size:12px">${e.acv ? '$'+Number(e.acv).toLocaleString() : '—'}</td>
       <td><button class="del-btn" onclick="deleteLogEntry(${e.id})" title="Eliminar">✕</button></td>
     </tr>`;
   }).join('');
