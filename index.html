@@ -2160,27 +2160,23 @@ var KPI_FLOW = [
   },
   {
     id:'disc_agendados',
-    ask: () => '🔭 ¿Cuántos <strong>Discovery calls</strong> agendaste esta semana?',
+    ask: () => '🔭 ¿Cuántos <strong>Discoveries agendaste</strong> esta semana?<br><small style="color:#94a3b8">Los que quedaron en calendario — se harán esta semana o las próximas.</small>',
     type:'number', field:'disc_agendados',
   },
   {
     id:'disc_realizados',
-    ask: (d) => `¿Y cuántos discoveries se <strong>realizaron</strong>?<br><small style="color:#94a3b8">Agendaste ${d.disc_agendados}. Si tuviste no-shows, cuenta solo los que sí se hicieron.</small>`,
+    ask: () => '¿Cuántos Discoveries <strong>se realizaron</strong> esta semana?<br><small style="color:#94a3b8">Cuenta los que ocurrieron esta semana, aunque los hayas agendado semanas anteriores. Sin contar no-shows.</small>',
     type:'number', field:'disc_realizados',
-    skip: (d) => d.disc_agendados === 0,
-    max: (d) => d.disc_agendados,
   },
   {
     id:'demos_agendados',
-    ask: () => '💻 ¿Cuántos <strong>demos</strong> agendaste?',
+    ask: () => '💻 ¿Cuántos <strong>demos agendaste</strong> esta semana?<br><small style="color:#94a3b8">Los que quedaron en calendario — se harán esta semana o en las próximas.</small>',
     type:'number', field:'demos_agendados',
   },
   {
     id:'demos_realizados',
-    ask: (d) => `¿Cuántos demos se <strong>realizaron</strong>?<br><small style="color:#94a3b8">Agendaste ${d.demos_agendados}.</small>`,
+    ask: () => '¿Cuántos demos <strong>se realizaron</strong> esta semana?<br><small style="color:#94a3b8">Incluye los agendados en semanas anteriores. Sin contar no-shows.</small>',
     type:'number', field:'demos_realizados',
-    skip: (d) => d.demos_agendados === 0,
-    max: (d) => d.demos_agendados,
   },
   {
     id:'propuestas',
@@ -2353,12 +2349,10 @@ function kpiChatSend() {
 
 function _kpiShowSummary() {
   const d = _kpiChat.data;
-  const discNoShows = Math.max(0, (d.disc_agendados||0) - (d.disc_realizados||0));
-  const demoNoShows = Math.max(0, (d.demos_agendados||0) - (d.demos_realizados||0));
   const summaryHtml = `<div class="kpi-summary-box">
     <div>🎯 <strong>Leads:</strong> ${d.leads||0}${d.canales_raw && d.canales_raw.toLowerCase()!=='listo' ? ' · ' + d.canales_raw : ''}</div>
-    <div>🔭 <strong>Discoveries:</strong> ${d.disc_agendados||0} agendados · ${d.disc_realizados||0} realizados${discNoShows>0?' · '+discNoShows+' no-show':''}</div>
-    <div>💻 <strong>Demos:</strong> ${d.demos_agendados||0} agendados · ${d.demos_realizados||0} realizados${demoNoShows>0?' · '+demoNoShows+' no-show':''}</div>
+    <div>🔭 <strong>Discoveries:</strong> ${d.disc_agendados||0} agendados esta semana · ${d.disc_realizados||0} realizados esta semana</div>
+    <div>💻 <strong>Demos:</strong> ${d.demos_agendados||0} agendados esta semana · ${d.demos_realizados||0} realizados esta semana</div>
     <div>📄 <strong>Propuestas:</strong> ${d.propuestas||0}</div>
     <div>🏆 <strong>Deals cerrados:</strong> ${d.cerrados||0}${d.acv_total?' · $'+Number(d.acv_total).toLocaleString()+' ACV':''}</div>
     ${d.notas&&d.notas.toLowerCase()!=='listo'?`<div>📝 ${d.notas}</div>`:''}
@@ -2396,13 +2390,12 @@ async function kpiChatProcess() {
     channels.forEach(ch => { for(let i=0;i<ch.count;i++) entries.push(makeEntry('lead', ch.canal, 0)); });
   }
   // Discoveries
+  // Discoveries — agendados y realizados son métricas independientes
+  for (let i=0;i<(d.disc_agendados||0);i++) entries.push(makeEntry('disc_agendado','',0));
   for (let i=0;i<(d.disc_realizados||0);i++) entries.push(makeEntry('discovery','',0));
-  const discNo = Math.max(0,(d.disc_agendados||0)-(d.disc_realizados||0));
-  for (let i=0;i<discNo;i++) entries.push(makeEntry('noshow_disc','',0));
-  // Demos
+  // Demos — igual: agendados esta semana vs realizados esta semana (pueden ser de semanas previas)
+  for (let i=0;i<(d.demos_agendados||0);i++) entries.push(makeEntry('demo_agendado','',0));
   for (let i=0;i<(d.demos_realizados||0);i++) entries.push(makeEntry('demo','',0));
-  const demoNo = Math.max(0,(d.demos_agendados||0)-(d.demos_realizados||0));
-  for (let i=0;i<demoNo;i++) entries.push(makeEntry('noshow_demo','',0));
   // Propuestas
   for (let i=0;i<(d.propuestas||0);i++) entries.push(makeEntry('propuesta','',0));
   // Deals cerrados
