@@ -525,6 +525,21 @@
   /* Hide main content until logged in */
   #app-root { display:none; }
   #app-root.visible { display:block; }
+  /* ─── KPI CHAT ──────────────────────── */
+  .kpi-msg-bot { display:flex; align-items:flex-start; gap:8px; }
+  .kpi-msg-bot .kpi-bubble { background:white; border:1px solid var(--border); border-radius:0 12px 12px 12px; padding:10px 14px; font-size:12.5px; line-height:1.6; color:var(--text); max-width:88%; box-shadow:0 1px 4px rgba(0,0,0,0.06); }
+  .kpi-msg-user { display:flex; justify-content:flex-end; }
+  .kpi-msg-user .kpi-bubble { background:linear-gradient(135deg,#3b6ef8,#7c3aed); color:white; border-radius:12px 0 12px 12px; padding:10px 14px; font-size:12.5px; max-width:80%; }
+  .kpi-avatar { width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#3b6ef8,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;margin-top:2px; }
+  .kpi-summary-box { background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 14px;font-size:12px;line-height:1.8;margin-top:4px; }
+  .kpi-summary-box strong { color:#15803d; }
+  .kpi-typing { display:flex;gap:4px;align-items:center;padding:10px 14px;background:white;border:1px solid var(--border);border-radius:0 12px 12px 12px;width:fit-content; }
+  .kpi-typing span { width:6px;height:6px;border-radius:50%;background:#94a3b8;animation:kpiTyping 1.2s infinite; }
+  .kpi-typing span:nth-child(2){animation-delay:0.2s}
+  .kpi-typing span:nth-child(3){animation-delay:0.4s}
+  @keyframes kpiTyping { 0%,80%,100%{transform:scale(1);opacity:0.4} 40%{transform:scale(1.3);opacity:1} }
+  .btn-procesar { flex:1;padding:10px;background:linear-gradient(135deg,#16a34a,#15803d);color:white;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer; }
+  .btn-reiniciar { padding:10px 16px;background:var(--card2);color:var(--muted);border:1px solid var(--border2);border-radius:10px;font-size:12px;font-weight:600;cursor:pointer; }
   /* ─── AUTOPILOT ─────────────────────── */
   .ap-agent-card { background:var(--card2);border:1.5px solid var(--border);border-radius:12px;padding:16px;transition:box-shadow 0.15s; }
   .ap-agent-card:hover { box-shadow:0 4px 16px rgba(0,0,0,0.08); }
@@ -1152,7 +1167,7 @@
 <!-- ══════════════════════════════════════
      TAB: KPIs POR VENDEDOR
 ══════════════════════════════════════ -->
-<div class="tab-content" id="tab-kpis">
+<div class="tab-content" id="tab-kpis-OLD-REPLACED">
 
   <!-- Filter Bar -->
   <div class="kpi-filter-bar">
@@ -1336,6 +1351,155 @@
           <tr><td colspan="10" class="no-data">Sin registros aún — usa el formulario de arriba para comenzar.</td></tr>
         </tbody>
       </table>
+    </div>
+  </div>
+
+</div>
+<!-- /tab-kpis-OLD -->
+
+<!-- ══════════════════════════════════════
+     TAB: KPIs POR VENDEDOR (REDESIGNED)
+══════════════════════════════════════ -->
+<div class="tab-content" id="tab-kpis">
+
+  <!-- Filter Bar -->
+  <div class="kpi-filter-bar">
+    <label>Vendedor</label>
+    <select id="kpi-seller-filter" onchange="renderKPITab()">
+      <option value="all">Todos los vendedores</option>
+      <option value="Abraham Lopez">Abraham Lopez</option>
+      <option value="Héctor Nícola">Héctor Nícola</option>
+      <option value="Daniel Luna">Daniel Luna</option>
+    </select>
+    <div class="kpi-filter-sep"></div>
+    <label>Período</label>
+    <select id="kpi-period-filter" onchange="renderKPITab()">
+      <option value="week">Esta semana</option>
+      <option value="month" selected>Este mes</option>
+      <option value="all">Todo el tiempo</option>
+    </select>
+    <div class="kpi-filter-sep"></div>
+    <span style="font-size:11px;color:var(--muted)">Supabase · <button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="kpiLogsLoad()">🔄</button></span>
+    <span style="margin-left:auto"><button class="btn btn-outline" style="padding:5px 12px;font-size:11px" onclick="exportKPILog()">⬇ CSV</button></span>
+  </div>
+
+  <!-- Seller Cards -->
+  <div class="section-title" style="margin-bottom:14px">📈 Métricas del Equipo <span style="font-size:11px;font-weight:400;color:var(--muted)">(pipeline activo)</span></div>
+  <div class="seller-grid" id="seller-cards-grid">
+    <div class="seller-card">
+      <div class="seller-header"><div class="seller-avatar" style="background:linear-gradient(135deg,#3b6ef8,#6c4ef7)">A</div><div><div class="seller-name">Abraham Lopez</div><div class="seller-role">Sales Lead</div></div></div>
+      <div class="seller-metrics">
+        <div class="seller-metric"><div class="sm-val" style="color:#3b6ef8">—</div><div class="sm-lbl">Calificados</div></div>
+        <div class="seller-metric"><div class="sm-val" style="color:#7c3aed">—</div><div class="sm-lbl">Discovery</div></div>
+        <div class="seller-metric"><div class="sm-val" style="color:#16a34a">—</div><div class="sm-lbl">Cerrados</div></div>
+        <div class="seller-metric"><div class="sm-val" style="color:#ea580c">—</div><div class="sm-lbl">Propuestas</div></div>
+        <div class="seller-metric"><div class="sm-val" style="color:#15803d">—</div><div class="sm-lbl">Close 2c</div></div>
+        <div class="seller-metric"><div class="sm-val" style="color:#6d28d9">—</div><div class="sm-lbl">Demos</div></div>
+      </div>
+      <div class="seller-footer"><span class="sf-tag sf-acv">ACV: —</span><span class="sf-tag sf-mrr">MRR: —</span><span class="sf-tag sf-impl">Impl: —</span></div>
+    </div>
+    <div class="seller-card">
+      <div class="seller-header"><div class="seller-avatar" style="background:linear-gradient(135deg,#6c4ef7,#7c3aed)">H</div><div><div class="seller-name">Héctor Nícola</div><div class="seller-role">Account Executive</div></div></div>
+      <div class="seller-metrics">
+        <div class="seller-metric"><div class="sm-val" style="color:#3b6ef8">—</div><div class="sm-lbl">Calificados</div></div>
+        <div class="seller-metric"><div class="sm-val" style="color:#7c3aed">—</div><div class="sm-lbl">Discovery</div></div>
+        <div class="seller-metric"><div class="sm-val" style="color:#16a34a">—</div><div class="sm-lbl">Cerrados</div></div>
+        <div class="seller-metric"><div class="sm-val" style="color:#ea580c">—</div><div class="sm-lbl">Propuestas</div></div>
+        <div class="seller-metric"><div class="sm-val" style="color:#15803d">—</div><div class="sm-lbl">Close 2c</div></div>
+        <div class="seller-metric"><div class="sm-val" style="color:#6d28d9">—</div><div class="sm-lbl">Demos</div></div>
+      </div>
+      <div class="seller-footer"><span class="sf-tag sf-acv">ACV: —</span><span class="sf-tag sf-mrr">MRR: —</span></div>
+    </div>
+    <div class="seller-card">
+      <div class="seller-header"><div class="seller-avatar" style="background:linear-gradient(135deg,#16a34a,#15803d)">D</div><div><div class="seller-name">Daniel Luna</div><div class="seller-role">Sales Development</div></div></div>
+      <div class="seller-metrics">
+        <div class="seller-metric"><div class="sm-val" style="color:#3b6ef8">—</div><div class="sm-lbl">Calificados</div></div>
+        <div class="seller-metric"><div class="sm-val" style="color:#7c3aed">—</div><div class="sm-lbl">Discovery</div></div>
+        <div class="seller-metric"><div class="sm-val" style="color:#16a34a">—</div><div class="sm-lbl">Cerrados</div></div>
+        <div class="seller-metric"><div class="sm-val" style="color:#ea580c">—</div><div class="sm-lbl">Propuestas</div></div>
+        <div class="seller-metric"><div class="sm-val" style="color:#15803d">—</div><div class="sm-lbl">Close 2c</div></div>
+        <div class="seller-metric"><div class="sm-val" style="color:#6d28d9">—</div><div class="sm-lbl">Demos</div></div>
+      </div>
+      <div class="seller-footer"><span class="sf-tag sf-acv">ACV: —</span><span class="sf-tag sf-mrr">MRR: —</span></div>
+    </div>
+  </div>
+
+  <!-- 2-column: AI Chat + History -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;align-items:start">
+
+    <!-- AI Chat Panel -->
+    <div style="background:var(--card2);border:1.5px solid #c7d2fe;border-radius:14px;overflow:hidden;display:flex;flex-direction:column">
+      <!-- Chat Header -->
+      <div style="padding:14px 18px;background:linear-gradient(135deg,#3b6ef8,#7c3aed);display:flex;align-items:center;gap:10px">
+        <div style="width:36px;height:36px;background:rgba(255,255,255,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px">🤖</div>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:white">Reporte Semanal de KPIs</div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.8)" id="kpi-chat-status-lbl">Chat guiado · responde en lenguaje natural</div>
+        </div>
+        <div style="margin-left:auto">
+          <select id="chat-seller-select" style="padding:5px 10px;border-radius:8px;border:none;font-size:12px;font-weight:600;background:rgba(255,255,255,0.9);color:#1e2235">
+            <option value="">— Soy —</option>
+            <option value="Abraham Lopez">Abraham Lopez</option>
+            <option value="Héctor Nícola">Héctor Nícola</option>
+            <option value="Daniel Luna">Daniel Luna</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Messages Area -->
+      <div id="kpi-chat-messages" style="flex:1;min-height:360px;max-height:420px;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth">
+        <div id="kpi-chat-idle" style="text-align:center;padding:40px 20px;color:var(--muted)">
+          <div style="font-size:44px;margin-bottom:14px">📊</div>
+          <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px">Reporte semanal en 2 minutos</div>
+          <div style="font-size:12px;line-height:1.6">Selecciona tu nombre arriba y haz clic en<br><strong>Iniciar Reporte</strong> para comenzar.</div>
+        </div>
+      </div>
+
+      <!-- Input -->
+      <div id="kpi-chat-input-wrap" style="padding:10px 14px;border-top:1px solid var(--border);display:none">
+        <div style="display:flex;gap:8px">
+          <input id="kpi-chat-input" type="text" placeholder="Escribe tu respuesta…"
+            style="flex:1;padding:9px 14px;border:1.5px solid var(--border2);border-radius:10px;font-size:13px;font-family:inherit;outline:none;transition:border-color 0.15s"
+            onkeydown="if(event.key==='Enter')kpiChatSend()">
+          <button onclick="kpiChatSend()" style="padding:9px 18px;background:#3b6ef8;color:white;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer">Enviar →</button>
+        </div>
+      </div>
+
+      <!-- Footer Actions -->
+      <div id="kpi-chat-footer" style="padding:12px 14px;border-top:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap">
+        <button id="btn-kpi-iniciar" onclick="kpiChatStart()"
+          style="flex:1;padding:10px;background:linear-gradient(135deg,#3b6ef8,#7c3aed);color:white;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">
+          ▶ Iniciar Reporte Semanal
+        </button>
+      </div>
+    </div>
+
+    <!-- Activity History -->
+    <div style="background:var(--card2);border:1px solid var(--border);border-radius:14px;overflow:hidden">
+      <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:13px;font-weight:700;color:var(--text)">📋 Historial de Actividades</div>
+        <span style="font-size:10px;color:var(--muted)">Guardado en Supabase</span>
+      </div>
+      <div style="overflow:auto;max-height:510px">
+        <table class="log-table">
+          <thead>
+            <tr>
+              <th>Fecha</th><th>Vendedor</th><th>Tipo</th><th>Empresa / Semana</th><th>Canal</th><th>ACV</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="log-table-body">
+            <tr><td colspan="7" class="no-data">Sin registros aún.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Channel Breakdown -->
+  <div class="section-title" style="margin-bottom:12px">🌐 Canales de Adquisición</div>
+  <div class="card" style="margin-bottom:20px;padding:16px 18px">
+    <div class="channel-grid" id="channel-breakdown">
+      <span style="color:var(--muted);font-size:12px">Sin registros de canal aún.</span>
     </div>
   </div>
 
@@ -1979,6 +2143,309 @@ async function addCard(colId) {
     await sbFetch('POST', 'initiatives', newCard);
   } catch(e) { console.warn('initiative insert error:', e.message); }
 }
+// ─── KPI CHAT ────────────────────────────────────────────────────────────────
+var _kpiChat = { active:false, seller:'', step:0, steps:[], data:{} };
+
+var KPI_FLOW = [
+  {
+    id:'leads',
+    ask: () => '🎯 ¿Cuántos <strong>leads nuevos</strong> generaste esta semana?',
+    type:'number', field:'leads', required:true,
+  },
+  {
+    id:'canales',
+    ask: (d) => `${d.leads} leads, ¡bien! 🙌<br>¿Por qué <strong>canales</strong> llegaron?<br><small style="color:#94a3b8">Ej: "3 LinkedIn, 2 cold email, 1 referido"</small>`,
+    type:'text', field:'canales_raw',
+    skip: (d) => d.leads === 0,
+  },
+  {
+    id:'disc_agendados',
+    ask: () => '🔭 ¿Cuántos <strong>Discovery calls</strong> agendaste esta semana?',
+    type:'number', field:'disc_agendados',
+  },
+  {
+    id:'disc_realizados',
+    ask: (d) => `¿Y cuántos discoveries se <strong>realizaron</strong>?<br><small style="color:#94a3b8">Agendaste ${d.disc_agendados}. Si tuviste no-shows, cuenta solo los que sí se hicieron.</small>`,
+    type:'number', field:'disc_realizados',
+    skip: (d) => d.disc_agendados === 0,
+    max: (d) => d.disc_agendados,
+  },
+  {
+    id:'demos_agendados',
+    ask: () => '💻 ¿Cuántos <strong>demos</strong> agendaste?',
+    type:'number', field:'demos_agendados',
+  },
+  {
+    id:'demos_realizados',
+    ask: (d) => `¿Cuántos demos se <strong>realizaron</strong>?<br><small style="color:#94a3b8">Agendaste ${d.demos_agendados}.</small>`,
+    type:'number', field:'demos_realizados',
+    skip: (d) => d.demos_agendados === 0,
+    max: (d) => d.demos_agendados,
+  },
+  {
+    id:'propuestas',
+    ask: () => '📄 ¿Cuántas <strong>propuestas</strong> enviaste?',
+    type:'number', field:'propuestas',
+  },
+  {
+    id:'cerrados',
+    ask: () => '🏆 ¿Algún <strong>deal cerrado</strong> esta semana? (escribe 0 si ninguno)',
+    type:'number', field:'cerrados',
+  },
+  {
+    id:'acv_total',
+    ask: (d) => `¡Excelente! 🎉 ¿Cuál fue el <strong>ACV total</strong> de ${d.cerrados > 1 ? 'esos ' + d.cerrados + ' deals' : 'ese deal'}?<br><small style="color:#94a3b8">En USD, solo el número (ej: 3000)</small>`,
+    type:'number', field:'acv_total',
+    skip: (d) => d.cerrados === 0,
+  },
+  {
+    id:'notas',
+    ask: () => '📝 ¿Algo destacable? Objeciones, oportunidades, highlights de la semana.<br><small style="color:#94a3b8">Escribe "listo" si no hay nada adicional.</small>',
+    type:'text', field:'notas',
+  },
+];
+
+function _kpiGetWeekLabel() {
+  const now = new Date();
+  const jan1 = new Date(now.getFullYear(), 0, 1);
+  const week = Math.ceil(((now - jan1) / 86400000 + jan1.getDay() + 1) / 7);
+  return `Semana ${week} · ${now.toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'numeric'})}`;
+}
+
+function _kpiParseNum(text) {
+  const t = text.toLowerCase().trim();
+  if (/^(no|ninguno|ninguna|cero|nada|ningún)$/.test(t)) return 0;
+  const m = t.match(/(\d+)/);
+  return m ? parseInt(m[1]) : null;
+}
+
+function _kpiParseChannels(text, total) {
+  if (!text || !text.trim() || text.trim().toLowerCase() === 'listo') return [{canal:'Otro', count: total||1}];
+  const t = text.toLowerCase();
+  const channels = [];
+  const numBefore = (kw) => { const m = t.match(new RegExp('(\\d+)\\s*(?:de\\s+|por\\s+|via\\s+)?' + kw)); return m ? parseInt(m[1]) : null; };
+  const numAfter  = (kw) => { const m = t.match(new RegExp(kw + '\\s*[:(]?\\s*(\\d+)')); return m ? parseInt(m[1]) : null; };
+  const tryAdd = (keywords, label) => {
+    for (const kw of keywords) {
+      if (t.includes(kw)) {
+        const cnt = numBefore(kw) || numAfter(kw) || 1;
+        channels.push({canal: label, count: cnt});
+        return;
+      }
+    }
+  };
+  tryAdd(['linkedin'], 'LinkedIn');
+  tryAdd(['cold email','outbound email','email frío','correo frío','email'], 'Outbound (email/llamada)');
+  tryAdd(['llamada','cold call'], 'Outbound (email/llamada)');
+  tryAdd(['referid','referral','referral'], 'Referido');
+  tryAdd(['inbound','web','form','entrada'], 'Inbound (web/form)');
+  tryAdd(['evento','feria','conferencia','congreso'], 'Evento / Feria');
+  tryAdd(['partnership','alianza','partner'], 'Partnership');
+  if (!channels.length) channels.push({canal:'Otro', count: total||1});
+  return channels;
+}
+
+function _kpiAddBotMsg(html, delay) {
+  const messages = document.getElementById('kpi-chat-messages');
+  if (!messages) return;
+  const idle = document.getElementById('kpi-chat-idle');
+  if (idle) idle.remove();
+  // Show typing indicator first
+  const typing = document.createElement('div');
+  typing.className = 'kpi-msg-bot';
+  typing.innerHTML = `<div class="kpi-avatar">🤖</div><div class="kpi-typing"><span></span><span></span><span></span></div>`;
+  messages.appendChild(typing);
+  messages.scrollTop = messages.scrollHeight;
+  setTimeout(() => {
+    typing.remove();
+    const msg = document.createElement('div');
+    msg.className = 'kpi-msg-bot';
+    msg.innerHTML = `<div class="kpi-avatar">🤖</div><div class="kpi-bubble">${html}</div>`;
+    messages.appendChild(msg);
+    messages.scrollTop = messages.scrollHeight;
+  }, delay || 600);
+}
+
+function _kpiAddUserMsg(text) {
+  const messages = document.getElementById('kpi-chat-messages');
+  if (!messages) return;
+  const msg = document.createElement('div');
+  msg.className = 'kpi-msg-user';
+  msg.innerHTML = `<div class="kpi-bubble">${text}</div>`;
+  messages.appendChild(msg);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+function _kpiComputeSteps(data) {
+  return KPI_FLOW.filter(s => !s.skip || !s.skip(data));
+}
+
+function kpiChatStart() {
+  const seller = document.getElementById('chat-seller-select').value;
+  if (!seller) { showToast('⚠ Selecciona tu nombre primero','err'); return; }
+  _kpiChat = { active:true, seller, step:0, steps:[], data:{} };
+  _kpiChat.steps = KPI_FLOW.filter(s => !s.skip); // start with all (no data yet)
+  // Clear messages area
+  const messages = document.getElementById('kpi-chat-messages');
+  if (messages) messages.innerHTML = '';
+  // Show input
+  const inputWrap = document.getElementById('kpi-chat-input-wrap');
+  if (inputWrap) inputWrap.style.display = 'block';
+  // Update footer
+  const footer = document.getElementById('kpi-chat-footer');
+  if (footer) footer.innerHTML = '';
+  // Update status
+  const statusLbl = document.getElementById('kpi-chat-status-lbl');
+  if (statusLbl) statusLbl.textContent = 'En progreso · ' + _kpiGetWeekLabel();
+  // Greeting
+  const nombre = seller.split(' ')[0];
+  const weekLabel = _kpiGetWeekLabel();
+  _kpiAddBotMsg(`¡Hola <strong>${nombre}</strong>! 👋 Vamos a registrar tus KPIs de la <strong>${weekLabel}</strong>.<br>Responde en lenguaje natural, yo extraigo los números.`, 400);
+  // First question after greeting
+  setTimeout(() => _kpiAskStep(), 1400);
+}
+
+function _kpiAskStep() {
+  const { step, steps, data } = _kpiChat;
+  if (step >= steps.length) { _kpiShowSummary(); return; }
+  const s = steps[step];
+  const question = typeof s.ask === 'function' ? s.ask(data) : s.ask;
+  _kpiAddBotMsg(question, 600);
+  const input = document.getElementById('kpi-chat-input');
+  if (input) setTimeout(() => input.focus(), 800);
+}
+
+function kpiChatSend() {
+  const input = document.getElementById('kpi-chat-input');
+  if (!input || !_kpiChat.active) return;
+  const raw = input.value.trim();
+  if (!raw) return;
+  input.value = '';
+  _kpiAddUserMsg(raw);
+  const { step, steps, data } = _kpiChat;
+  const s = steps[step];
+  if (!s) return;
+  // Parse
+  if (s.type === 'number') {
+    const num = _kpiParseNum(raw);
+    if (num === null) {
+      setTimeout(() => _kpiAddBotMsg('No entendí el número 😅 ¿Puedes escribir solo el dígito? Ej: "4" o "cero"', 500), 300);
+      return;
+    }
+    const maxVal = s.max ? s.max(data) : null;
+    if (maxVal !== null && num > maxVal) {
+      setTimeout(() => _kpiAddBotMsg(`No puede ser más que ${maxVal} 🤔 ¿Cuántos se realizaron realmente?`, 500), 300);
+      return;
+    }
+    data[s.field] = num;
+  } else {
+    data[s.field] = raw;
+  }
+  // Advance step — recompute which steps remain
+  _kpiChat.step++;
+  _kpiChat.steps = KPI_FLOW.filter(s2 => !s2.skip || !s2.skip(data));
+  // Skip steps already answered
+  while (_kpiChat.step < _kpiChat.steps.length && data[_kpiChat.steps[_kpiChat.step].field] !== undefined) {
+    _kpiChat.step++;
+  }
+  setTimeout(() => _kpiAskStep(), 300);
+}
+
+function _kpiShowSummary() {
+  const d = _kpiChat.data;
+  const discNoShows = Math.max(0, (d.disc_agendados||0) - (d.disc_realizados||0));
+  const demoNoShows = Math.max(0, (d.demos_agendados||0) - (d.demos_realizados||0));
+  const summaryHtml = `<div class="kpi-summary-box">
+    <div>🎯 <strong>Leads:</strong> ${d.leads||0}${d.canales_raw && d.canales_raw.toLowerCase()!=='listo' ? ' · ' + d.canales_raw : ''}</div>
+    <div>🔭 <strong>Discoveries:</strong> ${d.disc_agendados||0} agendados · ${d.disc_realizados||0} realizados${discNoShows>0?' · '+discNoShows+' no-show':''}</div>
+    <div>💻 <strong>Demos:</strong> ${d.demos_agendados||0} agendados · ${d.demos_realizados||0} realizados${demoNoShows>0?' · '+demoNoShows+' no-show':''}</div>
+    <div>📄 <strong>Propuestas:</strong> ${d.propuestas||0}</div>
+    <div>🏆 <strong>Deals cerrados:</strong> ${d.cerrados||0}${d.acv_total?' · $'+Number(d.acv_total).toLocaleString()+' ACV':''}</div>
+    ${d.notas&&d.notas.toLowerCase()!=='listo'?`<div>📝 ${d.notas}</div>`:''}
+  </div>`;
+  setTimeout(() => {
+    _kpiAddBotMsg('¡Listo! 🎉 Aquí está el resumen de tu semana:<br>' + summaryHtml, 600);
+    // Hide text input
+    const inputWrap = document.getElementById('kpi-chat-input-wrap');
+    if (inputWrap) inputWrap.style.display = 'none';
+    // Show footer buttons
+    const footer = document.getElementById('kpi-chat-footer');
+    if (footer) footer.innerHTML = `
+      <button class="btn-reiniciar" onclick="kpiChatReset()">↺ Reiniciar</button>
+      <button class="btn-procesar" onclick="kpiChatProcess()">✓ Procesar KPIs</button>`;
+  }, 300);
+}
+
+async function kpiChatProcess() {
+  const d = _kpiChat.data;
+  const seller = _kpiChat.seller;
+  const today = new Date().toISOString().slice(0,10);
+  const weekLabel = _kpiGetWeekLabel();
+  const entries = [];
+  const makeEntry = (type, canal, acv) => ({
+    id: Date.now() + '_' + Math.floor(Math.random()*9999),
+    date: today, seller, type,
+    company: weekLabel,
+    canal: canal||'', acv: acv||0, mrr:0, impl:0,
+    notes: weekLabel,
+  });
+  // Leads by channel
+  const channels = _kpiParseChannels(d.canales_raw, d.leads||0);
+  if ((d.leads||0) > 0) {
+    channels.forEach(ch => { for(let i=0;i<ch.count;i++) entries.push(makeEntry('lead', ch.canal, 0)); });
+  }
+  // Discoveries
+  for (let i=0;i<(d.disc_realizados||0);i++) entries.push(makeEntry('discovery','',0));
+  const discNo = Math.max(0,(d.disc_agendados||0)-(d.disc_realizados||0));
+  for (let i=0;i<discNo;i++) entries.push(makeEntry('noshow_disc','',0));
+  // Demos
+  for (let i=0;i<(d.demos_realizados||0);i++) entries.push(makeEntry('demo','',0));
+  const demoNo = Math.max(0,(d.demos_agendados||0)-(d.demos_realizados||0));
+  for (let i=0;i<demoNo;i++) entries.push(makeEntry('noshow_demo','',0));
+  // Propuestas
+  for (let i=0;i<(d.propuestas||0);i++) entries.push(makeEntry('propuesta','',0));
+  // Deals cerrados
+  if ((d.cerrados||0) > 0) {
+    const acvEach = Math.round(((d.acv_total||0)) / d.cerrados);
+    for (let i=0;i<d.cerrados;i++) entries.push(makeEntry('won','',acvEach));
+  }
+  if (!entries.length) { showToast('⚠ No hay datos para guardar','err'); return; }
+  // Disable button
+  const footer = document.getElementById('kpi-chat-footer');
+  if (footer) footer.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:12px;padding:8px">Guardando…</div>';
+  try {
+    await sbFetch('POST', 'kpi_logs', entries);
+    entries.forEach(e => _kpiLogs.unshift(e));
+    _kpiAddBotMsg('✅ <strong>KPIs guardados</strong> exitosamente en Supabase. Las métricas del equipo se actualizaron.', 400);
+    setTimeout(() => {
+      renderLogTable(); renderKPITab(); updateGoalsFromLogs();
+      if (footer) footer.innerHTML = `<button id="btn-kpi-iniciar" onclick="kpiChatReset()" style="flex:1;padding:10px;background:linear-gradient(135deg,#3b6ef8,#7c3aed);color:white;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">▶ Nuevo Reporte</button>`;
+      const statusLbl = document.getElementById('kpi-chat-status-lbl');
+      if (statusLbl) statusLbl.textContent = 'Chat guiado · responde en lenguaje natural';
+    }, 800);
+    _kpiChat.active = false;
+  } catch(e) {
+    _kpiAddBotMsg('❌ Error al guardar: ' + e.message + '. Intenta de nuevo.', 400);
+    if (footer) footer.innerHTML = `<button class="btn-reiniciar" onclick="kpiChatReset()">↺ Reiniciar</button><button class="btn-procesar" onclick="kpiChatProcess()">↻ Reintentar</button>`;
+  }
+}
+
+function kpiChatReset() {
+  _kpiChat = { active:false, seller:'', step:0, steps:[], data:{} };
+  const messages = document.getElementById('kpi-chat-messages');
+  if (messages) messages.innerHTML = `<div id="kpi-chat-idle" style="text-align:center;padding:40px 20px;color:var(--muted)">
+    <div style="font-size:44px;margin-bottom:14px">📊</div>
+    <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px">Reporte semanal en 2 minutos</div>
+    <div style="font-size:12px;line-height:1.6">Selecciona tu nombre arriba y haz clic en<br><strong>Iniciar Reporte</strong> para comenzar.</div>
+  </div>`;
+  const inputWrap = document.getElementById('kpi-chat-input-wrap');
+  if (inputWrap) inputWrap.style.display = 'none';
+  const footer = document.getElementById('kpi-chat-footer');
+  if (footer) footer.innerHTML = `<button id="btn-kpi-iniciar" onclick="kpiChatStart()" style="flex:1;padding:10px;background:linear-gradient(135deg,#3b6ef8,#7c3aed);color:white;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">▶ Iniciar Reporte Semanal</button>`;
+  const statusLbl = document.getElementById('kpi-chat-status-lbl');
+  if (statusLbl) statusLbl.textContent = 'Chat guiado · responde en lenguaje natural';
+}
+
 // ─── AUTOPILOT ───────────────────────────────────────────────────────────────
 var AP_CONFIG_KEY = 'birdie_autopilot_config_v1';
 
@@ -3312,11 +3779,11 @@ function renderLogTable() {
   tbody.innerHTML = logs.map(e => {
     const cfg = ACT_CONFIG[e.type] || { label: e.type, cls:'' };
     return `<tr>
-      <td style="white-space:nowrap">${e.date}</td>
-      <td><span class="owner-chip">${e.seller.split(' ')[0]}</span></td>
+      <td style="white-space:nowrap;font-size:11px">${e.date}</td>
+      <td><span class="owner-chip">${(e.seller||'').split(' ')[0]}</span></td>
       <td><span class="act-badge ${cfg.cls}">${cfg.label}</span></td>
-      <td style="font-weight:600">${e.company}</td>
-      <td style="color:var(--muted)">${e.canal || '—'}</td>
+      <td style="font-weight:600;font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${e.company||''}">${e.company||'—'}</td>
+      <td style="color:var(--muted);font-size:11px">${e.canal || '—'}</td>
       <td style="font-weight:700">${e.acv ? '$'+e.acv.toLocaleString() : '—'}</td>
       <td style="color:var(--green-text);font-weight:700">${e.mrr ? '$'+e.mrr.toLocaleString()+'/mo' : '—'}</td>
       <td style="color:#7c3aed;font-weight:700">${e.impl ? '$'+e.impl.toLocaleString() : '—'}</td>
