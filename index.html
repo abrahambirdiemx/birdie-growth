@@ -2527,10 +2527,10 @@ var AP_CONFIG_KEY = 'birdie_autopilot_config_v1';
 var AP_AGENTS = [
   {
     num: 'Agente 1', emoji: '🔍', title: 'Prospecting',
-    tech: 'Apollo.io API', status: 'pending',
-    desc: 'Busca contactos por dominio de empresa. Selecciona 2 DMs (Director/Gerente) + 3 referidores (Coordinador/Analista). Email verificado incluido.',
+    tech: 'Hunter.io API', status: 'pending',
+    desc: 'Hunter.io domain search por empresa. Devuelve emails verificados. Selecciona 2 DMs + 3 referidores por cargo.',
     trigger: 'Diario · 7:30am',
-    file: 'agent1_apollo_prospecting.json',
+    file: 'agent1_hunter_prospecting.json',
   },
   {
     num: 'Agente 2', emoji: '🧠', title: 'Investigación',
@@ -2558,7 +2558,7 @@ var AP_AGENTS = [
 var AP_CHECKLIST = [
   { id: 'claude',    label: 'Claude API Key',        tag: 'x-api-key header',    hint: 'console.anthropic.com' },
   { id: 'gemini',    label: 'Gemini API Key',         tag: 'query param ?key=',   hint: 'aistudio.google.com' },
-  { id: 'apollo',    label: 'Apollo.io API Key',      tag: 'x-api-key header',    hint: 'app.apollo.io/settings/integrations/api' },
+  { id: 'hunter',    label: 'Hunter.io API Key',       tag: 'HTTP Query Auth',     hint: 'hunter.io → Dashboard → API' },
   { id: 'gsheets',   label: 'Google Sheets OAuth2',   tag: 'OAuth2',              hint: 'Autorizar con Workspace' },
   { id: 'gmail',     label: 'Gmail OAuth2',            tag: 'OAuth2',              hint: 'abraham@birdie.mx' },
   { id: 'sheetid',   label: 'Sheet ID reemplazado',   tag: 'todos los nodos n8n', hint: 'TU_GOOGLE_SHEET_ID → real' },
