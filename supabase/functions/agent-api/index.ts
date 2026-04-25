@@ -220,6 +220,43 @@ Deno.serve(async (req: Request) => {
       case 'ping':
         return json({ ok: true, ts: new Date().toISOString(), version: '1.0.0' });
 
+      case 'weekly_plan': {
+        const { seller, deals = [], initiatives = [] } = body;
+        const today = new Date().toLocaleDateString('es-MX', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+        const dealLines = deals.slice(0,20).map((d: Record<string,unknown>) =>
+          `- ${d.opportunity_name} | ${d.status} | Touch: ${d.next_touchpoint||'sin fecha'} | ACV: $${d.acv||0} | Notas: ${String(d.notes||'').slice(0,80)}`
+        ).join('\n');
+        const initLines = initiatives.slice(0,10).map((i: Record<string,unknown>) =>
+          `- ${i.emoji||''} ${i.title} | ${i.status} | ${String(i.notes||'').slice(0,60)}`
+        ).join('\n');
+        const prompt = `Eres el copiloto de ventas de Birdie (birdie.mx), plataforma de AI para comercio exterior en México. Analiza los datos y genera un plan de semana priorizado y accionable.
+
+VENDEDOR: ${seller}
+HOY: ${today}
+
+DEALS ACTIVOS (${deals.length}):
+${dealLines||'(ninguno)'}
+
+INICIATIVAS ASIGNADAS (${initiatives.length}):
+${initLines||'(ninguna)'}
+
+Genera EXACTAMENTE este JSON sin texto adicional:
+{"resumen":"2-3 oraciones sobre el estado general","prioridades":[{"deal":"nombre","accion":"acción específica esta semana","motivo":"por qué es prioritario","urgencia":"alta|media|baja"}],"riesgos":[{"deal":"nombre","razon":"por qué está en riesgo","accion":"qué hacer"}],"iniciativas":[{"titulo":"nombre","accion":"tarea concreta esta semana"}],"foco_semana":"el deal o acción más importante y por qué"}`;
+
+        const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY') || '';
+        const aiRes = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: { 'x-api-key': anthropicKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+          body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 1024, messages: [{ role:'user', content: prompt }] })
+        });
+        const aiData = await aiRes.json() as { content?: Array<{type:string,text:string}> };
+        const raw = aiData.content?.[0]?.text || '';
+        let plan: unknown;
+        try { plan = JSON.parse(raw.replace(/```json\n?|\n?```/g,'')); }
+        catch { plan = { resumen: raw, prioridades:[], riesgos:[], iniciativas:[], foco_semana:'' }; }
+        return json({ ok: true, plan });
+      }
+
       default:
         return json({ error: `Unknown action: "${action}"` }, 400);
     }

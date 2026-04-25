@@ -525,6 +525,44 @@
   /* Hide main content until logged in */
   #app-root { display:none; }
   #app-root.visible { display:block; }
+  /* ─── TAB DROPDOWN ──────────────────── */
+  .tab-dropdown { position:relative; display:inline-flex; }
+  .tab-dropdown-trigger { color:var(--muted); }
+  .tab-dropdown-trigger.active-dropdown { color:var(--accent); border-bottom-color:var(--accent); }
+  .tab-dropdown-menu { display:none; position:absolute; top:calc(100% + 2px); left:0; background:white; border:1px solid var(--border); border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,0.12); z-index:200; min-width:200px; padding:6px; }
+  .tab-dropdown:hover .tab-dropdown-menu { display:flex; flex-direction:column; }
+  .tab-dropdown-menu button { text-align:left; padding:9px 14px; border:none; background:none; cursor:pointer; font-size:12.5px; font-weight:600; color:var(--text); border-radius:7px; width:100%; }
+  .tab-dropdown-menu button:hover { background:#f1f5f9; color:var(--accent); }
+  /* ─── PLAN SEMANAL / COPILOT ─────────── */
+  .copilot-output-box { background:linear-gradient(135deg,#f5f3ff,#eff6ff); border:1.5px solid #c4b5fd; border-radius:14px; padding:20px; margin-bottom:24px; }
+  .copilot-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .copilot-title { font-size:14px; font-weight:800; color:#4c1d95; display:flex; align-items:center; gap:8px; }
+  .copilot-resumen { font-size:13px; color:#1e1b4b; line-height:1.6; margin-bottom:16px; padding:12px 14px; background:white; border-radius:10px; border:1px solid #ddd6fe; }
+  .copilot-foco { background:#4c1d95; color:white; border-radius:10px; padding:12px 16px; font-size:12.5px; font-weight:600; margin-bottom:16px; display:flex; align-items:flex-start; gap:10px; }
+  .copilot-section-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.7px; color:#5b21b6; margin-bottom:10px; }
+  .copilot-priority-card { background:white; border:1px solid #ddd6fe; border-radius:10px; padding:12px 14px; margin-bottom:8px; border-left:4px solid; }
+  .copilot-priority-card.alta { border-left-color:#dc2626; }
+  .copilot-priority-card.media { border-left-color:#d97706; }
+  .copilot-priority-card.baja { border-left-color:#16a34a; }
+  .copilot-priority-deal { font-size:13px; font-weight:700; color:var(--text); margin-bottom:4px; }
+  .copilot-priority-action { font-size:12px; color:#1e1b4b; margin-bottom:3px; }
+  .copilot-priority-motivo { font-size:11px; color:var(--muted); }
+  .copilot-risk-item { display:flex; align-items:flex-start; gap:8px; padding:8px 12px; background:white; border-radius:8px; border:1px solid #fecaca; margin-bottom:6px; }
+  .copilot-init-item { display:flex; align-items:flex-start; gap:8px; padding:8px 12px; background:white; border-radius:8px; border:1px solid #ddd6fe; margin-bottom:6px; }
+  .copilot-loading { display:flex; align-items:center; gap:12px; padding:20px; color:#5b21b6; font-size:13px; font-weight:600; }
+  .copilot-loading::before { content:''; display:inline-block; width:16px; height:16px; border:2px solid #c4b5fd; border-top-color:#7c3aed; border-radius:50%; animation:copilotSpin 0.7s linear infinite; }
+  @keyframes copilotSpin { to { transform:rotate(360deg); } }
+  .plan-user-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:12px; }
+  .btn-run-copilot { display:flex; align-items:center; gap:8px; padding:12px 22px; background:linear-gradient(135deg,#7c3aed,#3b6ef8); color:white; border:none; border-radius:12px; font-size:13px; font-weight:700; cursor:pointer; box-shadow:0 4px 16px rgba(124,58,237,0.3); transition:all 0.15s; }
+  .btn-run-copilot:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(124,58,237,0.4); }
+  .btn-run-copilot:disabled { opacity:0.7; cursor:not-allowed; transform:none; }
+  /* inline pipeline edit */
+  .cell-editable { cursor:pointer; }
+  .cell-editable:hover { background:#eff6ff; border-radius:4px; }
+  .inline-input { width:70px; padding:3px 6px; border:1.5px solid var(--accent); border-radius:5px; font-size:12px; font-family:inherit; outline:none; }
+  /* weekly badge */
+  .week-new-badge { display:inline-block; padding:1px 6px; background:#dcfce7; color:#15803d; border-radius:6px; font-size:9px; font-weight:700; margin-left:5px; }
+  .week-upd-badge { display:inline-block; padding:1px 6px; background:#dbeafe; color:#1d4ed8; border-radius:6px; font-size:9px; font-weight:700; margin-left:5px; }
   /* ─── KPI CHAT ──────────────────────── */
   .kpi-msg-bot { display:flex; align-items:flex-start; gap:8px; }
   .kpi-msg-bot .kpi-bubble { background:white; border:1px solid var(--border); border-radius:0 12px 12px 12px; padding:10px 14px; font-size:12.5px; line-height:1.6; color:var(--text); max-width:88%; box-shadow:0 1px 4px rgba(0,0,0,0.06); }
@@ -814,14 +852,19 @@
 <!-- ── TABS ─────────────────────────────────── -->
 <div class="tab-nav">
   <button class="tab-btn active" onclick="switchTab('pipeline',this)">📊 Dashboard</button>
-  <button class="tab-btn" onclick="switchTab('deals',this)">🔥 Pipeline</button>
-  <button class="tab-btn" onclick="switchTab('cerrados',this)">🔓 Cerrados & MRR <span id="cerrado-tab-badge" style="background:#dcfce7;color:#15803d;border-radius:8px;padding:0 6px;font-size:10px;font-weight:700;margin-left:3px">—%</span></button>
-  <button class="tab-btn" onclick="switchTab('metas',this)">🏹 Metas del Trimestre</button>
-  <button class="tab-btn" onclick="switchTab('kpis',this)">🎯 KPIs por Vendedor</button>
   <button class="tab-btn" onclick="switchTab('plan',this)">📋 Plan Semanal</button>
+  <button class="tab-btn" onclick="switchTab('deals',this)">🔥 Pipeline</button>
   <button class="tab-btn" onclick="switchTab('iniciativas',this)">🚀 Iniciativas Clave</button>
-  <button class="tab-btn" onclick="switchTab('crm',this)">🏢 CRM</button>
   <button class="tab-btn" onclick="switchTab('autopilot',this)" style="color:#7c3aed;font-weight:700">⚡ Autopilot</button>
+  <div class="tab-dropdown" id="tab-dropdown-objetivos">
+    <button class="tab-btn tab-dropdown-trigger" id="tab-btn-objetivos">🎯 Objetivos ▾</button>
+    <div class="tab-dropdown-menu">
+      <button onclick="switchTabDropdown('cerrados',this)">🔓 Cerrados del Mes <span id="cerrado-tab-badge" style="background:#dcfce7;color:#15803d;border-radius:8px;padding:0 5px;font-size:10px;font-weight:700;margin-left:3px">—%</span></button>
+      <button onclick="switchTabDropdown('kpis',this)">📝 Registro de KPIs</button>
+      <button onclick="switchTabDropdown('metas',this)">🏹 Metas del Trimestre</button>
+    </div>
+  </div>
+  <button class="tab-btn" onclick="switchTab('crm',this)">🏢 CRM</button>
 </div>
 
 <!-- ══════════════════════════════════════
@@ -1012,6 +1055,12 @@
       <span style="display:inline-flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:#eff6ff;border:1px solid #3b6ef8;border-radius:2px;display:inline-block"></span> Nuevo registro</span>
     </div>
   </div>
+
+  <!-- KPIs Registrados -->
+  <div class="section-title" style="margin:24px 0 14px">📝 KPIs del Equipo — Semana Actual <span style="font-size:11px;font-weight:400;color:var(--muted)">(registrados vía chat)</span></div>
+  <div id="dash-kpi-summary" style="display:grid;grid-template-columns:repeat(7,1fr);gap:12px;margin-bottom:16px"></div>
+  <div id="dash-kpi-by-seller"></div>
+
 </div>
 
 <!-- ══════════════════════════════════════
@@ -1110,28 +1159,41 @@
      TAB: PLAN SEMANAL
 ══════════════════════════════════════ -->
 <div class="tab-content" id="tab-plan">
-  <div id="plan-semanal-banner" style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 16px;margin-bottom:18px;font-size:13px;color:#1d4ed8;">
-    📅 Cargando plan desde pipeline…
+
+  <!-- Header personalizado -->
+  <div class="plan-user-header">
+    <div>
+      <div style="font-size:20px;font-weight:800;color:var(--text)" id="plan-greeting">📋 Plan Semanal</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:3px" id="plan-week-info">Cargando…</div>
+    </div>
+    <button class="btn-run-copilot" onclick="runCopilot()" id="btn-run-copilot">
+      <span style="font-size:18px">🤖</span> Run Copilot
+    </button>
   </div>
+
+  <!-- Copilot Output -->
+  <div id="copilot-output" style="display:none;margin-bottom:24px"></div>
+
+  <!-- 2-column plan -->
   <div class="grid-2">
     <div>
       <div class="day-label" id="day-label-hoy">HOY · Cargando…</div>
       <div class="plan-col" id="plan-hoy-col">
-        <div style="padding:12px;color:var(--muted);font-size:12px">Sincronizando pipeline…</div>
+        <div style="padding:12px;color:var(--muted);font-size:12px">Cargando…</div>
       </div>
-      <div class="day-label" id="plan-week-label" style="margin-top:16px">PRÓXIMOS 7 DÍAS</div>
+      <div class="day-label" id="plan-week-label" style="margin-top:16px">📅 PRÓXIMOS 7 DÍAS</div>
       <div class="plan-col" id="plan-semana-col">
-        <div style="padding:12px;color:var(--muted);font-size:12px">Sincronizando pipeline…</div>
+        <div style="padding:12px;color:var(--muted);font-size:12px">Cargando…</div>
       </div>
     </div>
     <div>
       <div class="day-label">🚨 OVERDUE · Toques Vencidos</div>
       <div class="risk-list" id="plan-overdue-list">
-        <div style="padding:12px;color:var(--muted);font-size:12px">Sincronizando pipeline…</div>
+        <div style="padding:12px;color:var(--muted);font-size:12px">Cargando…</div>
       </div>
-      <div class="day-label" style="margin-top:16px">🆕 NUEVOS · Últimos 7 días</div>
-      <div id="plan-nuevos-col" style="background:var(--card);border:1px solid #bfdbfe;border-radius:10px;padding:14px;margin-bottom:12px;box-shadow:var(--shadow);">
-        <div style="font-size:12px;color:var(--muted)">Sincronizando pipeline…</div>
+      <div class="day-label" style="margin-top:16px">🚀 INICIATIVAS ASIGNADAS</div>
+      <div id="plan-iniciativas-col" style="background:var(--card);border:1px solid #ddd6fe;border-radius:10px;padding:14px;margin-bottom:12px;box-shadow:var(--shadow)">
+        <div style="font-size:12px;color:var(--muted)">Cargando…</div>
       </div>
     </div>
   </div>
@@ -1664,7 +1726,7 @@
         <div class="crm-field"><label>Cierre Estimado (mes)</label><input type="month" id="pf-close-f"></div>
         <div class="crm-field"><label>Probabilidad de cierre %</label><input type="number" id="pf-prob-f" min="0" max="100" placeholder="50"></div>
         <div class="crm-field"><label>Tamaño</label>
-          <select id="pf-size-f"><option value="">—</option><option>0-100</option><option>101-500</option><option>501-1000</option><option>1000+</option></select></div>
+          <select id="pf-size-f"><option value="">—</option><option>0-100</option><option>101-400</option><option>401-800</option><option>801-1600</option><option>1601-2500</option><option>2500+</option></select></div>
         <div class="crm-field"><label>Producto de interés</label><input type="text" id="pf-product-f" placeholder="Birdie Platform, AI…"></div>
         <div class="crm-field full"><label>Feedback / Notas</label><textarea id="pf-feedback-f" rows="2" placeholder="Objeciones, próximo paso, contexto…"></textarea></div>
       </div>
@@ -1915,9 +1977,11 @@
           <select id="cf-size">
             <option value="">— Selecciona —</option>
             <option>0-100</option>
-            <option>101-500</option>
-            <option>501-1000</option>
-            <option>1000+</option>
+            <option>101-400</option>
+            <option>401-800</option>
+            <option>801-1600</option>
+            <option>1601-2500</option>
+            <option>2500+</option>
           </select>
         </div>
         <div class="crm-field">
@@ -2012,15 +2076,23 @@ new Chart(ctxOwner, {
 function switchTab(id, btn) {
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('tab-'+id).classList.add('active');
-  btn.classList.add('active');
-  if (id === 'crm')      crmRender();
-  if (id === 'kpis')     renderKPITab();
-  if (id === 'deals')    pipeRender();
+  document.querySelectorAll('.tab-dropdown-trigger').forEach(b => b.classList.remove('active-dropdown'));
+  const tabEl = document.getElementById('tab-'+id);
+  if (tabEl) tabEl.classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (id === 'crm')       crmRender();
+  if (id === 'kpis')      renderKPITab();
+  if (id === 'deals')     pipeRender();
   if (id === 'cerrados')  renderCerradosTab();
   if (id === 'metas')     renderMetasTab();
   if (id === 'plan')      renderPlanSemanal();
   if (id === 'autopilot') renderAutopilot();
+}
+// Objetivos dropdown sub-tabs
+function switchTabDropdown(id, btn) {
+  switchTab(id, null);
+  const trigger = document.getElementById('tab-btn-objetivos');
+  if (trigger) trigger.classList.add('active-dropdown');
 }
 
 // Accordion
@@ -2829,6 +2901,7 @@ function startAutoSync(intervalMs = 60000) {
       const kpiData = await sbFetch('GET', 'kpi_logs?select=id,date,seller,type,company,canal,acv,mrr,impl,notes,created_at&order=created_at.desc&limit=2000');
       if (Array.isArray(kpiData)) { _kpiLogs = kpiData; }
       updateGoalsFromLogs();
+      renderDashKPIs();
       // Silent initiatives refresh (keeps board in sync for whole team)
       const initRows = await sbFetch('GET', 'initiatives?select=*&order=position.asc,created_at.asc');
       if (Array.isArray(initRows)) {
@@ -3024,8 +3097,16 @@ function pipeRender() {
     // CRM match indicator
   const crmMatch = _crmData && _crmData.find(c => c.n && r.opportunity_name && c.n.toLowerCase().trim() === r.opportunity_name.toLowerCase().trim());
   const crmBadge = crmMatch ? `<span title="Ligado a CRM: ${crmMatch.n}" style="margin-left:5px;font-size:10px;color:#3b6ef8;cursor:pointer" onclick="pipeOpenEdit(${r.id})">🏢</span>` : '';
+  // Weekly badge (resets each week Mon 00:00)
+  const _wkStart = _getWeekStart();
+  const updAt = r.updated_at ? r.updated_at.slice(0,10) : null;
+  const creAt = r.created_at ? r.created_at.slice(0,10) : null;
+  const isNew = creAt && creAt >= _wkStart;
+  const isUpd = !isNew && updAt && updAt >= _wkStart;
+  const weekBadge = isNew ? '<span class="week-new-badge">NUEVO</span>' : isUpd ? '<span class="week-upd-badge">UPD</span>' : '';
+  const impl = parsePipeMoney(r.implementaciones);
   return `<tr>
-      <td><span class="cell cell-name" title="Clic para editar" style="cursor:pointer" onclick="pipeOpenEdit(${r.id})">${r.opportunity_name||'—'}</span>${crmBadge}</td>
+      <td><span class="cell cell-name" title="Clic para editar" style="cursor:pointer" onclick="pipeOpenEdit(${r.id})">${r.opportunity_name||'—'}</span>${crmBadge}${weekBadge}</td>
       <td><span class="cell" style="font-size:11px;color:#64748b">${r.size||'—'}</span></td>
       <td class="cell-select">
         <select onchange="pipeUpdateField(${r.id},'owner',this.value)">
@@ -3039,9 +3120,9 @@ function pipeRender() {
           ${STAGE_ORDER_LIST.map(s=>`<option value="${s}" ${r.status===s?'selected':''}>${s}</option>`).join('')}
         </select>
       </td>
-      <td><span class="cell cell-money">${mrr?'$'+mrr.toLocaleString():''}</span></td>
-      <td><span class="cell cell-money acv">${acv?'$'+acv.toLocaleString():''}</span></td>
-      <td class="col-hide-md"><span class="cell cell-money" style="color:#7c3aed">${parsePipeMoney(r.implementaciones)?'$'+parsePipeMoney(r.implementaciones).toLocaleString():''}</span></td>
+      <td title="Clic para editar MRR" onclick="pipeInlineEdit(this,${r.id},'mrr',${mrr||0})"><span class="cell cell-money cell-editable">${mrr?'$'+mrr.toLocaleString():'<span style=\'color:#cbd5e1\'>—</span>'}</span></td>
+      <td><span class="cell cell-money acv" style="color:#16a34a;font-weight:700">${acv?'$'+acv.toLocaleString():'<span style=\'color:#cbd5e1\'>auto</span>'}</span></td>
+      <td class="col-hide-md" title="Clic para editar Implementación" onclick="pipeInlineEdit(this,${r.id},'implementaciones',${impl||0})"><span class="cell cell-money cell-editable" style="color:#7c3aed">${impl?'$'+impl.toLocaleString():'<span style=\'color:#cbd5e1\'>—</span>'}</span></td>
       <td class="cell-date col-hide-md">${dInline(r.ingreso_lead,'ingreso_lead','')}</td>
       <td class="cell-date col-hide-lg">${dInline(r.discovery_date,'discovery_date','#7c3aed')}</td>
       <td class="cell-date col-hide-lg">${dInline(r.demo_date,'demo_date','#5b21b6')}</td>
@@ -3113,10 +3194,41 @@ function pipeRender() {
 
 function pipeGoPage(p){const t=Math.ceil(_pipeFiltered.length/PIPE_PAGE)||1;pipePage=Math.max(1,Math.min(p,t));pipeRender();}
 
+// Returns cutoff date for weekly tracking (resets Fridays at 18:00)
+function _getWeekStart() {
+  const now = new Date();
+  const d = new Date(now);
+  const day = d.getDay(); // 0=Sun..5=Fri..6=Sat
+  const hour = d.getHours();
+  // Days since last Friday 18:00
+  const sinceF = (day===5&&hour>=18)?0:day===6?1:day===0?2:day+2;
+  d.setDate(d.getDate()-sinceF); d.setHours(18,0,0,0);
+  return d.toISOString().slice(0,10);
+}
+
+// Inline edit for MRR / Implementación — ACV auto-calculated
+function pipeInlineEdit(cell, id, field, currentVal) {
+  if (cell.querySelector('input.inline-input')) return;
+  cell.innerHTML = `<input class="inline-input" type="number" min="0" value="${currentVal||''}" autofocus>`;
+  const input = cell.querySelector('input');
+  input.focus();
+  const commit = async () => {
+    const newVal = parseFloat(input.value) || 0;
+    await pipeUpdateField(id, field, newVal || null);
+    if (field==='mrr') await pipeUpdateField(id, 'acv', newVal ? newVal*12 : null);
+    pipeRender();
+  };
+  input.addEventListener('blur', commit);
+  input.addEventListener('keydown', e=>{ if(e.key==='Enter'){e.preventDefault();commit();} if(e.key==='Escape') pipeRender(); });
+}
+
 async function pipeUpdateField(id, field, value) {
   // Optimistic update — apply locally immediately, sync in background
   const idx = _pipeData.findIndex(r=>r.id===id);
-  if (idx>=0) _pipeData[idx][field] = (value===''||value===undefined) ? null : value;
+  if (idx>=0) {
+    _pipeData[idx][field] = (value===''||value===undefined) ? null : value;
+    if (field==='mrr' && value && idx>=0) _pipeData[idx]['acv']=parseFloat(value)*12;
+  }
   // Async fire-and-forget with silent retry on schema cache errors
   (async () => {
     try {
@@ -3705,6 +3817,7 @@ async function submitLogEntry() {
     clearLogForm();
     renderLogTable();
     renderKPITab();
+    renderDashKPIs();
     updateGoalsFromLogs();
   } catch(e) { showToast('Error guardando actividad: ' + e.message, 'err'); }
 }
@@ -3815,6 +3928,49 @@ function renderKPITab() {
   renderChannelBreakdown();
   renderLogTable();
   updateGoalsFromLogs();
+}
+
+function renderDashKPIs() {
+  const summaryEl = document.getElementById('dash-kpi-summary');
+  const sellerEl  = document.getElementById('dash-kpi-by-seller');
+  if (!summaryEl) return;
+  const wkStart = _getWeekStart();
+  const weekLogs = _kpiLogs.filter(e => e.date >= wkStart);
+  const count = t => weekLogs.filter(e=>e.type===t).length;
+  const sumMrr = t => weekLogs.filter(e=>e.type===t).reduce((s,e)=>s+(parseFloat(e.mrr)||0),0);
+  const sumAcv = t => weekLogs.filter(e=>e.type===t).reduce((s,e)=>s+(parseFloat(e.acv)||0),0);
+  const kpiCards = [
+    { label:'Leads',        val:count('lead'),         color:'#3b6ef8', icon:'🎯' },
+    { label:'Disc. Agend.', val:count('disc_agendado'),color:'#7c3aed', icon:'🔭' },
+    { label:'Disc. Reales', val:count('discovery'),    color:'#5b21b6', icon:'✅' },
+    { label:'Demos Agend.', val:count('demo_agendado'),color:'#ea580c', icon:'💻' },
+    { label:'Demos Reales', val:count('demo'),         color:'#c2410c', icon:'✅' },
+    { label:'Propuestas',   val:count('propuesta'),    color:'#d97706', icon:'📄', sub: sumMrr('propuesta')?'$'+Math.round(sumMrr('propuesta')/1000)+'K MRR':'' },
+    { label:'Deals Won',    val:count('won'),           color:'#16a34a', icon:'🏆', sub: sumAcv('won')?'$'+Math.round(sumAcv('won')/1000)+'K ACV':'' },
+  ];
+  summaryEl.innerHTML = kpiCards.map(k=>`
+    <div style="background:var(--card2);border:1.5px solid var(--border);border-radius:12px;padding:14px;text-align:center">
+      <div style="font-size:20px;margin-bottom:4px">${k.icon}</div>
+      <div style="font-size:26px;font-weight:800;color:${k.color}">${k.val}</div>
+      <div style="font-size:10px;font-weight:700;color:var(--muted);margin-top:2px">${k.label}</div>
+      ${k.sub?`<div style="font-size:10px;color:${k.color};font-weight:600;margin-top:2px">${k.sub}</div>`:''}
+    </div>`).join('');
+  const sellers = ['Abraham Lopez','Héctor Nícola','Daniel Luna'];
+  sellerEl.innerHTML = '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">' + sellers.map(s=>{
+    const sl = weekLogs.filter(e=>e.seller===s);
+    if(!sl.length) return `<div style="background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;color:var(--muted);font-size:12px">${s.split(' ')[0]}<br>Sin registros esta semana</div>`;
+    const lines = [
+      sl.filter(e=>e.type==='lead').length?`🎯 ${sl.filter(e=>e.type==='lead').length} leads`:'',
+      sl.filter(e=>e.type==='discovery').length?`🔭 ${sl.filter(e=>e.type==='discovery').length} discoveries`:'',
+      sl.filter(e=>e.type==='demo').length?`💻 ${sl.filter(e=>e.type==='demo').length} demos`:'',
+      sl.filter(e=>e.type==='propuesta').length?`📄 ${sl.filter(e=>e.type==='propuesta').length} propuestas`:'',
+      sl.filter(e=>e.type==='won').length?`🏆 ${sl.filter(e=>e.type==='won').length} won`:'',
+    ].filter(Boolean);
+    return `<div style="background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:14px">
+      <div style="font-size:12px;font-weight:700;margin-bottom:8px">${s.split(' ')[0]}</div>
+      ${lines.map(l=>`<div style="font-size:11px;color:var(--text);margin-bottom:3px">${l}</div>`).join('')}
+    </div>`;
+  }).join('') + '</div>';
 }
 
 function updateGoalsFromLogs() {
@@ -4745,156 +4901,214 @@ function renderMetasTab() {
 // ─────────────────────────────────────────────────────────────────────────────
 // Plan Semanal — renders from live _pipeData
 // ─────────────────────────────────────────────────────────────────────────────
+function _getCurrentSeller() {
+  try {
+    const s = JSON.parse(sessionStorage.getItem(SESSION_KEY) || 'null');
+    return s ? { name: s.name || s.email, email: s.email } : null;
+  } catch { return null; }
+}
+
 function renderPlanSemanal() {
-  if (!Array.isArray(_pipeData) || _pipeData.length === 0) return;
-
-  const ACTIVE = new Set(['Weekly Hunt','Active Lead','Active lead','Calificado','Discovery','Demo','Propuesta','Close 2 close','Piloto','Cerrado']);
+  const user = _getCurrentSeller();
   const now = new Date();
-  const todayStr = now.toISOString().slice(0,10); // YYYY-MM-DD
-  const in7days = new Date(now); in7days.setDate(in7days.getDate() + 7);
-  const in7Str  = in7days.toISOString().slice(0,10);
-  const ago7    = new Date(now); ago7.setDate(ago7.getDate() - 7);
+  const todayStr = now.toISOString().slice(0,10);
+  const in7days = new Date(now); in7days.setDate(now.getDate() + 7);
+  const in7Str = in7days.toISOString().slice(0,10);
+  const weekNum = Math.ceil(((now - new Date(now.getFullYear(),0,1))/86400000 + new Date(now.getFullYear(),0,1).getDay()+1)/7);
+  const todayFmt = now.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'});
+  const todayFmtCap = todayFmt.charAt(0).toUpperCase() + todayFmt.slice(1);
 
-  // STAGE colors for plan items
-  const STAGE_CLR = {
-    'Close 2 close':'pt-red','Propuesta':'pt-green','Demo':'pt-blue','Discovery':'pt-blue',
-    'Calificado':'pt-yellow','Cerrado':'pt-green','Piloto':'pt-purple',
-    'Active Lead':'','Active lead':'','Weekly Hunt':''
-  };
+  // Update header
+  const greetEl = document.getElementById('plan-greeting');
+  const weekInfoEl = document.getElementById('plan-week-info');
+  if (greetEl) greetEl.textContent = user ? `📋 Plan Semanal · ${user.name.split(' ')[0]}` : '📋 Plan Semanal';
+  if (weekInfoEl) weekInfoEl.textContent = `Semana ${weekNum} · ${todayFmtCap}`;
 
-  function stageTag(s) { return `<span class="plan-tag ${STAGE_CLR[s]||''}" style="font-size:10px">${s}</span>`; }
-  function ownerTag(o) { return o ? `<span class="owner-tag">${o.split(' ')[0]}</span>` : ''; }
-  function fmtDateShort(d) {
-    if (!d) return '—';
-    const dt = new Date(d + 'T00:00:00');
-    return dt.toLocaleDateString('es-MX', {day:'numeric', month:'short'});
-  }
-  function diffDays(dateStr) {
-    const d = new Date(dateStr + 'T00:00:00');
-    return Math.round((d - now) / 86400000);
-  }
-  function acvChip(r) {
-    const v = parseFloat(r.acv)||0;
-    if (!v) return '';
-    return `<span class="plan-tag pt-green" style="font-size:10px">$${v.toLocaleString()} ACV</span>`;
+  const dayLbl = document.getElementById('day-label-hoy');
+  if (dayLbl) dayLbl.textContent = `HOY · ${todayFmtCap}`;
+
+  if (!Array.isArray(_pipeData) || _pipeData.length === 0) {
+    ['plan-hoy-col','plan-semana-col','plan-overdue-list'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = '<div style="padding:12px;color:var(--muted);font-size:12px;text-align:center">Sin datos de pipeline</div>';
+    });
+    return;
   }
 
-  const overdue = [], today = [], upcoming = [], newRecords = [];
+  const ACTIVE_P = new Set(['Weekly Hunt','Active Lead','Active lead','Calificado','Discovery','Demo','Propuesta','Close 2 close','Piloto']);
+  // Filter by current user if logged in
+  const myDeals = _pipeData.filter(r => {
+    if (!ACTIVE_P.has(r.status||'')) return false;
+    if (user && r.owner && r.owner !== user.name) return false;
+    return true;
+  });
 
-  for (const r of _pipeData) {
+  const overdue=[], today=[], upcoming=[];
+  for (const r of myDeals) {
     const nt = r.next_touchpoint;
-    const created = r.created_at ? r.created_at.slice(0,10) : null;
-
-    // New records (last 7 days, active stages)
-    if (created && created >= ago7.toISOString().slice(0,10) && ACTIVE.has(r.status||'')) {
-      newRecords.push(r);
-    }
     if (!nt) continue;
-    const diff = diffDays(nt);
-    if (diff < 0) { overdue.push({r, diff}); }
-    else if (nt === todayStr) { today.push({r, diff}); }
-    else if (nt <= in7Str)   { upcoming.push({r, diff}); }
+    const diff = Math.round((new Date(nt+'T00:00:00') - now) / 86400000);
+    if (diff < 0)       overdue.push({r, diff});
+    else if (nt===todayStr) today.push({r, diff});
+    else if (nt<=in7Str)    upcoming.push({r, diff});
   }
+  overdue.sort((a,b)=>a.diff-b.diff);
+  upcoming.sort((a,b)=>a.diff-b.diff);
 
-  // Sort overdue by most overdue first, upcoming by soonest first
-  overdue.sort((a,b) => a.diff - b.diff);
-  upcoming.sort((a,b) => a.diff - b.diff);
-  newRecords.sort((a,b) => (b.created_at||'').localeCompare(a.created_at||''));
+  function fmtShort(d) { if(!d) return '—'; return new Date(d+'T00:00:00').toLocaleDateString('es-MX',{day:'numeric',month:'short'}); }
+  function stageTag(s) { const c={'Close 2 close':'pt-red','Propuesta':'pt-green','Demo':'pt-blue','Discovery':'pt-blue','Piloto':'pt-purple'}; return `<span class="plan-tag ${c[s]||'pt-yellow'}" style="font-size:10px">${s}</span>`; }
+  function ownerTag(o) { return o?`<span class="owner-tag">${o.split(' ')[0]}</span>`:''; }
+  function acvChip(r) { const v=parseFloat(r.acv)||0; return v?`<span class="plan-tag pt-green" style="font-size:10px">$${v.toLocaleString()} ACV</span>`:''; }
 
-  function planItem(r, diffDays) {
-    const isToday = diffDays === 0;
-    const isOverdue = diffDays < 0;
-    const urgencyTag = isToday
-      ? `<span class="plan-tag pt-red" style="font-size:10px">Hoy ✅</span>`
-      : isOverdue
-        ? `<span class="plan-tag pt-red" style="font-size:10px">🚨 ${Math.abs(diffDays)}d vencido</span>`
-        : `<span class="plan-tag" style="font-size:10px;background:#f3f4f6;color:#374151">${fmtDateShort(r.next_touchpoint)}</span>`;
-    const acv = parseFloat(r.acv)||0;
-    const estrategia = r.estrategia ? `<div style="font-size:11px;color:var(--muted);margin-top:2px">${r.estrategia}</div>` : '';
+  function planItem(r, diff) {
+    const isToday=diff===0, isOver=diff<0;
+    const urgTag = isToday ? `<span class="plan-tag pt-red" style="font-size:10px">Hoy ✅</span>`
+      : isOver ? `<span class="plan-tag pt-red" style="font-size:10px">🚨 ${Math.abs(diff)}d vencido</span>`
+      : `<span class="plan-tag" style="font-size:10px;background:#f3f4f6;color:#374151">${fmtShort(r.next_touchpoint)}</span>`;
     return `<div class="plan-item">
       <div class="plan-check" onclick="this.classList.toggle('done')"></div>
       <div class="plan-content">
-        <div class="plan-title">${r.opportunity_name||'(sin nombre)'} ${acv ? '— $'+acv.toLocaleString()+' ACV' : ''}</div>
-        ${estrategia}
-        <div style="font-size:11px;color:var(--muted);margin-top:2px">Próximo toque: ${fmtDateShort(r.next_touchpoint)} · ${r.status}</div>
-        <div class="plan-meta">${stageTag(r.status||'')}${ownerTag(r.owner)}${urgencyTag}${acvChip(r)}</div>
+        <div class="plan-title">${r.opportunity_name||'(sin nombre)'}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">${r.status} · Touch: ${fmtShort(r.next_touchpoint)}</div>
+        <div class="plan-meta">${stageTag(r.status||'')}${ownerTag(r.owner)}${urgTag}${acvChip(r)}</div>
       </div>
     </div>`;
   }
 
-  // HOY column
   const hoyEl = document.getElementById('plan-hoy-col');
-  if (hoyEl) {
-    if (today.length === 0) {
-      hoyEl.innerHTML = `<div style="padding:12px;color:var(--muted);font-size:12px;text-align:center">Sin touchpoints programados para hoy</div>`;
-    } else {
-      hoyEl.innerHTML = today.map(({r,diff}) => planItem(r, diff)).join('');
-    }
-  }
+  if (hoyEl) hoyEl.innerHTML = today.length ? today.map(({r,diff})=>planItem(r,diff)).join('') : '<div style="padding:12px;color:var(--muted);font-size:12px;text-align:center">Sin touchpoints para hoy</div>';
 
-  // SEMANA column
   const semEl = document.getElementById('plan-semana-col');
-  const weekLabel = document.getElementById('plan-week-label');
-  if (semEl) {
-    const end7 = in7days.toLocaleDateString('es-MX', {day:'numeric', month:'short'});
-    if (weekLabel) weekLabel.textContent = `PRÓXIMOS 7 DÍAS · hasta ${end7}`;
-    if (upcoming.length === 0) {
-      semEl.innerHTML = `<div style="padding:12px;color:var(--muted);font-size:12px;text-align:center">Sin touchpoints programados esta semana</div>`;
-    } else {
-      semEl.innerHTML = upcoming.map(({r,diff}) => planItem(r, diff)).join('');
-    }
-  }
+  const wkLbl = document.getElementById('plan-week-label');
+  if (wkLbl) wkLbl.textContent = `📅 PRÓXIMOS 7 DÍAS · hasta ${fmtShort(in7Str)}`;
+  if (semEl) semEl.innerHTML = upcoming.length ? upcoming.map(({r,diff})=>planItem(r,diff)).join('') : '<div style="padding:12px;color:var(--muted);font-size:12px;text-align:center">Sin touchpoints esta semana</div>';
 
-  // OVERDUE list
-  const ovEl = document.getElementById('plan-overdue-list');
-  if (ovEl) {
-    if (overdue.length === 0) {
-      ovEl.innerHTML = `<div style="padding:12px;color:#16a34a;font-size:12px">✅ Sin toques vencidos</div>`;
-    } else {
-      // Show top 10 overdue sorted by ACV desc within same urgency
-      const top = overdue.slice(0,15);
-      ovEl.innerHTML = top.map(({r,diff}) => {
-        const acv = parseFloat(r.acv)||0;
-        const dotCls = diff <= -3 ? 'rd-red' : 'rd-orange';
-        return `<div class="risk-row" style="cursor:pointer" onclick="switchTab('deals',null)">
-          <div class="risk-dot ${dotCls}"></div>
-          <div style="flex:1;min-width:0">
-            <div class="risk-deal">${r.opportunity_name||'—'}</div>
-            <div class="risk-reason">${fmtDateShort(r.next_touchpoint)} · ${r.status} · ${Math.abs(diff)}d vencido · ${r.owner||'—'}</div>
-          </div>
-          <div class="risk-acv-val" style="color:${diff <= -3 ? 'var(--red)' : 'var(--orange)'}">${acv ? '$'+Math.round(acv/1000)+'K' : '—'}</div>
-        </div>`;
-      }).join('');
-    }
-  }
+  const overdueEl = document.getElementById('plan-overdue-list');
+  if (overdueEl) overdueEl.innerHTML = overdue.length ? overdue.map(({r,diff})=>`
+    <div class="risk-item">
+      <div class="risk-dot risk-dot-red"></div>
+      <div style="flex:1">
+        <div class="risk-deal">${r.opportunity_name||'—'}</div>
+        <div class="risk-reason">${fmtShort(r.next_touchpoint)} · ${r.status} · ${Math.abs(diff)}d vencido · ${r.owner||'—'}</div>
+      </div>
+      <div class="risk-acv-val" style="color:#dc2626">${r.acv?'$'+Math.round(r.acv/1000)+'K':'—'}</div>
+    </div>`).join('')
+    : '<div style="padding:12px;color:var(--muted);font-size:12px;text-align:center">✅ Sin touchpoints vencidos</div>';
 
-  // NUEVOS column
-  const newEl = document.getElementById('plan-nuevos-col');
-  if (newEl) {
-    if (newRecords.length === 0) {
-      newEl.innerHTML = `<div style="font-size:12px;color:var(--muted)">Sin registros nuevos en los últimos 7 días</div>`;
-    } else {
-      newEl.innerHTML = `<div style="font-size:12px;color:var(--muted);margin-bottom:8px">${newRecords.length} nuevo${newRecords.length!==1?'s':''} en los últimos 7 días</div>` +
-        newRecords.slice(0,15).map(r => {
-          return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;background:var(--bg2);border-radius:7px;margin-bottom:4px">
-            <span style="font-size:12px;font-weight:600">${r.opportunity_name||'—'}</span>
-            <div style="display:flex;gap:4px;align-items:center">
-              <span style="font-size:10px;color:var(--muted)">${fmtDateShort(r.created_at ? r.created_at.slice(0,10) : null)}</span>
-              ${stageTag(r.status||'')}
-            </div>
-          </div>`;
-        }).join('');
-    }
+  // Iniciativas asignadas al usuario
+  const initEl = document.getElementById('plan-iniciativas-col');
+  if (initEl && user) {
+    const myInits = Object.entries(_initData||{}).flatMap(([col,cards])=>
+      cards.filter(c=>c.responsable===user.name && c.status!=='Completado ✓').map(c=>({...c,col}))
+    );
+    initEl.innerHTML = myInits.length ? myInits.map(c=>`
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border2)">
+        <span style="font-size:18px">${c.emoji||'📌'}</span>
+        <div style="flex:1">
+          <div style="font-size:12px;font-weight:600;color:var(--text)">${c.title||'(sin título)'}</div>
+          <div style="font-size:11px;color:var(--muted)">${c.status}${c.deadline?' · '+(new Date(c.deadline+'T00:00:00')).toLocaleDateString('es-MX',{day:'numeric',month:'short'}):''}</div>
+        </div>
+      </div>`).join('')
+      : '<div style="font-size:12px;color:var(--muted);text-align:center;padding:8px 0">Sin iniciativas asignadas</div>';
   }
+}
 
-  // Banner
-  const banner = document.getElementById('plan-semanal-banner');
-  if (banner) {
-    const todayFmt = now.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-    const todayFmtCap = todayFmt.charAt(0).toUpperCase() + todayFmt.slice(1);
-    const overdueUrgent = overdue.filter(x => x.diff <= -3).length;
-    banner.innerHTML = `📅 <strong>${todayFmtCap}</strong> · ${today.length} touchpoint${today.length!==1?'s':''} HOY · ${upcoming.length} próximos 7 días · <span style="color:#dc2626;font-weight:700">${overdue.length} overdue${overdueUrgent ? ' ('+overdueUrgent+' críticos)' : ''}</span>`;
+// ─── RUN COPILOT ─────────────────────────────────────────────────────────────
+const BIRDIE_AGENT_KEY = 'f42bf187c54c933fbb4ac6ce0d460a6b4b63f2c76d226ba3992ecdc2f349d75c';
+const BIRDIE_AGENT_URL = 'https://xjrgqborwhvyqgrczetq.supabase.co/functions/v1/agent-api';
+
+async function runCopilot() {
+  const user = _getCurrentSeller();
+  if (!user) { showToast('⚠ Inicia sesión primero','err'); return; }
+
+  const btn = document.getElementById('btn-run-copilot');
+  const outEl = document.getElementById('copilot-output');
+  if (!outEl) return;
+
+  if (btn) { btn.disabled=true; btn.innerHTML='<span style="font-size:18px">🤖</span> Analizando…'; }
+  outEl.style.display = 'block';
+  outEl.innerHTML = '<div class="copilot-loading">Analizando tus deals e iniciativas para la semana…</div>';
+
+  const ACTIVE_P = new Set(['Weekly Hunt','Active Lead','Active lead','Calificado','Discovery','Demo','Propuesta','Close 2 close','Piloto']);
+  const myDeals = (_pipeData||[]).filter(r => ACTIVE_P.has(r.status||'') && (!r.owner || r.owner===user.name));
+  const myInits = Object.entries(_initData||{}).flatMap(([col,cards])=>
+    cards.filter(c=>c.responsable===user.name && c.status!=='Completado ✓').map(c=>({...c,col}))
+  );
+
+  try {
+    const res = await fetch(BIRDIE_AGENT_URL, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-Agent-Key':BIRDIE_AGENT_KEY},
+      body: JSON.stringify({ action:'weekly_plan', seller:user.name, deals:myDeals, initiatives:myInits })
+    });
+    const data = await res.json();
+    if (data.ok && data.plan) {
+      _renderCopilotPlan(data.plan, user.name);
+    } else {
+      // Fallback: local smart analysis
+      _renderCopilotLocal(myDeals, myInits, user.name);
+    }
+  } catch(e) {
+    // Fallback: local smart analysis (no Edge Function update needed)
+    _renderCopilotLocal(myDeals, myInits, user.name);
   }
+  if (btn) { btn.disabled=false; btn.innerHTML='<span style="font-size:18px">🤖</span> Run Copilot'; }
+}
+
+function _renderCopilotPlan(plan, seller) {
+  const outEl = document.getElementById('copilot-output');
+  if (!outEl) return;
+  const urgColor = {'alta':'#dc2626','media':'#d97706','baja':'#16a34a'};
+  outEl.innerHTML = `<div class="copilot-output-box">
+    <div class="copilot-header">
+      <div class="copilot-title">🤖 Análisis Copilot · ${seller.split(' ')[0]}</div>
+      <span style="font-size:11px;color:#7c3aed;font-weight:600">${new Date().toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'})}</span>
+    </div>
+    ${plan.foco_semana?`<div class="copilot-foco"><span style="font-size:18px">🎯</span><div><strong>Foco de la semana:</strong><br>${plan.foco_semana}</div></div>`:''}
+    ${plan.resumen?`<div class="copilot-resumen">${plan.resumen}</div>`:''}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div>
+        <div class="copilot-section-title">⚡ Prioridades</div>
+        ${(plan.prioridades||[]).map(p=>`<div class="copilot-priority-card ${p.urgencia||'media'}">
+          <div class="copilot-priority-deal">${p.deal}</div>
+          <div class="copilot-priority-action">→ ${p.accion}</div>
+          <div class="copilot-priority-motivo" style="color:${urgColor[p.urgencia]||'#64748b'}">${p.urgencia?.toUpperCase()||''} · ${p.motivo}</div>
+        </div>`).join('')||'<div style="font-size:12px;color:var(--muted)">Sin prioridades identificadas</div>'}
+      </div>
+      <div>
+        <div class="copilot-section-title">⚠️ En Riesgo</div>
+        ${(plan.riesgos||[]).map(r=>`<div class="copilot-risk-item">
+          <span style="font-size:16px">⚠️</span>
+          <div><div style="font-size:12px;font-weight:700">${r.deal}</div>
+          <div style="font-size:11px;color:var(--muted)">${r.razon}</div>
+          <div style="font-size:11px;color:#dc2626">→ ${r.accion}</div></div>
+        </div>`).join('')||'<div style="font-size:12px;color:var(--muted)">Sin riesgos detectados ✅</div>'}
+        ${plan.iniciativas?.length?`<div class="copilot-section-title" style="margin-top:14px">🚀 Iniciativas</div>
+        ${plan.iniciativas.map(i=>`<div class="copilot-init-item">
+          <span style="font-size:14px">🚀</span>
+          <div><div style="font-size:12px;font-weight:700">${i.titulo}</div>
+          <div style="font-size:11px;color:var(--muted)">→ ${i.accion}</div></div>
+        </div>`).join('')}`:''}
+      </div>
+    </div>
+  </div>`;
+}
+
+function _renderCopilotLocal(deals, inits, seller) {
+  const now = new Date();
+  const todayStr = now.toISOString().slice(0,10);
+  const in7Str = new Date(now.getTime()+7*86400000).toISOString().slice(0,10);
+  const closePriority = deals.filter(d=>d.status==='Close 2 close'||d.status==='Propuesta').sort((a,b)=>(parseFloat(b.acv)||0)-(parseFloat(a.acv)||0));
+  const overdue = deals.filter(d=>d.next_touchpoint&&d.next_touchpoint<todayStr).sort((a,b)=>a.next_touchpoint.localeCompare(b.next_touchpoint));
+  const thisWeek = deals.filter(d=>d.next_touchpoint&&d.next_touchpoint>=todayStr&&d.next_touchpoint<=in7Str);
+  const prioridades = [
+    ...closePriority.slice(0,3).map(d=>({deal:d.opportunity_name,accion:d.status==='Propuesta'?'Hacer seguimiento de la propuesta y confirmar timeline de decisión':'Cerrar deal esta semana — prepara contrato',motivo:`${d.status} · $${(parseFloat(d.acv)||0).toLocaleString()} ACV`,urgencia:'alta'})),
+    ...thisWeek.filter(d=>!closePriority.find(c=>c.id===d.id)).slice(0,2).map(d=>({deal:d.opportunity_name,accion:`Ejecutar touchpoint programado (${d.next_touchpoint})`,motivo:d.status,urgencia:'media'})),
+  ].slice(0,5);
+  const riesgos = overdue.slice(0,3).map(d=>({deal:d.opportunity_name,razon:`Touchpoint vencido: ${d.next_touchpoint}`,accion:'Contactar hoy y reagendar'}));
+  const iniciativas = inits.slice(0,3).map(i=>({titulo:i.title||'(sin título)',accion:i.notes||'Avanzar en esta semana'}));
+  const resumen = `${seller.split(' ')[0]}, tienes ${deals.length} deals activos. ${closePriority.length} en etapa de cierre. ${overdue.length} con touchpoint vencido que necesitan atención inmediata.`;
+  _renderCopilotPlan({prioridades, riesgos, iniciativas, resumen, foco_semana: closePriority[0]?`Cerrar ${closePriority[0].opportunity_name} — deal de mayor ACV en etapa avanzada`:''}, seller);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
