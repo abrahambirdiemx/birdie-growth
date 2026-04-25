@@ -1,0 +1,774 @@
+{
+  "name": "Birdie Pipeline Add-ons v3 (Follow-up + Pipedrive)",
+  "nodes": [
+    {
+      "id": "node-comment-separator",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [100, 80],
+      "parameters": {
+        "content": "## 3a: Follow-up automático (5 días sin respuesta)\nTrigger: daily 10:00am | Reads enviado rows | Claude Haiku drafts follow-up | Gmail sends in thread",
+        "height": 80,
+        "width": 600,
+        "color": 4
+      }
+    },
+    {
+      "id": "node-comment-pipedrive",
+      "name": "Sticky Note Pipedrive",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [100, 900],
+      "parameters": {
+        "content": "## 3b: Pipedrive Integration (demo_agendada)\nTrigger: every 2h | Reads demo_agendada rows not yet in Pipedrive | Creates Deal + Person",
+        "height": 80,
+        "width": 600,
+        "color": 6
+      }
+    },
+    {
+      "id": "node-followup-schedule",
+      "name": "Follow-up Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 240],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 10 * * *"
+            }
+          ]
+        },
+        "timezone": "America/Mexico_City"
+      }
+    },
+    {
+      "id": "node-read-enviado-rows",
+      "name": "Read Sent Prospects",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.2,
+      "position": [460, 240],
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "1xq8IMuFZoMO3YkdTneirIPQ6VqvaAxKRN8H24BhN_AE",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "name"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "estado",
+              "lookupValue": "enviado"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": false
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "google-sheets-credential",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "id": "node-filter-overdue",
+      "name": "Filter 5+ Days No Reply",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 240],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const fiveDaysMs = 5 * 24 * 60 * 60 * 1000;\nconst now = Date.now();\n\nconst filtered = $input.all().filter(item => {\n  const row = item.json;\n  // Must have fecha_envio and no clasificacion_respuesta yet\n  if (!row.fecha_envio || row.clasificacion_respuesta) return false;\n  \n  const sendDate = new Date(row.fecha_envio);\n  if (isNaN(sendDate.getTime())) return false;\n  \n  const daysSinceSent = now - sendDate.getTime();\n  return daysSinceSent >= fiveDaysMs;\n});\n\nreturn filtered;"
+      }
+    },
+    {
+      "id": "node-followup-split",
+      "name": "Follow-up SplitInBatches",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [900, 240],
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      }
+    },
+    {
+      "id": "node-claude-followup",
+      "name": "Claude Haiku Follow-up Draft",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 240],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-haiku-4-5-20251001\",\n  \"max_tokens\": 300,\n  \"system\": \"Eres Abraham López, Director de Growth de Birdie (birdie.mx), una plataforma de IA para importadores mexicanos. Redacta un follow-up breve y natural (máx 80 palabras) para un prospecto que no respondió tu primer email hace 5 días. Sé directo, no insistente. Menciona brevemente el valor específico de Birdie para su sector. Sin markdown. Solo el cuerpo del email, sin asunto ni firma.\",\n  \"messages\": [{\n    \"role\": \"user\",\n    \"content\": \"Escribe el follow-up para:\\n- Nombre: {{ $json.nombre }}\\n- Empresa: {{ $json.empresa }}\\n- Cargo: {{ $json.cargo }}\\n- Sector: {{ $json.sector }}\\n- Pain point conocido: {{ $json.pain_point }}\\n- Asunto del email original: {{ $json.email_subject }}\\n\\nEl follow-up debe ser natural, recordar brevemente de qué se trataba el email anterior y preguntar si tienen 15 minutos para una llamada.\"\n  }]\n}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "claude-api-credential",
+          "name": "Claude API"
+        }
+      }
+    },
+    {
+      "id": "node-extract-followup-text",
+      "name": "Extract Follow-up Text",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1340, 240],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const claudeResponse = $input.item.json;\nconst prospectData = $('Follow-up SplitInBatches').item.json;\n\nconst followUpText = claudeResponse?.content?.[0]?.text || '';\nconst today = new Date().toISOString().split('T')[0];\n\nreturn {\n  json: {\n    followUpText,\n    nombre: prospectData.nombre,\n    empresa: prospectData.empresa,\n    email: prospectData.email,\n    email_subject: prospectData.email_subject,\n    row_number: prospectData.row_number,\n    notas: prospectData.notas,\n    today\n  }\n};"
+      }
+    },
+    {
+      "id": "node-send-followup-gmail",
+      "name": "Send Follow-up via Gmail",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [1560, 240],
+      "parameters": {
+        "operation": "send",
+        "sendTo": "={{ $json.email }}",
+        "subject": "=Re: {{ $json.email_subject }}",
+        "message": "={{ $json.followUpText }}\n\nSaludos,\nAbraham López\nDirector de Growth | Birdie\nbirdie.mx",
+        "options": {
+          "replyTo": "abraham@birdie.mx",
+          "appendAttribution": false
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "gmail-credential",
+          "name": "Gmail"
+        }
+      }
+    },
+    {
+      "id": "node-update-sheet-followup",
+      "name": "Update Sheet: follow-up sent",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.2,
+      "position": [1780, 240],
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1xq8IMuFZoMO3YkdTneirIPQ6VqvaAxKRN8H24BhN_AE",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $json.row_number }}",
+            "notas": "={{ ($json.notas ? $json.notas + ' | ' : '') + 'Follow-up enviado: ' + $json.today }}"
+          },
+          "matchingColumns": ["row_number"],
+          "schema": [
+            { "id": "notas", "displayName": "notas", "canBeUsedToMatch": false }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "google-sheets-credential",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "id": "node-log-followup-supabase",
+      "name": "Log Follow-up to Supabase",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2000, 240],
+      "parameters": {
+        "method": "POST",
+        "url": "https://xjrgqborwhvyqgrczetq.supabase.co/rest/v1/agent_events",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdxYm9yd2h2eXFncmN6ZXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODc5ODksImV4cCI6MjA5MDQ2Mzk4OX0.DWOoshMXxmQk0deq2jEnOOAFpr_pyE9aWenvu_GPzLs"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdxYm9yd2h2eXFncmN6ZXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODc5ODksImV4cCI6MjA5MDQ2Mzk4OX0.DWOoshMXxmQk0deq2jEnOOAFpr_pyE9aWenvu_GPzLs"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"type\": \"followup_sent\",\n  \"payload\": {\n    \"empresa\": \"{{ $json.empresa }}\",\n    \"nombre\": \"{{ $json.nombre }}\",\n    \"email\": \"{{ $json.email }}\"\n  }\n}",
+        "options": {}
+      }
+    },
+    {
+      "id": "node-followup-loop-check",
+      "name": "More Follow-ups?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [2220, 240],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "condition-has-more-followup",
+              "leftValue": "={{ $node['Follow-up SplitInBatches'].context['noItemsLeft'] }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "node-pipedrive-schedule",
+      "name": "Pipedrive Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 1040],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 2
+            }
+          ]
+        },
+        "timezone": "America/Mexico_City"
+      }
+    },
+    {
+      "id": "node-read-demo-rows",
+      "name": "Read Demo Agendada Rows",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.2,
+      "position": [460, 1040],
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "1xq8IMuFZoMO3YkdTneirIPQ6VqvaAxKRN8H24BhN_AE",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "name"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "estado",
+              "lookupValue": "demo_agendada"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": false
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "google-sheets-credential",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "id": "node-filter-not-in-pipedrive",
+      "name": "Filter Not Yet in Pipedrive",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 1040],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Only process rows where notas does NOT contain 'pipedrive_created'\nconst filtered = $input.all().filter(item => {\n  const notas = item.json.notas || '';\n  return !notas.includes('pipedrive_created');\n});\n\nreturn filtered;"
+      }
+    },
+    {
+      "id": "node-pipedrive-split",
+      "name": "Pipedrive SplitInBatches",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [900, 1040],
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      }
+    },
+    {
+      "id": "node-pipedrive-create-person",
+      "name": "Pipedrive Create Person",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 1040],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.pipedrive.com/v1/persons?api_token={{ $credentials.httpQueryAuth.key }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"name\": \"{{ $json.nombre }}\",\n  \"email\": [{ \"value\": \"{{ $json.email }}\", \"primary\": true }],\n  \"org_name\": \"{{ $json.empresa }}\",\n  \"job_title\": \"{{ $json.cargo }}\"\n}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "pipedrive-api-credential",
+          "name": "Pipedrive API"
+        }
+      }
+    },
+    {
+      "id": "node-pipedrive-create-deal",
+      "name": "Pipedrive Create Deal",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1340, 1040],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.pipedrive.com/v1/deals?api_token={{ $credentials.httpQueryAuth.key }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"title\": \"{{ $('Pipedrive SplitInBatches').item.json.empresa }} - Demo Birdie\",\n  \"status\": \"open\",\n  \"person_id\": {{ $json.data && $json.data.id ? $json.data.id : 'null' }},\n  \"value\": 0,\n  \"currency\": \"MXN\"\n}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "pipedrive-api-credential",
+          "name": "Pipedrive API"
+        }
+      }
+    },
+    {
+      "id": "node-extract-deal-data",
+      "name": "Extract Deal Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1560, 1040],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const dealResponse = $input.item.json;\nconst prospectData = $('Pipedrive SplitInBatches').item.json;\nconst today = new Date().toISOString().split('T')[0];\n\nconst dealId = dealResponse?.data?.id || null;\n\nreturn {\n  json: {\n    deal_id: dealId,\n    empresa: prospectData.empresa,\n    nombre: prospectData.nombre,\n    email: prospectData.email,\n    row_number: prospectData.row_number,\n    notas: prospectData.notas,\n    today,\n    pipedrive_note: dealId ? `pipedrive_created: ${dealId}` : 'pipedrive_error'\n  }\n};"
+      }
+    },
+    {
+      "id": "node-update-sheet-pipedrive",
+      "name": "Update Sheet: pipedrive_created",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.2,
+      "position": [1780, 1040],
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1xq8IMuFZoMO3YkdTneirIPQ6VqvaAxKRN8H24BhN_AE",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $json.row_number }}",
+            "notas": "={{ ($json.notas ? $json.notas + ' | ' : '') + $json.pipedrive_note }}"
+          },
+          "matchingColumns": ["row_number"],
+          "schema": [
+            { "id": "notas", "displayName": "notas", "canBeUsedToMatch": false }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "google-sheets-credential",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "id": "node-log-pipedrive-supabase",
+      "name": "Log Pipedrive Deal to Supabase",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2000, 1040],
+      "parameters": {
+        "method": "POST",
+        "url": "https://xjrgqborwhvyqgrczetq.supabase.co/rest/v1/agent_events",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdxYm9yd2h2eXFncmN6ZXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODc5ODksImV4cCI6MjA5MDQ2Mzk4OX0.DWOoshMXxmQk0deq2jEnOOAFpr_pyE9aWenvu_GPzLs"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdxYm9yd2h2eXFncmN6ZXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODc5ODksImV4cCI6MjA5MDQ2Mzk4OX0.DWOoshMXxmQk0deq2jEnOOAFpr_pyE9aWenvu_GPzLs"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"type\": \"pipedrive_deal_created\",\n  \"payload\": {\n    \"empresa\": \"{{ $json.empresa }}\",\n    \"deal_id\": {{ $json.deal_id || 'null' }}\n  }\n}",
+        "options": {}
+      }
+    },
+    {
+      "id": "node-pipedrive-loop-check",
+      "name": "More Pipedrive Rows?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [2220, 1040],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "condition-has-more-pipedrive",
+              "leftValue": "={{ $node['Pipedrive SplitInBatches'].context['noItemsLeft'] }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Follow-up Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Read Sent Prospects",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Sent Prospects": {
+      "main": [
+        [
+          {
+            "node": "Filter 5+ Days No Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter 5+ Days No Reply": {
+      "main": [
+        [
+          {
+            "node": "Follow-up SplitInBatches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Follow-up SplitInBatches": {
+      "main": [
+        [
+          {
+            "node": "Claude Haiku Follow-up Draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude Haiku Follow-up Draft": {
+      "main": [
+        [
+          {
+            "node": "Extract Follow-up Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Follow-up Text": {
+      "main": [
+        [
+          {
+            "node": "Send Follow-up via Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Follow-up via Gmail": {
+      "main": [
+        [
+          {
+            "node": "Update Sheet: follow-up sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Sheet: follow-up sent": {
+      "main": [
+        [
+          {
+            "node": "Log Follow-up to Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Follow-up to Supabase": {
+      "main": [
+        [
+          {
+            "node": "More Follow-ups?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "More Follow-ups?": {
+      "main": [
+        [
+          {
+            "node": "Follow-up SplitInBatches",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Pipedrive Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Read Demo Agendada Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Demo Agendada Rows": {
+      "main": [
+        [
+          {
+            "node": "Filter Not Yet in Pipedrive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Not Yet in Pipedrive": {
+      "main": [
+        [
+          {
+            "node": "Pipedrive SplitInBatches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pipedrive SplitInBatches": {
+      "main": [
+        [
+          {
+            "node": "Pipedrive Create Person",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pipedrive Create Person": {
+      "main": [
+        [
+          {
+            "node": "Pipedrive Create Deal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pipedrive Create Deal": {
+      "main": [
+        [
+          {
+            "node": "Extract Deal Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Deal Data": {
+      "main": [
+        [
+          {
+            "node": "Update Sheet: pipedrive_created",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Sheet: pipedrive_created": {
+      "main": [
+        [
+          {
+            "node": "Log Pipedrive Deal to Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Pipedrive Deal to Supabase": {
+      "main": [
+        [
+          {
+            "node": "More Pipedrive Rows?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "More Pipedrive Rows?": {
+      "main": [
+        [
+          {
+            "node": "Pipedrive SplitInBatches",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "tags": ["birdie", "followup", "pipedrive", "addon-v3"],
+  "versionId": "addon-v3-birdie",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": ""
+  }
+}

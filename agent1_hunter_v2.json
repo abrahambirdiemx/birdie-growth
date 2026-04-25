@@ -1,0 +1,1047 @@
+{
+  "name": "Agent 1 - Hunter Prospecting v2",
+  "nodes": [
+    {
+      "id": "a1b2c3d4",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        240,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "30 7 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "e5f6a7b8",
+      "name": "Read Empresas",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        460,
+        300
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "google-sheets-cred",
+          "name": "Google Sheets"
+        }
+      },
+      "parameters": {
+        "operation": "getRows",
+        "documentId": {
+          "__rl": true,
+          "value": "1xq8IMuFZoMO3YkdTneirIPQ6VqvaAxKRN8H24BhN_AE",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Empresas",
+          "mode": "name"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "estado_Empresa",
+              "lookupValue": "nuevo"
+            }
+          ]
+        },
+        "returnAllMatching": false,
+        "limit": 20
+      }
+    },
+    {
+      "id": "c9d0e1f2",
+      "name": "SplitInBatches",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        680,
+        300
+      ],
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      }
+    },
+    {
+      "id": "a3b4c5d6",
+      "name": "IF - Has Web",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        900,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "cond-web-exists",
+              "leftValue": "={{ $json['Web'] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            },
+            {
+              "id": "cond-web-not-empty-word",
+              "leftValue": "={{ $json['Web'] }}",
+              "rightValue": "empty",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "e7f8a9b0",
+      "name": "Update Sin Dominio",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        1120,
+        480
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "google-sheets-cred",
+          "name": "Google Sheets"
+        }
+      },
+      "parameters": {
+        "operation": "updateRows",
+        "documentId": {
+          "__rl": true,
+          "value": "1xq8IMuFZoMO3YkdTneirIPQ6VqvaAxKRN8H24BhN_AE",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Empresas",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "estado_Empresa": "sin_dominio",
+            "Notas": "Sin dominio web - investigar manualmente"
+          },
+          "matchingColumns": [
+            "Empresa ID"
+          ],
+          "schema": [
+            {
+              "id": "Empresa ID",
+              "displayName": "Empresa ID",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "estado_Empresa",
+              "displayName": "estado_Empresa",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Notas",
+              "displayName": "Notas",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        },
+        "options": {
+          "cellFormat": "USER_ENTERED"
+        }
+      }
+    },
+    {
+      "id": "c1d2e3f4",
+      "name": "Set - Extract Domain",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1120,
+        180
+      ],
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "assign-domain",
+              "name": "domain",
+              "value": "={{ $json['Web'].toString().replace(/^https?:\\/\\//i,'').replace(/^www\\./i,'').split('/')[0].split('?')[0].toLowerCase().trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "assign-empresa-id",
+              "name": "empresa_id",
+              "value": "={{ $json['Empresa ID'] }}",
+              "type": "string"
+            },
+            {
+              "id": "assign-empresa-nombre",
+              "name": "empresa_nombre",
+              "value": "={{ $json['Nombre'] }}",
+              "type": "string"
+            },
+            {
+              "id": "assign-volumen",
+              "name": "volumen",
+              "value": "={{ String($json['Envíos'] || '') }}",
+              "type": "string"
+            },
+            {
+              "id": "assign-sector",
+              "name": "sector",
+              "value": "={{ $json['sector'] || '' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "a5b6c7d8",
+      "name": "Update En Proceso",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        1340,
+        180
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "google-sheets-cred",
+          "name": "Google Sheets"
+        }
+      },
+      "parameters": {
+        "operation": "updateRows",
+        "documentId": {
+          "__rl": true,
+          "value": "1xq8IMuFZoMO3YkdTneirIPQ6VqvaAxKRN8H24BhN_AE",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Empresas",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Empresa ID": "={{ $json.empresa_id }}",
+            "estado_Empresa": "en_proceso"
+          },
+          "matchingColumns": [
+            "Empresa ID"
+          ],
+          "schema": [
+            {
+              "id": "Empresa ID",
+              "displayName": "Empresa ID",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "estado_Empresa",
+              "displayName": "estado_Empresa",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        },
+        "options": {
+          "cellFormat": "USER_ENTERED"
+        }
+      }
+    },
+    {
+      "id": "e9f0a1b2",
+      "name": "Hunter Domain Search",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1560,
+        180
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.hunter.io/v2/domain-search",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "domain",
+              "value": "={{ $json.domain }}"
+            },
+            {
+              "name": "limit",
+              "value": "100"
+            },
+            {
+              "name": "api_key",
+              "value": "efee88633f610ce7b47f7f495da22b41bea2b685"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "c3d4e5f6",
+      "name": "Code - Score Contacts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1780,
+        180
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Get input data\nconst input = $input.item.json;\nconst emails = (input.data && input.data.emails) ? input.data.emails : [];\nconst empresa_id = input.empresa_id || '';\nconst empresa_nombre = input.empresa_nombre || '';\nconst volumen = input.volumen || '';\nconst sector = input.sector || '';\n\nif (emails.length === 0) {\n  return [{ json: { _no_contacts: true, empresa_id, empresa_nombre } }];\n}\n\n// Score contacts\nconst DM_KW = ['director','vp ','vice president','gerente general','gerente de log','gerente de import','gerente de operac','gerente de supply','gerente de compras','jefe de log','jefe de import','jefe de operac','subdirector','ceo','coo','head of','managing'];\nconst REF_KW = ['coordinador','analista','especialista','supervisor','ejecutivo de import','ejecutivo de log','encargado de log','encargado de import'];\nconst DEPT_BONUS = ['management','logistics','operations','supply','purchasing','imports'];\n\nconst scored = emails\n  .filter(e => e.value && e.value.includes('@'))\n  .map(e => {\n    const pos = (e.position || '').toLowerCase();\n    const dept = (e.department || '').toLowerCase();\n    let score = 0;\n    let type = 'otro';\n    if (DM_KW.some(k => pos.includes(k))) { score += 10; type = 'decision_maker'; }\n    else if (REF_KW.some(k => pos.includes(k))) { score += 5; type = 'referidor'; }\n    if (DEPT_BONUS.some(k => dept.includes(k))) score += 3;\n    return { ...e, score, tipo_contacto: type };\n  })\n  .sort((a,b) => b.score - a.score);\n\nconst dms = scored.filter(e => e.tipo_contacto === 'decision_maker').slice(0,2);\nconst refs = scored.filter(e => e.tipo_contacto === 'referidor').slice(0,3);\nconst selected = [...dms, ...refs];\n\nif (selected.length === 0) {\n  return [{ json: { _no_contacts: true, empresa_id, empresa_nombre } }];\n}\n\nreturn selected.map((e, i) => ({\n  json: {\n    contacto_id: empresa_id + '-' + e.tipo_contacto.slice(0,2).toUpperCase() + '-' + (i+1),\n    empresa_id,\n    empresa: empresa_nombre,\n    nombre: ((e.first_name||'') + ' ' + (e.last_name||'')).trim(),\n    cargo: e.position || '',\n    tipo_contacto: e.tipo_contacto,\n    email: e.value,\n    telefono: e.phone_number || '',\n    linkedin: e.linkedin || '',\n    estado: 'nuevo',\n    investigacion: '',\n    pain_point: '',\n    contexto_email: '',\n    email_subject: '',\n    email_generado: '',\n    fecha_envio: '',\n    tokens_claude: '',\n    clasificacion_respuesta: '',\n    fecha_respuesta: '',\n    notas: 'Confianza Hunter: ' + (e.confidence||0) + '% | Vol: ' + volumen\n  }\n}));"
+      }
+    },
+    {
+      "id": "a7b8c9d0",
+      "name": "IF - Has Contacts",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        180
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "cond-no-contacts",
+              "leftValue": "={{ $json._no_contacts }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "e1f2a3b4",
+      "name": "Append Contactos",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        2220,
+        100
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "google-sheets-cred",
+          "name": "Google Sheets"
+        }
+      },
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1xq8IMuFZoMO3YkdTneirIPQ6VqvaAxKRN8H24BhN_AE",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Contactos",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "contacto_id": "={{ $json.contacto_id }}",
+            "empresa_id": "={{ $json.empresa_id }}",
+            "empresa": "={{ $json.empresa }}",
+            "nombre": "={{ $json.nombre }}",
+            "cargo": "={{ $json.cargo }}",
+            "tipo_contacto": "={{ $json.tipo_contacto }}",
+            "email": "={{ $json.email }}",
+            "telefono": "={{ $json.telefono }}",
+            "linkedin": "={{ $json.linkedin }}",
+            "estado": "={{ $json.estado }}",
+            "investigacion": "={{ $json.investigacion }}",
+            "pain_point": "={{ $json.pain_point }}",
+            "contexto_email": "={{ $json.contexto_email }}",
+            "email_subject": "={{ $json.email_subject }}",
+            "email_generado": "={{ $json.email_generado }}",
+            "fecha_envio": "={{ $json.fecha_envio }}",
+            "tokens_claude": "={{ $json.tokens_claude }}",
+            "clasificacion_respuesta": "={{ $json.clasificacion_respuesta }}",
+            "fecha_respuesta": "={{ $json.fecha_respuesta }}",
+            "notas": "={{ $json.notas }}"
+          },
+          "matchingColumns": [
+            "contacto_id"
+          ],
+          "schema": [
+            {
+              "id": "contacto_id",
+              "displayName": "contacto_id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "empresa_id",
+              "displayName": "empresa_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "empresa",
+              "displayName": "empresa",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "nombre",
+              "displayName": "nombre",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "cargo",
+              "displayName": "cargo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "tipo_contacto",
+              "displayName": "tipo_contacto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "telefono",
+              "displayName": "telefono",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "linkedin",
+              "displayName": "linkedin",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "estado",
+              "displayName": "estado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "investigacion",
+              "displayName": "investigacion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "pain_point",
+              "displayName": "pain_point",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "contexto_email",
+              "displayName": "contexto_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "email_subject",
+              "displayName": "email_subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "email_generado",
+              "displayName": "email_generado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "fecha_envio",
+              "displayName": "fecha_envio",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "tokens_claude",
+              "displayName": "tokens_claude",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "clasificacion_respuesta",
+              "displayName": "clasificacion_respuesta",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "fecha_respuesta",
+              "displayName": "fecha_respuesta",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "notas",
+              "displayName": "notas",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        },
+        "options": {
+          "cellFormat": "USER_ENTERED"
+        }
+      }
+    },
+    {
+      "id": "c5d6e7f8",
+      "name": "Update Enriquecido",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        2440,
+        100
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "google-sheets-cred",
+          "name": "Google Sheets"
+        }
+      },
+      "parameters": {
+        "operation": "updateRows",
+        "documentId": {
+          "__rl": true,
+          "value": "1xq8IMuFZoMO3YkdTneirIPQ6VqvaAxKRN8H24BhN_AE",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Empresas",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Empresa ID": "={{ $json.empresa_id }}",
+            "estado_Empresa": "enriquecido",
+            "fecha_procesado": "={{ new Date().toISOString().split('T')[0] }}"
+          },
+          "matchingColumns": [
+            "Empresa ID"
+          ],
+          "schema": [
+            {
+              "id": "Empresa ID",
+              "displayName": "Empresa ID",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "estado_Empresa",
+              "displayName": "estado_Empresa",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "fecha_procesado",
+              "displayName": "fecha_procesado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        },
+        "options": {
+          "cellFormat": "USER_ENTERED"
+        }
+      }
+    },
+    {
+      "id": "a9b0c1d2",
+      "name": "Update Error",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        2220,
+        300
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "google-sheets-cred",
+          "name": "Google Sheets"
+        }
+      },
+      "parameters": {
+        "operation": "updateRows",
+        "documentId": {
+          "__rl": true,
+          "value": "1xq8IMuFZoMO3YkdTneirIPQ6VqvaAxKRN8H24BhN_AE",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Empresas",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Empresa ID": "={{ $json.empresa_id }}",
+            "estado_Empresa": "error",
+            "Notas": "Sin contactos relevantes en Hunter"
+          },
+          "matchingColumns": [
+            "Empresa ID"
+          ],
+          "schema": [
+            {
+              "id": "Empresa ID",
+              "displayName": "Empresa ID",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "estado_Empresa",
+              "displayName": "estado_Empresa",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Notas",
+              "displayName": "Notas",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        },
+        "options": {
+          "cellFormat": "USER_ENTERED"
+        }
+      }
+    },
+    {
+      "id": "e3f4a5b6",
+      "name": "Merge",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        2660,
+        300
+      ],
+      "parameters": {
+        "mode": "passThrough",
+        "output": "input1"
+      }
+    },
+    {
+      "id": "c7d8e9f0",
+      "name": "Wait",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2880,
+        300
+      ],
+      "parameters": {
+        "resume": "timeInterval",
+        "unit": "seconds",
+        "amount": 1.5
+      },
+      "webhookId": "wait-webhook-01"
+    },
+    {
+      "id": "a1b2c3d5",
+      "name": "Supabase Log",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3100,
+        180
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://xjrgqborwhvyqgrczetq.supabase.co/rest/v1/agent_events",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdxYm9yd2h2eXFncmN6ZXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODc5ODksImV4cCI6MjA5MDQ2Mzk4OX0.DWOoshMXxmQk0deq2jEnOOAFpr_pyE9aWenvu_GPzLs"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdxYm9yd2h2eXFncmN6ZXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODc5ODksImV4cCI6MjA5MDQ2Mzk4OX0.DWOoshMXxmQk0deq2jEnOOAFpr_pyE9aWenvu_GPzLs"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "type": "agent1_prospecting",
+          "payload": {
+            "status": "completed"
+          }
+        },
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Read Empresas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Empresas": {
+      "main": [
+        [
+          {
+            "node": "SplitInBatches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SplitInBatches": {
+      "main": [
+        [
+          {
+            "node": "IF - Has Web",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Supabase Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Has Web": {
+      "main": [
+        [
+          {
+            "node": "Set - Extract Domain",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update Sin Dominio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set - Extract Domain": {
+      "main": [
+        [
+          {
+            "node": "Update En Proceso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update En Proceso": {
+      "main": [
+        [
+          {
+            "node": "Hunter Domain Search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hunter Domain Search": {
+      "main": [
+        [
+          {
+            "node": "Code - Score Contacts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Score Contacts": {
+      "main": [
+        [
+          {
+            "node": "IF - Has Contacts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Has Contacts": {
+      "main": [
+        [
+          {
+            "node": "Append Contactos",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append Contactos": {
+      "main": [
+        [
+          {
+            "node": "Update Enriquecido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Enriquecido": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Error": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Update Sin Dominio": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "SplitInBatches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "versionId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "n8nVersion": "2.17.7"
+  }
+}

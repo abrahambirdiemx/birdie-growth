@@ -1,0 +1,654 @@
+{
+  "name": "Agent 2 - Gemini Research",
+  "nodes": [
+    {
+      "id": "node-schedule-trigger",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        240,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 2
+            }
+          ]
+        },
+        "timezone": "America/Mexico_City"
+      }
+    },
+    {
+      "id": "node-read-sheet-enriquecido",
+      "name": "Read Prospects (estado=enriquecido)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.2,
+      "position": [
+        460,
+        300
+      ],
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "1xq8IMuFZoMO3YkdTneirIPQ6VqvaAxKRN8H24BhN_AE",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "name"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "estado",
+              "lookupValue": "enriquecido"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": false
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "google-sheets-credential",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "id": "node-init-counters",
+      "name": "Init Counters",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        680,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nstaticData.processed = 0;\nstaticData.investigated = 0;\nstaticData.errors = 0;\nreturn $input.all();"
+      }
+    },
+    {
+      "id": "node-split-batches",
+      "name": "SplitInBatches",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        900,
+        300
+      ],
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      }
+    },
+    {
+      "id": "node-gemini-request",
+      "name": "Gemini Research",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1120,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={{ $credentials.httpQueryAuth.key }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [{\n    \"parts\": [{\n      \"text\": \"Eres un investigador de inteligencia comercial especializado en importadores mexicanos y comercio exterior. Analiza esta empresa y genera un JSON estructurado.\\n\\nEmpresa: {{ $json.empresa }}\\nSector: {{ $json.sector }}\\nCargo del contacto: {{ $json.cargo }}\\n\\nGenera EXACTAMENTE este JSON sin texto adicional:\\n{\\n  \\\"resumen\\\": \\\"descripción de 2-3 oraciones sobre qué importa esta empresa, sus operaciones y tamaño estimado\\\",\\n  \\\"pain_point\\\": \\\"el problema aduanal o logístico más probable que enfrenta esta empresa (ej: demoras en aduana, costos de almacenaje, clasificación arancelaria, cumplimiento NOM)\\\",\\n  \\\"contexto_email\\\": \\\"dato específico y concreto para personalizar el primer email (ej: 'como importador de electrónicos de Asia, probablemente enfrentes la verificación NOM-019')\\\"\\n}\"\n    }]\n  }],\n  \"generationConfig\": {\n    \"temperature\": 0.3,\n    \"maxOutputTokens\": 512\n  }\n}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "gemini-api-credential",
+          "name": "Gemini API"
+        }
+      }
+    },
+    {
+      "id": "node-parse-gemini",
+      "name": "Parse Gemini Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1340,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Pull the raw text from Gemini response\nconst item = $input.item.json;\nconst prospectData = $('Read Prospects (estado=enriquecido)').item.json;\n\nlet parsed = null;\nlet parseSuccess = false;\nlet errorMsg = '';\n\ntry {\n  const rawText = item?.candidates?.[0]?.content?.parts?.[0]?.text || '';\n  \n  // Strip markdown code fences if present\n  let jsonText = rawText.trim();\n  const fenceMatch = jsonText.match(/```(?:json)?\\s*([\\s\\S]*?)```/);\n  if (fenceMatch) {\n    jsonText = fenceMatch[1].trim();\n  }\n  \n  parsed = JSON.parse(jsonText);\n  \n  // Validate required fields\n  if (!parsed.resumen || !parsed.pain_point || !parsed.contexto_email) {\n    throw new Error('Missing required fields in Gemini JSON output');\n  }\n  \n  parseSuccess = true;\n} catch (e) {\n  errorMsg = e.message;\n  parseSuccess = false;\n}\n\nreturn {\n  json: {\n    parseSuccess,\n    errorMsg,\n    resumen: parsed?.resumen || '',\n    pain_point: parsed?.pain_point || '',\n    contexto_email: parsed?.contexto_email || '',\n    // Pass through prospect identifiers\n    row_number: prospectData.row_number,\n    nombre: prospectData.nombre,\n    empresa: prospectData.empresa\n  }\n};"
+      }
+    },
+    {
+      "id": "node-check-parse",
+      "name": "Parse Successful?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1560,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition-parse-ok",
+              "leftValue": "={{ $json.parseSuccess }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "node-set-investigated-fields",
+      "name": "Prepare Research Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1780,
+        180
+      ],
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "field-row-number",
+              "name": "row_number",
+              "value": "={{ $json.row_number }}",
+              "type": "number"
+            },
+            {
+              "id": "field-investigacion",
+              "name": "investigacion",
+              "value": "={{ $json.resumen }}",
+              "type": "string"
+            },
+            {
+              "id": "field-pain-point",
+              "name": "pain_point",
+              "value": "={{ $json.pain_point }}",
+              "type": "string"
+            },
+            {
+              "id": "field-contexto-email",
+              "name": "contexto_email",
+              "value": "={{ $json.contexto_email }}",
+              "type": "string"
+            },
+            {
+              "id": "field-estado",
+              "name": "estado",
+              "value": "investigado",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "node-update-sheet-investigated",
+      "name": "Update Sheet: investigado",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.2,
+      "position": [
+        2000,
+        180
+      ],
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1xq8IMuFZoMO3YkdTneirIPQ6VqvaAxKRN8H24BhN_AE",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $json.row_number }}",
+            "investigacion": "={{ $json.investigacion }}",
+            "pain_point": "={{ $json.pain_point }}",
+            "estado": "investigado"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "investigacion",
+              "displayName": "investigacion",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "pain_point",
+              "displayName": "pain_point",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "estado",
+              "displayName": "estado",
+              "canBeUsedToMatch": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "google-sheets-credential",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "id": "node-increment-investigated",
+      "name": "Increment Investigated Counter",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2220,
+        180
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nstaticData.processed = (staticData.processed || 0) + 1;\nstaticData.investigated = (staticData.investigated || 0) + 1;\nreturn $input.item;"
+      }
+    },
+    {
+      "id": "node-update-sheet-error",
+      "name": "Update Sheet: parse error",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.2,
+      "position": [
+        1780,
+        420
+      ],
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1xq8IMuFZoMO3YkdTneirIPQ6VqvaAxKRN8H24BhN_AE",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $json.row_number }}",
+            "notas": "=Gemini parse error: {{ $json.errorMsg }}"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "notas",
+              "displayName": "notas",
+              "canBeUsedToMatch": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "google-sheets-credential",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "id": "node-increment-errors",
+      "name": "Increment Errors Counter",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        420
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nstaticData.processed = (staticData.processed || 0) + 1;\nstaticData.errors = (staticData.errors || 0) + 1;\nreturn $input.item;"
+      }
+    },
+    {
+      "id": "node-wait",
+      "name": "Rate Limit Wait (2s)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2220,
+        420
+      ],
+      "parameters": {
+        "resume": "timeInterval",
+        "unit": "seconds",
+        "amount": 2
+      },
+      "webhookId": "wait-gemini-rate-limit"
+    },
+    {
+      "id": "node-merge-paths",
+      "name": "Merge Paths",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        2440,
+        300
+      ],
+      "parameters": {
+        "mode": "passThrough",
+        "output": "input1"
+      }
+    },
+    {
+      "id": "node-check-more-batches",
+      "name": "More Batches?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2660,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "condition-has-more",
+              "leftValue": "={{ $node['SplitInBatches'].context['noItemsLeft'] }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "node-log-supabase",
+      "name": "Log to Supabase",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2880,
+        420
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://xjrgqborwhvyqgrczetq.supabase.co/rest/v1/agent_events",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdxYm9yd2h2eXFncmN6ZXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODc5ODksImV4cCI6MjA5MDQ2Mzk4OX0.DWOoshMXxmQk0deq2jEnOOAFpr_pyE9aWenvu_GPzLs"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdxYm9yd2h2eXFncmN6ZXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODc5ODksImV4cCI6MjA5MDQ2Mzk4OX0.DWOoshMXxmQk0deq2jEnOOAFpr_pyE9aWenvu_GPzLs"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"type\": \"agent2_research\",\n  \"payload\": {\n    \"processed\": {{ $getWorkflowStaticData('global').processed || 0 }},\n    \"investigated\": {{ $getWorkflowStaticData('global').investigated || 0 }},\n    \"errors\": {{ $getWorkflowStaticData('global').errors || 0 }}\n  }\n}",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Read Prospects (estado=enriquecido)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Prospects (estado=enriquecido)": {
+      "main": [
+        [
+          {
+            "node": "Init Counters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Init Counters": {
+      "main": [
+        [
+          {
+            "node": "SplitInBatches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SplitInBatches": {
+      "main": [
+        [
+          {
+            "node": "Gemini Research",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Research": {
+      "main": [
+        [
+          {
+            "node": "Parse Gemini Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Gemini Response": {
+      "main": [
+        [
+          {
+            "node": "Parse Successful?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Successful?": {
+      "main": [
+        [
+          {
+            "node": "Prepare Research Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update Sheet: parse error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Research Fields": {
+      "main": [
+        [
+          {
+            "node": "Update Sheet: investigado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Sheet: investigado": {
+      "main": [
+        [
+          {
+            "node": "Increment Investigated Counter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Increment Investigated Counter": {
+      "main": [
+        [
+          {
+            "node": "Merge Paths",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Sheet: parse error": {
+      "main": [
+        [
+          {
+            "node": "Increment Errors Counter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Increment Errors Counter": {
+      "main": [
+        [
+          {
+            "node": "Rate Limit Wait (2s)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rate Limit Wait (2s)": {
+      "main": [
+        [
+          {
+            "node": "Merge Paths",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Paths": {
+      "main": [
+        [
+          {
+            "node": "More Batches?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "More Batches?": {
+      "main": [
+        [
+          {
+            "node": "SplitInBatches",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log to Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "tags": [
+    "birdie",
+    "research",
+    "agent2",
+    "gemini"
+  ],
+  "versionId": "a2-gemini-v1-birdie",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": ""
+  }
+}

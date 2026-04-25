@@ -1,0 +1,418 @@
+{
+  "name": "Agent 3 - Dual Email Writer (DM vs Referidor)",
+  "nodes": [
+    {
+      "id": "node-schedule-trigger",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 30
+            }
+          ]
+        },
+        "timezone": "America/Mexico_City"
+      }
+    },
+    {
+      "id": "node-read-contactos",
+      "name": "Read Contactos (estado=investigado)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.2,
+      "position": [460, 300],
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "1xq8IMuFZoMO3YkdTneirIPQ6VqvaAxKRN8H24BhN_AE",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=1",
+          "mode": "id"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "estado",
+              "lookupValue": "investigado"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": false,
+          "limit": 10
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "google-sheets-credential",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "id": "node-split-batches",
+      "name": "SplitInBatches",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [680, 300],
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      }
+    },
+    {
+      "id": "node-check-tipo",
+      "name": "Is Decision Maker?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [900, 300],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "condition-is-dm",
+              "leftValue": "={{ $json.tipo_contacto }}",
+              "rightValue": "decision_maker",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "node-claude-dm",
+      "name": "Claude - Email DM",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 120],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-haiku-4-5-20251001\",\n  \"max_tokens\": 300,\n  \"system\": \"Eres Abraham López, Director de Growth de Birdie (birdie.mx), plataforma de AI para comercio exterior en México. Redacta un email de prospección FRÍO, profesional y directo para un tomador de decisiones. REGLAS: máximo 120 palabras, sin markdown, sin asteriscos, sin saludos genéricos. Menciona específicamente su empresa y su volumen de operación si lo tienes. Enfócate en ROI: reducción de tiempos en aduana, visibilidad de cargas, ahorro en costos. CTA: propón una llamada de 15 minutos. Firma como Abraham López | Birdie. Formato exacto: [SUBJECT: asunto aquí]\\n\\ncuerpo del email aquí\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Empresa: {{ $json.empresa }}\\nNombre: {{ $json.nombre }}\\nCargo: {{ $json.cargo }}\\nVolumen: {{ $json.volumen_contenedores }} contenedores\\nPain point: {{ $json.pain_point }}\\nContexto personalización: {{ $json.contexto_email }}\\nInvestigación: {{ $json.investigacion }}\"\n    }\n  ]\n}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "claude-api-credential",
+          "name": "Claude API"
+        }
+      }
+    },
+    {
+      "id": "node-claude-referidor",
+      "name": "Claude - Email Referidor",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 480],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-haiku-4-5-20251001\",\n  \"max_tokens\": 250,\n  \"system\": \"Eres Abraham López, Director de Growth de Birdie (birdie.mx). Redacta un email corto y natural para un contacto interno de una empresa (NO es el tomador de decisiones). El objetivo es conseguir que te conecte internamente con quien decide sobre logística/importaciones. REGLAS: máximo 90 palabras, tono amigable y conversacional (no formal/corporativo), NO menciones precio ni hagas pitch de ventas, pide explícitamente que te conecte con la persona que maneja importaciones/logística, sin markdown. Formato exacto: [SUBJECT: asunto aquí]\\n\\ncuerpo del email aquí\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Empresa: {{ $json.empresa }}\\nNombre del contacto: {{ $json.nombre }}\\nCargo: {{ $json.cargo }}\\nContexto empresa: {{ $json.investigacion }}\"\n    }\n  ]\n}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "claude-api-credential",
+          "name": "Claude API"
+        }
+      }
+    },
+    {
+      "id": "node-merge-branches",
+      "name": "Merge Branches",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [1340, 300],
+      "parameters": {
+        "mode": "passThrough",
+        "output": "input1"
+      }
+    },
+    {
+      "id": "node-parse-claude",
+      "name": "Parse Claude Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1560, 300],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Get the raw text from Claude's response\nconst content = $json.content && $json.content[0] ? $json.content[0].text : '';\nconst usage   = $json.usage || {};\nconst tokens  = (usage.input_tokens || 0) + (usage.output_tokens || 0);\n\n// Extract subject from [SUBJECT: ...] tag\nconst subjectMatch = content.match(/\\[SUBJECT:\\s*(.+?)\\]/i);\nconst subject = subjectMatch ? subjectMatch[1].trim() : 'Birdie - Optimiza tus importaciones';\n\n// Extract body: everything after the first blank line following [SUBJECT...]\nconst bodyRaw = content.replace(/\\[SUBJECT:.*?\\]\\s*/i, '').trim();\n\n// Retrieve original contact row data from the upstream node\nconst contactData = $('Read Contactos (estado=investigado)').item.json;\n\nreturn {\n  json: {\n    ...contactData,\n    email_subject: subject,\n    email_generado: bodyRaw,\n    tokens_claude: tokens,\n    fecha_envio: new Date().toISOString().split('T')[0]\n  }\n};"
+      }
+    },
+    {
+      "id": "node-gmail-send",
+      "name": "Gmail - Send Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [1780, 300],
+      "parameters": {
+        "operation": "send",
+        "sendTo": "={{ $json.email }}",
+        "subject": "={{ $json.email_subject }}",
+        "emailType": "text",
+        "message": "={{ $json.email_generado }}",
+        "options": {
+          "senderName": "Abraham López | Birdie",
+          "replyTo": "abraham@birdie.mx"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "gmail-credential",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "id": "node-update-contacto-enviado",
+      "name": "Update Contacto: enviado",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.2,
+      "position": [2000, 300],
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1xq8IMuFZoMO3YkdTneirIPQ6VqvaAxKRN8H24BhN_AE",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=1",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $json.row_number }}",
+            "estado": "enviado",
+            "email_subject": "={{ $json.email_subject }}",
+            "email_generado": "={{ $json.email_generado }}",
+            "fecha_envio": "={{ $json.fecha_envio }}",
+            "tokens_claude": "={{ $json.tokens_claude }}"
+          },
+          "matchingColumns": ["row_number"],
+          "schema": [
+            { "id": "estado", "displayName": "estado", "canBeUsedToMatch": false },
+            { "id": "email_subject", "displayName": "email_subject", "canBeUsedToMatch": false },
+            { "id": "email_generado", "displayName": "email_generado", "canBeUsedToMatch": false },
+            { "id": "fecha_envio", "displayName": "fecha_envio", "canBeUsedToMatch": false },
+            { "id": "tokens_claude", "displayName": "tokens_claude", "canBeUsedToMatch": false }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "google-sheets-credential",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "id": "node-wait",
+      "name": "Wait 30s (Gmail rate limit)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [2220, 300],
+      "parameters": {
+        "resume": "timeInterval",
+        "unit": "seconds",
+        "amount": 30
+      },
+      "webhookId": "wait-gmail-rate-limit"
+    },
+    {
+      "id": "node-check-more-batches",
+      "name": "More Batches?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [2440, 300],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "condition-has-more",
+              "leftValue": "={{ $node['SplitInBatches'].context['noItemsLeft'] }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "node-log-supabase",
+      "name": "Log to Supabase",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2660, 420],
+      "parameters": {
+        "method": "POST",
+        "url": "https://xjrgqborwhvyqgrczetq.supabase.co/rest/v1/agent_events",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdxYm9yd2h2eXFncmN6ZXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODc5ODksImV4cCI6MjA5MDQ2Mzk4OX0.DWOoshMXxmQk0deq2jEnOOAFpr_pyE9aWenvu_GPzLs"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdxYm9yd2h2eXFncmN6ZXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODc5ODksImV4cCI6MjA5MDQ2Mzk4OX0.DWOoshMXxmQk0deq2jEnOOAFpr_pyE9aWenvu_GPzLs"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"type\": \"email_sent\",\n  \"payload\": {\n    \"empresa\": \"{{ $('Read Contactos (estado=investigado)').item.json.empresa }}\",\n    \"nombre\": \"{{ $('Read Contactos (estado=investigado)').item.json.nombre }}\",\n    \"tipo_contacto\": \"{{ $('Read Contactos (estado=investigado)').item.json.tipo_contacto }}\",\n    \"subject\": \"{{ $('Parse Claude Response').item.json.email_subject }}\"\n  }\n}",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [{ "node": "Read Contactos (estado=investigado)", "type": "main", "index": 0 }]
+      ]
+    },
+    "Read Contactos (estado=investigado)": {
+      "main": [
+        [{ "node": "SplitInBatches", "type": "main", "index": 0 }]
+      ]
+    },
+    "SplitInBatches": {
+      "main": [
+        [{ "node": "Is Decision Maker?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Is Decision Maker?": {
+      "main": [
+        [{ "node": "Claude - Email DM", "type": "main", "index": 0 }],
+        [{ "node": "Claude - Email Referidor", "type": "main", "index": 0 }]
+      ]
+    },
+    "Claude - Email DM": {
+      "main": [
+        [{ "node": "Merge Branches", "type": "main", "index": 0 }]
+      ]
+    },
+    "Claude - Email Referidor": {
+      "main": [
+        [{ "node": "Merge Branches", "type": "main", "index": 1 }]
+      ]
+    },
+    "Merge Branches": {
+      "main": [
+        [{ "node": "Parse Claude Response", "type": "main", "index": 0 }]
+      ]
+    },
+    "Parse Claude Response": {
+      "main": [
+        [{ "node": "Gmail - Send Email", "type": "main", "index": 0 }]
+      ]
+    },
+    "Gmail - Send Email": {
+      "main": [
+        [{ "node": "Update Contacto: enviado", "type": "main", "index": 0 }]
+      ]
+    },
+    "Update Contacto: enviado": {
+      "main": [
+        [{ "node": "Wait 30s (Gmail rate limit)", "type": "main", "index": 0 }]
+      ]
+    },
+    "Wait 30s (Gmail rate limit)": {
+      "main": [
+        [{ "node": "More Batches?", "type": "main", "index": 0 }]
+      ]
+    },
+    "More Batches?": {
+      "main": [
+        [{ "node": "SplitInBatches", "type": "main", "index": 0 }],
+        [{ "node": "Log to Supabase", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Mexico_City"
+  },
+  "staticData": null,
+  "tags": ["birdie", "email", "dual-template"],
+  "pinData": {}
+}
