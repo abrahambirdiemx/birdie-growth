@@ -6,7 +6,10 @@
       "name": "Schedule Trigger",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
-      "position": [240, 300],
+      "position": [
+        240,
+        300
+      ],
       "parameters": {
         "rule": {
           "interval": [
@@ -24,13 +27,18 @@
       "name": "Gmail - Read Inbox",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
-      "position": [460, 300],
+      "position": [
+        460,
+        300
+      ],
       "parameters": {
         "operation": "getAll",
         "returnAll": false,
         "limit": 20,
         "filters": {
-          "labelIds": ["INBOX"],
+          "labelIds": [
+            "INBOX"
+          ],
           "readStatus": "unread"
         },
         "options": {
@@ -49,7 +57,10 @@
       "name": "SplitInBatches",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
-      "position": [680, 300],
+      "position": [
+        680,
+        300
+      ],
       "parameters": {
         "batchSize": 1,
         "options": {}
@@ -60,7 +71,10 @@
       "name": "Extract Sender Email",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [900, 300],
+      "position": [
+        900,
+        300
+      ],
       "parameters": {
         "mode": "runOnceForEachItem",
         "jsCode": "// Extract clean sender email from the From header\nconst from = $json.From || $json.from || '';\nconst emailMatch = from.match(/<([^>]+)>/) || from.match(/([\\w.+-]+@[\\w.-]+\\.[a-zA-Z]{2,})/);\nconst senderEmail = emailMatch ? emailMatch[1].trim().toLowerCase() : from.trim().toLowerCase();\n\nreturn {\n  json: {\n    ...$json,\n    sender_email: senderEmail,\n    email_body: $json.text || $json.snippet || ''\n  }\n};"
@@ -71,7 +85,10 @@
       "name": "Find Contacto in Sheet",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.2,
-      "position": [1120, 300],
+      "position": [
+        1120,
+        300
+      ],
       "parameters": {
         "operation": "read",
         "documentId": {
@@ -112,7 +129,10 @@
       "name": "Row Found?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [1340, 300],
+      "position": [
+        1340,
+        300
+      ],
       "parameters": {
         "conditions": {
           "options": {
@@ -140,7 +160,10 @@
       "name": "Mark Unrelated as Read",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
-      "position": [1560, 480],
+      "position": [
+        1560,
+        480
+      ],
       "parameters": {
         "operation": "markAsRead",
         "messageId": "={{ $('Extract Sender Email').item.json.id }}"
@@ -157,7 +180,10 @@
       "name": "Merge Email + Contact Context",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1560, 180],
+      "position": [
+        1560,
+        180
+      ],
       "parameters": {
         "mode": "runOnceForEachItem",
         "jsCode": "// Merge contact sheet data with the incoming email\nconst contactRow  = $json; // from Find Contacto\nconst emailData   = $('Extract Sender Email').item.json;\n\nreturn {\n  json: {\n    // contact fields\n    row_number: contactRow.row_number,\n    contacto_id: contactRow.contacto_id,\n    empresa: contactRow.empresa,\n    nombre: contactRow.nombre,\n    cargo: contactRow.cargo,\n    tipo_contacto: contactRow.tipo_contacto,\n    email: contactRow.email,\n    // incoming email fields\n    gmail_message_id: emailData.id,\n    gmail_thread_id: emailData.threadId,\n    email_body: emailData.email_body,\n    email_subject_received: emailData.Subject || emailData.subject || ''\n  }\n};"
@@ -168,7 +194,10 @@
       "name": "Claude - Classify Response",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1780, 180],
+      "position": [
+        1780,
+        180
+      ],
       "parameters": {
         "method": "POST",
         "url": "https://api.anthropic.com/v1/messages",
@@ -207,7 +236,10 @@
       "name": "Parse Classification",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2000, 180],
+      "position": [
+        2000,
+        180
+      ],
       "parameters": {
         "mode": "runOnceForEachItem",
         "jsCode": "const content = $json.content && $json.content[0] ? $json.content[0].text : '';\nconst label   = content.trim().toLowerCase().replace(/[^a-z_]/g, '');\n\n// Normalize label\nconst validDM  = ['interesado', 'pide_info', 'no_interesado', 'fuera_oficina', 'otro'];\nconst validRef = ['conecta_dm', 'no_interesado', 'fuera_oficina', 'pide_info', 'otro'];\n\nconst contactCtx = $('Merge Email + Contact Context').item.json;\nconst tipo       = contactCtx.tipo_contacto;\n\nconst validSet = tipo === 'decision_maker' ? validDM : validRef;\nconst classification = validSet.includes(label) ? label : 'otro';\n\nreturn {\n  json: {\n    ...contactCtx,\n    classification\n  }\n};"
@@ -218,20 +250,30 @@
       "name": "Switch on Classification",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3,
-      "position": [2220, 180],
+      "position": [
+        2220,
+        180
+      ],
       "parameters": {
         "mode": "rules",
         "rules": {
           "values": [
             {
               "conditions": {
-                "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "loose" },
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose"
+                },
                 "conditions": [
                   {
                     "id": "c1",
                     "leftValue": "={{ $json.classification }}",
                     "rightValue": "interesado",
-                    "operator": { "type": "string", "operation": "equals" }
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
                   }
                 ],
                 "combinator": "and"
@@ -241,13 +283,20 @@
             },
             {
               "conditions": {
-                "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "loose" },
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose"
+                },
                 "conditions": [
                   {
                     "id": "c2",
                     "leftValue": "={{ $json.classification }}",
                     "rightValue": "pide_info",
-                    "operator": { "type": "string", "operation": "equals" }
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
                   }
                 ],
                 "combinator": "and"
@@ -257,13 +306,20 @@
             },
             {
               "conditions": {
-                "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "loose" },
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose"
+                },
                 "conditions": [
                   {
                     "id": "c3",
                     "leftValue": "={{ $json.classification }}",
                     "rightValue": "conecta_dm",
-                    "operator": { "type": "string", "operation": "equals" }
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
                   }
                 ],
                 "combinator": "and"
@@ -273,13 +329,20 @@
             },
             {
               "conditions": {
-                "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "loose" },
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose"
+                },
                 "conditions": [
                   {
                     "id": "c4",
                     "leftValue": "={{ $json.classification }}",
                     "rightValue": "no_interesado",
-                    "operator": { "type": "string", "operation": "equals" }
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
                   }
                 ],
                 "combinator": "and"
@@ -297,7 +360,10 @@
       "name": "Claude - Draft Calendly Reply",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [2440, 60],
+      "position": [
+        2440,
+        60
+      ],
       "parameters": {
         "method": "POST",
         "url": "https://api.anthropic.com/v1/messages",
@@ -336,7 +402,10 @@
       "name": "Gmail - Reply with Calendly",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
-      "position": [2660, 60],
+      "position": [
+        2660,
+        60
+      ],
       "parameters": {
         "operation": "reply",
         "messageId": "={{ $('Parse Classification').item.json.gmail_message_id }}",
@@ -356,7 +425,10 @@
       "name": "Update Sheet: calendly_enviado",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.2,
-      "position": [2880, 60],
+      "position": [
+        2880,
+        60
+      ],
       "parameters": {
         "operation": "update",
         "documentId": {
@@ -377,11 +449,25 @@
             "clasificacion_respuesta": "={{ $('Parse Classification').item.json.classification }}",
             "fecha_respuesta": "={{ new Date().toISOString().split('T')[0] }}"
           },
-          "matchingColumns": ["row_number"],
+          "matchingColumns": [
+            "row_number"
+          ],
           "schema": [
-            { "id": "estado", "displayName": "estado", "canBeUsedToMatch": false },
-            { "id": "clasificacion_respuesta", "displayName": "clasificacion_respuesta", "canBeUsedToMatch": false },
-            { "id": "fecha_respuesta", "displayName": "fecha_respuesta", "canBeUsedToMatch": false }
+            {
+              "id": "estado",
+              "displayName": "estado",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "clasificacion_respuesta",
+              "displayName": "clasificacion_respuesta",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "fecha_respuesta",
+              "displayName": "fecha_respuesta",
+              "canBeUsedToMatch": false
+            }
           ]
         },
         "options": {}
@@ -398,7 +484,10 @@
       "name": "Claude - Draft Referidor Intro Reply",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [2440, 240],
+      "position": [
+        2440,
+        240
+      ],
       "parameters": {
         "method": "POST",
         "url": "https://api.anthropic.com/v1/messages",
@@ -437,7 +526,10 @@
       "name": "Gmail - Reply to Referidor",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
-      "position": [2660, 240],
+      "position": [
+        2660,
+        240
+      ],
       "parameters": {
         "operation": "reply",
         "messageId": "={{ $('Parse Classification').item.json.gmail_message_id }}",
@@ -457,7 +549,10 @@
       "name": "Update Sheet: conecta_dm",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.2,
-      "position": [2880, 240],
+      "position": [
+        2880,
+        240
+      ],
       "parameters": {
         "operation": "update",
         "documentId": {
@@ -479,12 +574,30 @@
             "notas": "Referidor positivo - esperando intro",
             "fecha_respuesta": "={{ new Date().toISOString().split('T')[0] }}"
           },
-          "matchingColumns": ["row_number"],
+          "matchingColumns": [
+            "row_number"
+          ],
           "schema": [
-            { "id": "estado", "displayName": "estado", "canBeUsedToMatch": false },
-            { "id": "clasificacion_respuesta", "displayName": "clasificacion_respuesta", "canBeUsedToMatch": false },
-            { "id": "notas", "displayName": "notas", "canBeUsedToMatch": false },
-            { "id": "fecha_respuesta", "displayName": "fecha_respuesta", "canBeUsedToMatch": false }
+            {
+              "id": "estado",
+              "displayName": "estado",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "clasificacion_respuesta",
+              "displayName": "clasificacion_respuesta",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "notas",
+              "displayName": "notas",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "fecha_respuesta",
+              "displayName": "fecha_respuesta",
+              "canBeUsedToMatch": false
+            }
           ]
         },
         "options": {}
@@ -501,7 +614,10 @@
       "name": "Update Sheet: descartado",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.2,
-      "position": [2440, 420],
+      "position": [
+        2440,
+        420
+      ],
       "parameters": {
         "operation": "update",
         "documentId": {
@@ -522,11 +638,25 @@
             "clasificacion_respuesta": "no_interesado",
             "fecha_respuesta": "={{ new Date().toISOString().split('T')[0] }}"
           },
-          "matchingColumns": ["row_number"],
+          "matchingColumns": [
+            "row_number"
+          ],
           "schema": [
-            { "id": "estado", "displayName": "estado", "canBeUsedToMatch": false },
-            { "id": "clasificacion_respuesta", "displayName": "clasificacion_respuesta", "canBeUsedToMatch": false },
-            { "id": "fecha_respuesta", "displayName": "fecha_respuesta", "canBeUsedToMatch": false }
+            {
+              "id": "estado",
+              "displayName": "estado",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "clasificacion_respuesta",
+              "displayName": "clasificacion_respuesta",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "fecha_respuesta",
+              "displayName": "fecha_respuesta",
+              "canBeUsedToMatch": false
+            }
           ]
         },
         "options": {}
@@ -543,7 +673,10 @@
       "name": "Update Sheet: clasificacion only",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.2,
-      "position": [2440, 600],
+      "position": [
+        2440,
+        600
+      ],
       "parameters": {
         "operation": "update",
         "documentId": {
@@ -563,10 +696,20 @@
             "clasificacion_respuesta": "={{ $json.classification }}",
             "fecha_respuesta": "={{ new Date().toISOString().split('T')[0] }}"
           },
-          "matchingColumns": ["row_number"],
+          "matchingColumns": [
+            "row_number"
+          ],
           "schema": [
-            { "id": "clasificacion_respuesta", "displayName": "clasificacion_respuesta", "canBeUsedToMatch": false },
-            { "id": "fecha_respuesta", "displayName": "fecha_respuesta", "canBeUsedToMatch": false }
+            {
+              "id": "clasificacion_respuesta",
+              "displayName": "clasificacion_respuesta",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "fecha_respuesta",
+              "displayName": "fecha_respuesta",
+              "canBeUsedToMatch": false
+            }
           ]
         },
         "options": {}
@@ -583,7 +726,10 @@
       "name": "Merge All Branches",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3,
-      "position": [3100, 300],
+      "position": [
+        3100,
+        300
+      ],
       "parameters": {
         "mode": "passThrough",
         "output": "input1"
@@ -594,7 +740,10 @@
       "name": "Gmail - Mark as Read",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
-      "position": [3320, 300],
+      "position": [
+        3320,
+        300
+      ],
       "parameters": {
         "operation": "markAsRead",
         "messageId": "={{ $('Parse Classification').item.json.gmail_message_id }}"
@@ -611,7 +760,10 @@
       "name": "More Batches?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [3540, 300],
+      "position": [
+        3540,
+        300
+      ],
       "parameters": {
         "conditions": {
           "options": {
@@ -639,7 +791,10 @@
       "name": "Log to Supabase",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [3760, 420],
+      "position": [
+        3760,
+        420
+      ],
       "parameters": {
         "method": "POST",
         "url": "https://xjrgqborwhvyqgrczetq.supabase.co/rest/v1/agent_events",
@@ -669,122 +824,374 @@
         "jsonBody": "={\n  \"type\": \"email_classified\",\n  \"payload\": {\n    \"empresa\": \"{{ $('Parse Classification').item.json.empresa }}\",\n    \"nombre\": \"{{ $('Parse Classification').item.json.nombre }}\",\n    \"tipo_contacto\": \"{{ $('Parse Classification').item.json.tipo_contacto }}\",\n    \"classification\": \"{{ $('Parse Classification').item.json.classification }}\"\n  }\n}",
         "options": {}
       }
+    },
+    {
+      "id": "d93661e8",
+      "name": "Log Calendly Sent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2000,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://xjrgqborwhvyqgrczetq.supabase.co/rest/v1/agent_events",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdxYm9yd2h2eXFncmN6ZXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODc5ODksImV4cCI6MjA5MDQ2Mzk4OX0.DWOoshMXxmQk0deq2jEnOOAFpr_pyE9aWenvu_GPzLs"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdxYm9yd2h2eXFncmN6ZXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODc5ODksImV4cCI6MjA5MDQ2Mzk4OX0.DWOoshMXxmQk0deq2jEnOOAFpr_pyE9aWenvu_GPzLs"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "jsonBody": "={{ JSON.stringify({ type: 'calendly_sent', payload: { empresa: $json.empresa || '', email: $json.email_address || '' } }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "f3aecac1",
+      "name": "Supabase - Pipeline Discovery",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2000,
+        500
+      ],
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://xjrgqborwhvyqgrczetq.supabase.co/rest/v1/pipeline?opportunity_name=eq.{{encodeURIComponent($json.empresa||'')}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdxYm9yd2h2eXFncmN6ZXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODc5ODksImV4cCI6MjA5MDQ2Mzk4OX0.DWOoshMXxmQk0deq2jEnOOAFpr_pyE9aWenvu_GPzLs"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdxYm9yd2h2eXFncmN6ZXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODc5ODksImV4cCI6MjA5MDQ2Mzk4OX0.DWOoshMXxmQk0deq2jEnOOAFpr_pyE9aWenvu_GPzLs"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "jsonBody": "={{ JSON.stringify({ status: \"Discovery\", notes: \"Pepper envió Calendly · \" + ($json.email_address||\"\") }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      }
     }
   ],
   "connections": {
     "Schedule Trigger": {
       "main": [
-        [{ "node": "Gmail - Read Inbox", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Gmail - Read Inbox",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Gmail - Read Inbox": {
       "main": [
-        [{ "node": "SplitInBatches", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "SplitInBatches",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "SplitInBatches": {
       "main": [
-        [{ "node": "Extract Sender Email", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Extract Sender Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Extract Sender Email": {
       "main": [
-        [{ "node": "Find Contacto in Sheet", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Find Contacto in Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Find Contacto in Sheet": {
       "main": [
-        [{ "node": "Row Found?", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Row Found?",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Row Found?": {
       "main": [
-        [{ "node": "Merge Email + Contact Context", "type": "main", "index": 0 }],
-        [{ "node": "Mark Unrelated as Read", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Merge Email + Contact Context",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark Unrelated as Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Mark Unrelated as Read": {
       "main": [
-        [{ "node": "More Batches?", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "More Batches?",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Merge Email + Contact Context": {
       "main": [
-        [{ "node": "Claude - Classify Response", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Claude - Classify Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Claude - Classify Response": {
       "main": [
-        [{ "node": "Parse Classification", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Parse Classification",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Parse Classification": {
       "main": [
-        [{ "node": "Switch on Classification", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Switch on Classification",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Switch on Classification": {
       "main": [
-        [{ "node": "Claude - Draft Calendly Reply", "type": "main", "index": 0 }],
-        [{ "node": "Claude - Draft Referidor Intro Reply", "type": "main", "index": 0 }],
-        [{ "node": "Update Sheet: descartado", "type": "main", "index": 0 }],
-        [{ "node": "Update Sheet: clasificacion only", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Claude - Draft Calendly Reply",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Claude - Draft Referidor Intro Reply",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update Sheet: descartado",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update Sheet: clasificacion only",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Claude - Draft Calendly Reply": {
       "main": [
-        [{ "node": "Gmail - Reply with Calendly", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Gmail - Reply with Calendly",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Gmail - Reply with Calendly": {
       "main": [
-        [{ "node": "Update Sheet: calendly_enviado", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Update Sheet: calendly_enviado",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Update Sheet: calendly_enviado": {
       "main": [
-        [{ "node": "Merge All Branches", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Merge All Branches",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Claude - Draft Referidor Intro Reply": {
       "main": [
-        [{ "node": "Gmail - Reply to Referidor", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Gmail - Reply to Referidor",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Gmail - Reply to Referidor": {
       "main": [
-        [{ "node": "Update Sheet: conecta_dm", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Update Sheet: conecta_dm",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Update Sheet: conecta_dm": {
       "main": [
-        [{ "node": "Merge All Branches", "type": "main", "index": 1 }]
+        [
+          {
+            "node": "Merge All Branches",
+            "type": "main",
+            "index": 1
+          }
+        ]
       ]
     },
     "Update Sheet: descartado": {
       "main": [
-        [{ "node": "Merge All Branches", "type": "main", "index": 2 }]
+        [
+          {
+            "node": "Merge All Branches",
+            "type": "main",
+            "index": 2
+          }
+        ]
       ]
     },
     "Update Sheet: clasificacion only": {
       "main": [
-        [{ "node": "Merge All Branches", "type": "main", "index": 3 }]
+        [
+          {
+            "node": "Merge All Branches",
+            "type": "main",
+            "index": 3
+          }
+        ]
       ]
     },
     "Merge All Branches": {
       "main": [
-        [{ "node": "Gmail - Mark as Read", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Gmail - Mark as Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Gmail - Mark as Read": {
       "main": [
-        [{ "node": "More Batches?", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "More Batches?",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "More Batches?": {
       "main": [
-        [{ "node": "SplitInBatches", "type": "main", "index": 0 }],
-        [{ "node": "Log to Supabase", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "SplitInBatches",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log to Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     }
   },
@@ -793,6 +1200,10 @@
     "timezone": "America/Mexico_City"
   },
   "staticData": null,
-  "tags": ["birdie", "classifier", "followup"],
+  "tags": [
+    "birdie",
+    "classifier",
+    "followup"
+  ],
   "pinData": {}
 }

@@ -2524,34 +2524,88 @@ function kpiChatReset() {
 // ─── AUTOPILOT ───────────────────────────────────────────────────────────────
 var AP_CONFIG_KEY = 'birdie_autopilot_config_v1';
 
+// The Office character SVG avatars
+var AP_AGENT_AVATARS = {
+  jim: `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="30" cy="30" r="30" fill="#2563eb"/>
+    <circle cx="30" cy="22" r="10" fill="#fde68a"/>
+    <ellipse cx="30" cy="42" rx="14" ry="10" fill="#fde68a"/>
+    <rect x="23" y="30" width="14" height="8" fill="#1e40af" rx="2"/>
+    <rect x="28" y="30" width="4" height="10" fill="#93c5fd"/>
+    <circle cx="26" cy="21" r="1.5" fill="#1e3a5f"/>
+    <circle cx="34" cy="21" r="1.5" fill="#1e3a5f"/>
+    <path d="M26 26 Q30 29 34 26" stroke="#1e3a5f" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    <text x="30" y="58" text-anchor="middle" fill="white" font-size="7" font-weight="bold" font-family="sans-serif">JIM</text>
+  </svg>`,
+  dwight: `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="30" cy="30" r="30" fill="#d97706"/>
+    <circle cx="30" cy="22" r="10" fill="#fde68a"/>
+    <ellipse cx="30" cy="42" rx="14" ry="10" fill="#fde68a"/>
+    <rect x="23" y="30" width="14" height="8" fill="#92400e" rx="2"/>
+    <rect x="28" y="30" width="4" height="10" fill="#fbbf24"/>
+    <circle cx="26" cy="21" r="1.5" fill="#1e3a5f"/>
+    <circle cx="34" cy="21" r="1.5" fill="#1e3a5f"/>
+    <rect x="24" y="19" width="5" height="1" fill="#4b5563" rx="0.5"/>
+    <rect x="31" y="19" width="5" height="1" fill="#4b5563" rx="0.5"/>
+    <path d="M27 26 Q30 25 33 26" stroke="#1e3a5f" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    <text x="30" y="58" text-anchor="middle" fill="white" font-size="6" font-weight="bold" font-family="sans-serif">DWIGHT</text>
+  </svg>`,
+  michael: `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="30" cy="30" r="30" fill="#dc2626"/>
+    <circle cx="30" cy="22" r="10" fill="#fde68a"/>
+    <ellipse cx="30" cy="42" rx="14" ry="10" fill="#fde68a"/>
+    <rect x="23" y="30" width="14" height="8" fill="#7f1d1d" rx="2"/>
+    <rect x="28" y="30" width="4" height="10" fill="#fca5a5"/>
+    <circle cx="26" cy="21" r="1.5" fill="#1e3a5f"/>
+    <circle cx="34" cy="21" r="1.5" fill="#1e3a5f"/>
+    <path d="M25 26 Q30 31 35 26" stroke="#1e3a5f" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    <text x="30" y="58" text-anchor="middle" fill="white" font-size="5.5" font-weight="bold" font-family="sans-serif">MICHAEL</text>
+  </svg>`,
+  pepper: `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="30" cy="30" r="30" fill="#0f766e"/>
+    <circle cx="30" cy="22" r="10" fill="#fde68a"/>
+    <ellipse cx="30" cy="42" rx="14" ry="10" fill="#fde68a"/>
+    <rect x="23" y="30" width="14" height="8" fill="#134e4a" rx="2"/>
+    <path d="M20 18 Q30 10 40 18" stroke="#b45309" stroke-width="2.5" fill="none"/>
+    <circle cx="26" cy="21" r="1.5" fill="#1e3a5f"/>
+    <circle cx="34" cy="21" r="1.5" fill="#1e3a5f"/>
+    <path d="M26 26 Q30 29 34 26" stroke="#1e3a5f" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    <text x="30" y="58" text-anchor="middle" fill="white" font-size="6" font-weight="bold" font-family="sans-serif">PEPPER</text>
+  </svg>`,
+};
+
 var AP_AGENTS = [
   {
-    num: 'Agente 1', emoji: '🔍', title: 'Prospecting',
-    tech: 'Hunter.io API', status: 'pending',
-    desc: 'Hunter.io domain search por empresa. Devuelve emails verificados. Selecciona 2 DMs + 3 referidores por cargo.',
+    num: 'Jim', emoji: '🔍', title: 'Prospecting',
+    tech: 'Hunter.io API', status: 'ready',
+    desc: 'Busca contactos por dominio. Selecciona 2 DMs (Director/Gerente) + 3 referidores (Coordinador/Analista) con email verificado.',
     trigger: 'Diario · 7:30am',
-    file: 'agent1_hunter_prospecting.json',
+    file: 'agent1_hunter_v3.json',
+    avatar: 'jim', color: '#2563eb',
   },
   {
-    num: 'Agente 2', emoji: '🧠', title: 'Investigación',
-    tech: 'Gemini 2.0 Flash', status: 'pending',
-    desc: 'Genera resumen, pain point aduanal y contexto personalizado por tipo de contacto (DM vs referidor).',
+    num: 'Dwight', emoji: '🧠', title: 'Investigación',
+    tech: 'Gemini 2.5 Flash', status: 'ready',
+    desc: 'Investiga cada empresa y contacto. Genera pain point aduanal + contexto personalizado para el email.',
     trigger: 'Cada 2h',
-    file: 'agent2_gemini_research.json',
+    file: 'agent2_gemini_v2.json',
+    avatar: 'dwight', color: '#d97706',
   },
   {
-    num: 'Agente 3', emoji: '✍️', title: 'Redacción Dual',
-    tech: 'Claude Haiku', status: 'pending',
-    desc: 'DMs: email ROI-focused ≤120 palabras + CTA Calendly. Referidores: email conversacional ≤90 palabras pidiendo intro interna.',
+    num: 'Michael', emoji: '✍️', title: 'Redacción & Envío',
+    tech: 'Claude Haiku', status: 'ready',
+    desc: 'Redacta emails personalizados (DM: ROI-focused, Referidor: intro request) y los envía vía Gmail.',
     trigger: 'Cada 30 min',
-    file: 'agent3_dual_email_writer.json',
+    file: 'agent3_v2.json',
+    avatar: 'michael', color: '#dc2626',
   },
   {
-    num: 'Agente 4', emoji: '📬', title: 'Seguimiento',
-    tech: 'Claude Haiku + Gmail', status: 'pending',
-    desc: 'DMs: clasifica + envía Calendly si interesado. Referidores: detecta "conecta_dm" y responde pidiendo intro al decisor.',
+    num: 'Pepper', emoji: '📬', title: 'Seguimiento',
+    tech: 'Claude + Gmail', status: 'ready',
+    desc: 'Clasifica respuestas del inbox. Si hay interés: envía Calendly. Si referidor positivo: pide intro al decisor.',
     trigger: 'Cada 4h',
     file: 'agent4_followup_classifier.json',
+    avatar: 'pepper', color: '#0f766e',
   },
 ];
 
@@ -2599,19 +2653,26 @@ function renderAutopilot() {
 function _renderAgentCards() {
   const container = document.getElementById('ap-agent-cards');
   if (!container) return;
+  const evts = window._apLastEvents || {};
   container.innerHTML = AP_AGENTS.map(a => {
     const statusClass = { ready:'ap-status-ready', pending:'ap-status-pending', running:'ap-status-running', error:'ap-status-error' }[a.status] || 'ap-status-pending';
-    const statusLabel = { ready:'✅ Listo', pending:'🟡 Pendiente', running:'🔵 Corriendo', error:'🔴 Error' }[a.status] || '🟡 Pendiente';
-    return `<div class="ap-agent-card">
-      <div class="ap-agent-num">${a.num}</div>
-      <div style="font-size:22px;margin-bottom:6px">${a.emoji}</div>
-      <div class="ap-agent-title">${a.title}</div>
+    const statusLabel = { ready:'✅ Activo', pending:'🟡 Pendiente', running:'🔵 Corriendo', error:'🔴 Error' }[a.status] || '🟡 Pendiente';
+    const avatar = AP_AGENT_AVATARS[a.avatar] || `<div style="font-size:28px">${a.emoji}</div>`;
+    const lastRun = evts[a.num] ? `Último: ${new Date(evts[a.num]).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})}` : 'Sin actividad aún';
+    return `<div class="ap-agent-card" style="border-top:3px solid ${a.color||'#7c3aed'}">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div style="width:48px;height:48px;flex-shrink:0;border-radius:50%;overflow:hidden;border:2px solid ${a.color||'#7c3aed'}">${avatar}</div>
+        <div>
+          <div style="font-size:15px;font-weight:800;color:var(--text)">${a.num}</div>
+          <div style="font-size:11px;color:var(--muted)">${a.title}</div>
+        </div>
+      </div>
       <div class="ap-agent-tech">${a.tech}</div>
-      <div class="ap-agent-status ${statusClass}">${statusLabel}</div>
+      <div class="ap-agent-status ${statusClass}" style="margin-bottom:8px">${statusLabel}</div>
       <div style="font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:8px">${a.desc}</div>
       <div class="ap-agent-meta">
         <span>⏱ ${a.trigger}</span>
-        <span style="color:#7c3aed;cursor:pointer;font-size:10px" title="${a.file}">📄 JSON</span>
+        <span style="font-size:10px;color:var(--muted)">${lastRun}</span>
       </div>
     </div>`;
   }).join('');
@@ -2696,40 +2757,64 @@ var AP_EVENT_ICONS = {
   pipedrive_deal_created: '💼',
 };
 
+// Map event types to agent names
+var AP_EVENT_AGENT_MAP = {
+  'agent1_prospecting': 'Jim', 'contact_found': 'Jim',
+  'agent2_research': 'Dwight', 'contact_investigated': 'Dwight',
+  'email_sent': 'Michael', 'agent3_email': 'Michael',
+  'reply_classified': 'Pepper', 'calendly_sent': 'Pepper', 'followup_sent': 'Pepper',
+};
+
 async function loadAgentEvents() {
   const el = document.getElementById('ap-events-list');
   const sub = document.getElementById('ap-events-sub');
   if (!el) return;
   try {
-    const rows = await sbFetch('GET', 'agent_events?select=id,type,payload,created_at&order=created_at.desc&limit=30');
+    const rows = await sbFetch('GET', 'agent_events?select=id,type,payload,created_at&order=created_at.desc&limit=50');
+    window._apLastEvents = {};
+    if (Array.isArray(rows)) {
+      rows.forEach(e => {
+        const agent = AP_EVENT_AGENT_MAP[e.type];
+        if (agent && !window._apLastEvents[agent]) window._apLastEvents[agent] = e.created_at;
+      });
+    }
+    _renderAgentCards();
     if (!Array.isArray(rows) || rows.length === 0) {
-      el.innerHTML = '<div style="padding:24px 0;color:var(--muted);text-align:center">No hay eventos aún · Los agentes de n8n escribirán aquí automáticamente</div>';
+      el.innerHTML = '<div style="padding:24px 0;color:var(--muted);text-align:center">Sin actividad aún · Jim, Dwight, Michael y Pepper escribirán aquí automáticamente</div>';
       return;
     }
-    if (sub) sub.textContent = rows.length + ' eventos · Actualizado hace un momento';
+    if (sub) sub.textContent = rows.length + ' eventos · ' + new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+    const agentColors = {Jim:'#2563eb',Dwight:'#d97706',Michael:'#dc2626',Pepper:'#0f766e'};
+    const agentIcons = {Jim:'🔍',Dwight:'🧠',Michael:'✍️',Pepper:'📬'};
     el.innerHTML = rows.map(e => {
-      const icon = AP_EVENT_ICONS[e.type] || '⚙️';
+      const agent = AP_EVENT_AGENT_MAP[e.type] || 'Sistema';
+      const icon = agentIcons[agent] || '⚙️';
+      const color = agentColors[agent] || '#7c3aed';
       const payload = e.payload || {};
       let detail = '';
-      if (e.type === 'agent1_enrichment') detail = `Procesados: ${payload.processed||0} · Enriquecidos: ${payload.enriched||0} · Sin datos: ${payload.no_data||0}`;
-      else if (e.type === 'agent2_research') detail = `Procesados: ${payload.processed||0} · Investigados: ${payload.investigated||0} · Errores: ${payload.errors||0}`;
-      else if (e.type === 'pipedrive_deal_created') detail = `${payload.empresa||''} → Deal ${payload.deal_id||''}`;
-      else if (e.type === 'followup_sent') detail = `${payload.empresa||''}`;
-      else detail = JSON.stringify(payload).slice(0, 80);
-      const timeStr = new Date(e.created_at).toLocaleString('es-MX', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+      if (e.type === 'agent1_prospecting') detail = payload.empresa || (payload.dms_encontrados||0)+' DMs · '+(payload.referidores_encontrados||0)+' refs';
+      else if (e.type === 'contact_found') detail = payload.empresa || '';
+      else if (e.type === 'agent2_research') detail = payload.empresa || (payload.investigated||0)+' investigados';
+      else if (e.type === 'email_sent' || e.type === 'agent3_email') detail = (payload.empresa||'')+' · '+(payload.tipo_contacto||payload.subject||'').slice(0,50);
+      else if (e.type === 'reply_classified') detail = (payload.empresa||'') +' → '+(payload.clasificacion||payload.classification||'');
+      else if (e.type === 'calendly_sent') detail = 'Calendly → '+(payload.empresa||payload.email||'');
+      else if (e.type === 'followup_sent') detail = 'Follow-up → '+(payload.empresa||'');
+      else detail = JSON.stringify(payload).slice(0,80);
+      const timeStr = new Date(e.created_at).toLocaleString('es-MX',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
       return `<div class="ap-event-row">
-        <div class="ap-event-icon">${icon}</div>
+        <div class="ap-event-icon" style="background:${color}20;font-size:14px;width:32px;height:32px;color:${color}">${icon}</div>
         <div class="ap-event-body">
-          <div class="ap-event-type">${e.type.replace(/_/g,' ')}</div>
+          <div class="ap-event-type" style="color:${color}">${agent} · ${e.type.replace(/_/g,' ')}</div>
           <div class="ap-event-detail">${detail}</div>
         </div>
         <div class="ap-event-time">${timeStr}</div>
       </div>`;
     }).join('');
   } catch(err) {
-    el.innerHTML = '<div style="padding:16px 0;color:#dc2626;text-align:center">Error cargando eventos: ' + err.message + '</div>';
+    el.innerHTML = '<div style="padding:16px 0;color:#dc2626;text-align:center">Error: '+err.message+'</div>';
   }
 }
+
 
 // Auto-load pipeline on page start + init goals from log
 // ─── AUTH (Supabase Auth — no passwords in code) ─────────────────────────────

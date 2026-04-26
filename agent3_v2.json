@@ -16,7 +16,10 @@
       "name": "Schedule Trigger",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
-      "position": [240, 400]
+      "position": [
+        240,
+        400
+      ]
     },
     {
       "parameters": {
@@ -47,7 +50,10 @@
       "name": "Read Contactos Investigados",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
-      "position": [460, 400],
+      "position": [
+        460,
+        400
+      ],
       "credentials": {
         "googleSheetsOAuth2Api": {
           "id": "google-sheets-cred",
@@ -64,7 +70,10 @@
       "name": "SplitInBatches",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
-      "position": [680, 400]
+      "position": [
+        680,
+        400
+      ]
     },
     {
       "parameters": {
@@ -93,7 +102,10 @@
       "name": "IF - Tipo Contacto",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [900, 400]
+      "position": [
+        900,
+        400
+      ]
     },
     {
       "parameters": {
@@ -123,7 +135,10 @@
       "name": "HTTP Request Claude DM",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1120, 260],
+      "position": [
+        1120,
+        260
+      ],
       "credentials": {
         "httpHeaderAuth": {
           "id": "claude-api-cred",
@@ -159,7 +174,10 @@
       "name": "HTTP Request Claude Referidor",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1120, 540],
+      "position": [
+        1120,
+        540
+      ],
       "credentials": {
         "httpHeaderAuth": {
           "id": "claude-api-cred",
@@ -176,7 +194,10 @@
       "name": "Merge",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3,
-      "position": [1340, 400]
+      "position": [
+        1340,
+        400
+      ]
     },
     {
       "parameters": {
@@ -187,7 +208,10 @@
       "name": "Code - Parse Claude",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1560, 400]
+      "position": [
+        1560,
+        400
+      ]
     },
     {
       "parameters": {
@@ -204,7 +228,10 @@
       "name": "Gmail Send",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2,
-      "position": [1780, 400],
+      "position": [
+        1780,
+        400
+      ],
       "credentials": {
         "gmailOAuth2": {
           "id": "gmail-cred",
@@ -246,7 +273,10 @@
       "name": "Update Contactos Enviado",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
-      "position": [2000, 400],
+      "position": [
+        2000,
+        400
+      ],
       "credentials": {
         "googleSheetsOAuth2Api": {
           "id": "google-sheets-cred",
@@ -263,8 +293,101 @@
       "name": "Wait 30s",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
-      "position": [2220, 400],
+      "position": [
+        2220,
+        400
+      ],
       "webhookId": "a3-wait-webhook"
+    },
+    {
+      "id": "1e12949f",
+      "name": "Supabase - Crear Lead en Pipeline",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1800,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://xjrgqborwhvyqgrczetq.supabase.co/rest/v1/pipeline",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdxYm9yd2h2eXFncmN6ZXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODc5ODksImV4cCI6MjA5MDQ2Mzk4OX0.DWOoshMXxmQk0deq2jEnOOAFpr_pyE9aWenvu_GPzLs"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdxYm9yd2h2eXFncmN6ZXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODc5ODksImV4cCI6MjA5MDQ2Mzk4OX0.DWOoshMXxmQk0deq2jEnOOAFpr_pyE9aWenvu_GPzLs"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "jsonBody": "={{ JSON.stringify({ opportunity_name: $json.empresa || $json.empresa_nombre, status: 'Active Lead', owner: 'Abraham Lopez', estrategia: 'Autopilot', notes: 'Michael envió email · ' + ($json.tipo_contacto || '') + ' · ' + ($json.email_address || ''), ingreso_lead: new Date().toISOString().slice(0,10), next_touchpoint: new Date(Date.now() + 5*86400000).toISOString().slice(0,10) }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "22481683",
+      "name": "Supabase - Log Email Enviado",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1800,
+        500
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://xjrgqborwhvyqgrczetq.supabase.co/rest/v1/agent_events",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdxYm9yd2h2eXFncmN6ZXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODc5ODksImV4cCI6MjA5MDQ2Mzk4OX0.DWOoshMXxmQk0deq2jEnOOAFpr_pyE9aWenvu_GPzLs"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdxYm9yd2h2eXFncmN6ZXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODc5ODksImV4cCI6MjA5MDQ2Mzk4OX0.DWOoshMXxmQk0deq2jEnOOAFpr_pyE9aWenvu_GPzLs"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "jsonBody": "={{ JSON.stringify({ type: 'email_sent', payload: { empresa: $json.empresa || '', tipo_contacto: $json.tipo_contacto || '', email_address: $json.email_address || '', subject: $json.email_subject || '' } }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      }
     }
   ],
   "connections": {
@@ -369,6 +492,16 @@
         [
           {
             "node": "Update Contactos Enviado",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Supabase - Crear Lead en Pipeline",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Supabase - Log Email Enviado",
             "type": "main",
             "index": 0
           }
