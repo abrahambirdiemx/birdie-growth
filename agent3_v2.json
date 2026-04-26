@@ -1,0 +1,412 @@
+{
+  "name": "Agent 3 - Dual Email Writer v2",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "*/30 * * * *"
+            }
+          ]
+        }
+      },
+      "id": "a3-node-01",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 400]
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "1xq8IMuFZoMO3YkdTneirIPQ6VqvaAxKRN8H24BhN_AE",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Contactos",
+          "mode": "name"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "estado",
+              "lookupValue": "investigado"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": false
+        }
+      },
+      "id": "a3-node-02",
+      "name": "Read Contactos Investigados",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [460, 400],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "google-sheets-cred",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "a3-node-03",
+      "name": "SplitInBatches",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [680, 400]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-tipo",
+              "leftValue": "={{ $json.tipo_contacto }}",
+              "rightValue": "decision_maker",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a3-node-04",
+      "name": "IF - Tipo Contacto",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [900, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-3-5-sonnet-20241022\",\n  \"max_tokens\": 1024,\n  \"system\": \"Eres Abraham López, Director de Growth de Birdie (birdie.mx), plataforma de AI para comercio exterior en México. Redacta un email de prospección FRÍO, profesional y directo para un tomador de decisiones importador. REGLAS: máximo 120 palabras, sin markdown, sin asteriscos. Menciona específicamente su empresa. Enfócate en ROI: reducción de tiempos en aduana, visibilidad de cargas, ahorro en costos. CTA: propón una llamada de 15 minutos. Firma como Abraham López | Birdie. Formato exacto: [SUBJECT: asunto aquí]\\n\\ncuerpo del email aquí\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Escribe un email de prospección para:\\nNombre: {{ $json.nombre }}\\nCargo: {{ $json.cargo }}\\nEmpresa: {{ $json.empresa }}\\nPain point: {{ $json.pain_point }}\\nContexto: {{ $json.contexto_email }}\"\n    }\n  ]\n}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "a3-node-05a",
+      "name": "HTTP Request Claude DM",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 260],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "claude-api-cred",
+          "name": "Claude API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-3-5-sonnet-20241022\",\n  \"max_tokens\": 1024,\n  \"system\": \"Eres Abraham López, Director de Growth de Birdie (birdie.mx). Redacta un email corto y natural para un contacto interno de una empresa importadora (NO es el tomador de decisiones). Objetivo: conseguir que te conecte con quien decide sobre logística/importaciones. REGLAS: máximo 90 palabras, tono amigable y conversacional, NO menciones precio ni hagas pitch de ventas, pide explícitamente ser conectado con la persona que maneja importaciones/logística. Formato exacto: [SUBJECT: asunto aquí]\\n\\ncuerpo del email aquí\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Escribe un email para un referidor interno:\\nNombre: {{ $json.nombre }}\\nCargo: {{ $json.cargo }}\\nEmpresa: {{ $json.empresa }}\\nContexto: {{ $json.contexto_email }}\"\n    }\n  ]\n}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "a3-node-05b",
+      "name": "HTTP Request Claude Referidor",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 540],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "claude-api-cred",
+          "name": "Claude API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "passThrough",
+        "output": "input1"
+      },
+      "id": "a3-node-06",
+      "name": "Merge",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [1340, 400]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const items = $input.all();\nconst claudeResponse = items[0].json;\nlet contactData = {};\ntry {\n  contactData = $('SplitInBatches').all()[0].json || {};\n} catch(e) {}\n\nconst text = claudeResponse?.content?.[0]?.text || '';\nconst subjectMatch = text.match(/\\[SUBJECT:\\s*(.+?)\\]/);\nconst subject = subjectMatch ? subjectMatch[1].trim() : 'Birdie - Plataforma de Comercio Exterior';\nconst body = text.replace(/\\[SUBJECT:[^\\]]+\\]\\n?/, '').trim();\nconst tokens = (claudeResponse?.usage?.input_tokens || 0) + (claudeResponse?.usage?.output_tokens || 0);\n\nreturn [{\n  json: {\n    contacto_id: String(contactData.contacto_id || ''),\n    email_address: String(contactData.email || ''),\n    email_subject: subject,\n    email_generado: body,\n    tokens_claude: String(tokens),\n    fecha_envio: new Date().toISOString().slice(0, 10)\n  }\n}];"
+      },
+      "id": "a3-node-07",
+      "name": "Code - Parse Claude",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1560, 400]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.email_address }}",
+        "subject": "={{ $json.email_subject }}",
+        "emailType": "text",
+        "message": "={{ $json.email_generado }}",
+        "options": {
+          "replyTo": "abraham@birdie.mx",
+          "appendAttribution": false
+        }
+      },
+      "id": "a3-node-08",
+      "name": "Gmail Send",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [1780, 400],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "gmail-cred",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1xq8IMuFZoMO3YkdTneirIPQ6VqvaAxKRN8H24BhN_AE",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Contactos",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "contacto_id": "={{ $json.contacto_id }}",
+            "estado": "enviado",
+            "email_subject": "={{ $json.email_subject }}",
+            "email_generado": "={{ $json.email_generado }}",
+            "fecha_envio": "={{ $json.fecha_envio }}",
+            "tokens_claude": "={{ $json.tokens_claude }}"
+          },
+          "matchingColumns": [
+            "contacto_id"
+          ],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "a3-node-09",
+      "name": "Update Contactos Enviado",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [2000, 400],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "google-sheets-cred",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 30,
+        "unit": "seconds"
+      },
+      "id": "a3-node-10",
+      "name": "Wait 30s",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [2220, 400],
+      "webhookId": "a3-wait-webhook"
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Read Contactos Investigados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Contactos Investigados": {
+      "main": [
+        [
+          {
+            "node": "SplitInBatches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SplitInBatches": {
+      "main": [
+        [
+          {
+            "node": "IF - Tipo Contacto",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "IF - Tipo Contacto": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request Claude DM",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Request Claude Referidor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request Claude DM": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request Claude Referidor": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Code - Parse Claude",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Parse Claude": {
+      "main": [
+        [
+          {
+            "node": "Gmail Send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Send": {
+      "main": [
+        [
+          {
+            "node": "Update Contactos Enviado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Contactos Enviado": {
+      "main": [
+        [
+          {
+            "node": "Wait 30s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 30s": {
+      "main": [
+        [
+          {
+            "node": "SplitInBatches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {}
+}

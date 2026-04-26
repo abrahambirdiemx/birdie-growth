@@ -1,0 +1,250 @@
+{
+  "name": "Agent 2 - Gemini Research v2",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 */2 * * *"
+            }
+          ]
+        }
+      },
+      "id": "a2-node-01",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "1xq8IMuFZoMO3YkdTneirIPQ6VqvaAxKRN8H24BhN_AE",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Contactos",
+          "mode": "name"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "estado",
+              "lookupValue": "nuevo"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": false
+        }
+      },
+      "id": "a2-node-02",
+      "name": "Read Contactos",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [460, 300],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "google-sheets-cred",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "a2-node-03",
+      "name": "SplitInBatches",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleGeminiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [\n    {\n      \"parts\": [\n        {\n          \"text\": \"Eres un investigador de inteligencia comercial especializado en importadores mexicanos.\\nEmpresa: {{ $json.empresa }}\\nCargo del contacto: {{ $json.cargo }}\\nTipo de contacto: {{ $json.tipo_contacto }}\\n\\nGenera EXACTAMENTE este JSON sin texto adicional:\\n{\\\"resumen\\\":\\\"2-3 oraciones sobre qué importa esta empresa y sus operaciones\\\",\\\"pain_point\\\":\\\"el problema aduanal o logístico más probable (ej: demoras, costos de almacenaje, clasificación arancelaria)\\\",\\\"contexto_email\\\":\\\"dato específico y concreto para personalizar el email (diferente según si es decision_maker o referidor)\\\"}\"\n        }\n      ]\n    }\n  ]\n}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "a2-node-04",
+      "name": "HTTP Request Gemini",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 300],
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "gemini-api-cred",
+          "name": "Gemini API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const items = $input.all();\nconst geminiResponse = items[0].json;\nlet batchData = {};\ntry {\n  const batchItems = $('SplitInBatches').all();\n  batchData = (batchItems && batchItems[0]) ? batchItems[0].json : {};\n} catch(e) {}\n\nconst raw = geminiResponse?.candidates?.[0]?.content?.parts?.[0]?.text || '';\nlet parsed = { resumen: '', pain_point: '', contexto_email: '' };\ntry {\n  const clean = raw.replace(/```json\\n?|\\n?```/g, '').trim();\n  parsed = JSON.parse(clean);\n} catch(e) {\n  parsed = { resumen: raw.slice(0, 200), pain_point: '', contexto_email: '' };\n}\n\nreturn [{\n  json: {\n    contacto_id: String(batchData.contacto_id || ''),\n    investigacion: String(parsed.resumen || ''),\n    pain_point: String(parsed.pain_point || ''),\n    contexto_email: String(parsed.contexto_email || ''),\n    estado: 'investigado'\n  }\n}];"
+      },
+      "id": "a2-node-05",
+      "name": "Code - Parse Gemini",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1xq8IMuFZoMO3YkdTneirIPQ6VqvaAxKRN8H24BhN_AE",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Contactos",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "contacto_id": "={{ $json.contacto_id }}",
+            "investigacion": "={{ $json.investigacion }}",
+            "pain_point": "={{ $json.pain_point }}",
+            "contexto_email": "={{ $json.contexto_email }}",
+            "estado": "={{ $json.estado }}"
+          },
+          "matchingColumns": [
+            "contacto_id"
+          ],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "a2-node-06",
+      "name": "Update Contactos Investigado",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [1340, 300],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "google-sheets-cred",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 2,
+        "unit": "seconds"
+      },
+      "id": "a2-node-07",
+      "name": "Wait 2s",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1560, 300],
+      "webhookId": "a2-wait-webhook"
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Read Contactos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Contactos": {
+      "main": [
+        [
+          {
+            "node": "SplitInBatches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SplitInBatches": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request Gemini",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "HTTP Request Gemini": {
+      "main": [
+        [
+          {
+            "node": "Code - Parse Gemini",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Parse Gemini": {
+      "main": [
+        [
+          {
+            "node": "Update Contactos Investigado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Contactos Investigado": {
+      "main": [
+        [
+          {
+            "node": "Wait 2s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 2s": {
+      "main": [
+        [
+          {
+            "node": "SplitInBatches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {}
+}
