@@ -1792,15 +1792,18 @@
     </select>
     <select class="crm-select" id="crm-f-status" onchange="crmRender()">
       <option value="">Todos los status</option>
-      <option>Lead</option>
       <option>Calificado</option>
+      <option>Weekly Hunt</option>
+      <option>Active Lead</option>
       <option>Discovery</option>
       <option>Demo</option>
       <option>Propuesta</option>
       <option>Close 2 close</option>
       <option>Cerrado</option>
-      <option>Client</option>
       <option>Piloto</option>
+      <option>Cliente</option>
+      <option>Cool Off</option>
+      <option>Churn</option>
     </select>
     <select class="crm-select" id="crm-f-industry" onchange="crmRender()">
       <option value="">Todas las industrias</option>
@@ -1948,15 +1951,18 @@
         <div class="crm-field">
           <label>Status</label>
           <select id="cf-status">
-            <option>Lead</option>
             <option>Calificado</option>
+            <option>Weekly Hunt</option>
+            <option>Active Lead</option>
             <option>Discovery</option>
             <option>Demo</option>
             <option>Propuesta</option>
             <option>Close 2 close</option>
             <option>Cerrado</option>
-            <option>Client</option>
             <option>Piloto</option>
+            <option>Cliente</option>
+            <option>Cool Off</option>
+            <option>Churn</option>
           </select>
         </div>
         <div class="crm-field">
@@ -2006,21 +2012,35 @@
             <option>2500+</option>
           </select>
         </div>
-        <div class="crm-field">
-          <label>Contacto principal</label>
-          <input type="text" id="cf-contact" placeholder="Nombre del contacto">
+        <!-- Contacto 1 -->
+        <div class="crm-field full" style="background:var(--card2);border:1px solid var(--border2);border-radius:8px;padding:10px;margin-top:4px">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--accent);margin-bottom:8px">Contacto 1</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <input type="text" id="cf-contact" placeholder="Nombre" style="padding:7px 10px;border:1px solid var(--border2);border-radius:7px;font-size:12px;font-family:inherit;outline:none">
+            <input type="text" id="cf-puesto" placeholder="Cargo (Director, Gerente...)" style="padding:7px 10px;border:1px solid var(--border2);border-radius:7px;font-size:12px;font-family:inherit;outline:none">
+            <input type="email" id="cf-email" placeholder="Email" style="padding:7px 10px;border:1px solid var(--border2);border-radius:7px;font-size:12px;font-family:inherit;outline:none">
+            <input type="text" id="cf-phone" placeholder="Teléfono" style="padding:7px 10px;border:1px solid var(--border2);border-radius:7px;font-size:12px;font-family:inherit;outline:none">
+          </div>
         </div>
-        <div class="crm-field">
-          <label>Puesto</label>
-          <input type="text" id="cf-puesto" placeholder="Director, Gerente…">
+        <!-- Contacto 2 -->
+        <div class="crm-field full" style="background:var(--card2);border:1px solid var(--border2);border-radius:8px;padding:10px">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:8px">Contacto 2 <span style="font-weight:400">(opcional)</span></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <input type="text" id="cf-contact2" placeholder="Nombre" style="padding:7px 10px;border:1px solid var(--border2);border-radius:7px;font-size:12px;font-family:inherit;outline:none">
+            <input type="text" id="cf-puesto2" placeholder="Cargo" style="padding:7px 10px;border:1px solid var(--border2);border-radius:7px;font-size:12px;font-family:inherit;outline:none">
+            <input type="email" id="cf-email2" placeholder="Email" style="padding:7px 10px;border:1px solid var(--border2);border-radius:7px;font-size:12px;font-family:inherit;outline:none">
+            <input type="text" id="cf-phone2" placeholder="Teléfono" style="padding:7px 10px;border:1px solid var(--border2);border-radius:7px;font-size:12px;font-family:inherit;outline:none">
+          </div>
         </div>
-        <div class="crm-field">
-          <label>Email</label>
-          <input type="email" id="cf-email" placeholder="contacto@empresa.com">
-        </div>
-        <div class="crm-field">
-          <label>Teléfono</label>
-          <input type="text" id="cf-phone" placeholder="+52 55 0000 0000">
+        <!-- Contacto 3 -->
+        <div class="crm-field full" style="background:var(--card2);border:1px solid var(--border2);border-radius:8px;padding:10px">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:8px">Contacto 3 <span style="font-weight:400">(opcional)</span></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <input type="text" id="cf-contact3" placeholder="Nombre" style="padding:7px 10px;border:1px solid var(--border2);border-radius:7px;font-size:12px;font-family:inherit;outline:none">
+            <input type="text" id="cf-puesto3" placeholder="Cargo" style="padding:7px 10px;border:1px solid var(--border2);border-radius:7px;font-size:12px;font-family:inherit;outline:none">
+            <input type="email" id="cf-email3" placeholder="Email" style="padding:7px 10px;border:1px solid var(--border2);border-radius:7px;font-size:12px;font-family:inherit;outline:none">
+            <input type="text" id="cf-phone3" placeholder="Teléfono" style="padding:7px 10px;border:1px solid var(--border2);border-radius:7px;font-size:12px;font-family:inherit;outline:none">
+          </div>
         </div>
         <div class="crm-field">
           <label>MRR ($/mes)</label>
@@ -3459,7 +3479,7 @@ function pipeRender() {
   const weekBadge = isNew ? '<span class="week-new-badge">NUEVO</span>' : isUpd ? '<span class="week-upd-badge">UPD</span>' : '';
   const impl = parsePipeMoney(r.implementaciones);
   return `<tr>
-      <td><span class="cell cell-name" title="Clic para editar" style="cursor:pointer" onclick="pipeOpenEdit(${r.id})">${r.opportunity_name||'—'}</span>${crmBadge}${weekBadge}</td>
+      <td><span class="cell cell-name" title="Clic para editar" style="cursor:pointer" onclick="pipeOpenEdit('${r.id}')">${r.opportunity_name||'—'}</span>${crmBadge}${weekBadge}</td>
       <td><span class="cell" style="font-size:11px;color:#64748b">${r.size||'—'}</span></td>
       <td class="cell-select">
         <select onchange="pipeUpdateField(${r.id},'owner',this.value)">
@@ -4125,7 +4145,7 @@ function crmRender() {
       const pipeStage = pipeDeal ? pipeDeal.status : null;
       // Contact indicator
       const hasContact = r.c || r.em;
-      return `<tr onclick="crmOpenEdit(${r.id})" style="${!hasContact ? 'background:#fff7ed' : ''}">
+      return `<tr onclick="crmOpenEdit('${r.id}')" style="${!hasContact ? 'background:#fff7ed' : ''}">
         <td>
           <span class="crm-name" title="${(r.n||'').replace(/"/g,'')}">${r.n||'—'}</span>
           ${pipeStage ? `<span style="margin-left:4px;font-size:9px;padding:1px 5px;background:#ede9fe;color:#7c3aed;border-radius:4px" title="Pipeline: ${pipeStage}">🔗 ${pipeStage}</span>` : ''}
@@ -4148,7 +4168,7 @@ function crmRender() {
           ${pipeMrr && crmMrr && pipeMrr !== crmMrr ? `<span title="CRM: $${crmMrr.toLocaleString()} | Pipeline: $${pipeMrr.toLocaleString()}" style="font-size:9px;color:#f97316;margin-left:3px;cursor:help">⚠</span>` : ''}
         </td>
         <td style="font-weight:700">${crmAcv ? '$'+crmAcv.toLocaleString() : '—'}</td>
-        <td><button class="del-btn" onclick="event.stopPropagation();crmDeleteId(${r.id})" title="Eliminar">✕</button></td>
+        <td><button class="del-btn" onclick="event.stopPropagation();crmDeleteId('${r.id}')" title="Eliminar">✕</button></td>
       </tr>`;
     }).join('');
   }
@@ -4192,10 +4212,29 @@ function crmOpenEdit(id) {
   document.getElementById('cf-industry').value    = rec.ind  || '';
   document.getElementById('cf-canal').value       = rec.e    || '';
   document.getElementById('cf-size').value        = rec.sz   || '';
-  document.getElementById('cf-contact').value     = rec.c    || '';
-  document.getElementById('cf-puesto').value      = rec.p    || '';
-  document.getElementById('cf-email').value       = rec.em   || '';
-  document.getElementById('cf-phone').value       = rec.tel  || '';
+  // Primary contact (from _contacts array or legacy fields)
+  const contacts = rec._contacts || [];
+  const c0 = contacts[0] || {};
+  const c1 = contacts[1] || {};
+  const c2 = contacts[2] || {};
+  document.getElementById('cf-contact').value  = c0.nombre || rec.c  || '';
+  document.getElementById('cf-puesto').value   = c0.cargo  || rec.p  || '';
+  document.getElementById('cf-email').value    = c0.email  || rec.em || '';
+  document.getElementById('cf-phone').value    = c0.telefono || rec.tel || '';
+  // Contact 2
+  if (document.getElementById('cf-contact2')) {
+    document.getElementById('cf-contact2').value = c1.nombre || '';
+    document.getElementById('cf-puesto2').value  = c1.cargo  || '';
+    document.getElementById('cf-email2').value   = c1.email  || '';
+    document.getElementById('cf-phone2').value   = c1.telefono || '';
+  }
+  // Contact 3
+  if (document.getElementById('cf-contact3')) {
+    document.getElementById('cf-contact3').value = c2.nombre || '';
+    document.getElementById('cf-puesto3').value  = c2.cargo  || '';
+    document.getElementById('cf-email3').value   = c2.email  || '';
+    document.getElementById('cf-phone3').value   = c2.telefono || '';
+  }
   document.getElementById('cf-mrr').value         = parseMoney(rec.mrr) || '';
   document.getElementById('cf-acv').value         = parseMoney(rec.acv) || '';
   document.getElementById('cf-notes').value       = rec.notes || '';
@@ -4209,7 +4248,10 @@ function crmCloseModal() {
   document.getElementById('crm-edit-id').value = '';
   document.getElementById('crm-delete-btn').style.display = 'none';
   ['cf-name','cf-owner','cf-status','cf-industry','cf-canal','cf-size',
-   'cf-contact','cf-puesto','cf-email','cf-phone','cf-mrr','cf-acv','cf-notes'
+   'cf-contact','cf-puesto','cf-email','cf-phone',
+   'cf-contact2','cf-puesto2','cf-email2','cf-phone2',
+   'cf-contact3','cf-puesto3','cf-email3','cf-phone3',
+   'cf-mrr','cf-acv','cf-notes'
   ].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
   document.getElementById('cf-status').value = 'Lead';
 }
@@ -4220,10 +4262,16 @@ async function crmSave() {
   if (!name)  { showToast('⚠ Ingresa el nombre de la empresa','err'); return; }
   if (!owner) { showToast('⚠ Selecciona un responsable','err'); return; }
   const editId = document.getElementById('crm-edit-id').value || '';
-  const contactName  = document.getElementById('cf-contact').value || null;
-  const contactPuesto= document.getElementById('cf-puesto').value  || null;
-  const contactEmail = document.getElementById('cf-email').value   || null;
-  const contactTel   = document.getElementById('cf-phone').value   || null;
+  // Collect up to 3 contacts
+  const contactsToSave = [
+    { nombre: document.getElementById('cf-contact')?.value, cargo: document.getElementById('cf-puesto')?.value, email: document.getElementById('cf-email')?.value, telefono: document.getElementById('cf-phone')?.value },
+    { nombre: document.getElementById('cf-contact2')?.value, cargo: document.getElementById('cf-puesto2')?.value, email: document.getElementById('cf-email2')?.value, telefono: document.getElementById('cf-phone2')?.value },
+    { nombre: document.getElementById('cf-contact3')?.value, cargo: document.getElementById('cf-puesto3')?.value, email: document.getElementById('cf-email3')?.value, telefono: document.getElementById('cf-phone3')?.value },
+  ].filter(c => c.nombre || c.email); // only save non-empty contacts
+  const contactName  = contactsToSave[0]?.nombre || null;
+  const contactPuesto= contactsToSave[0]?.cargo  || null;
+  const contactEmail = contactsToSave[0]?.email  || null;
+  const contactTel   = contactsToSave[0]?.telefono || null;
   const companyRec = {
     nombre:    name,
     owner:     owner,
@@ -4253,18 +4301,19 @@ async function crmSave() {
         notes: companyRec.notas, _contacts: [], _company_id: companyId };
       _crmData.unshift(newLocal);
     }
-    // Save contact to contacts table if contact info provided
-    if (companyId && (contactName || contactEmail)) {
-      const contactRec = {
-        company_id:    companyId,
-        nombre:        contactName,
-        cargo:         contactPuesto,
-        tipo_contacto: 'decision_maker',
-        email:         contactEmail,
-        telefono:      contactTel,
-        estado:        'nuevo',
-      };
-      await sbFetch('POST', 'contacts', [contactRec]).catch(()=>{});
+    // Save up to 3 contacts to contacts table
+    if (companyId && contactsToSave.length > 0) {
+      for (const ct of contactsToSave) {
+        await sbFetch('POST', 'contacts', [{
+          company_id:    companyId,
+          nombre:        ct.nombre || null,
+          cargo:         ct.cargo  || null,
+          tipo_contacto: 'decision_maker',
+          email:         ct.email  || null,
+          telefono:      ct.telefono || null,
+          estado:        'nuevo',
+        }]).catch(()=>{});
+      }
     }
     crmCloseModal();
     crmRender();
