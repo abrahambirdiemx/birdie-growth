@@ -2898,76 +2898,84 @@ function apToggleCheck(id) {
 function _renderAutopilotAnalytics() {
   const el = document.getElementById('ap-analytics');
   if (!el) return;
-  // Filter pipeline by Autopilot strategy
-  const apDeals = (_pipeData || []).filter(r => (r.estrategia || '').toLowerCase().includes('autopilot'));
-  const inDiscoveryDemo = apDeals.filter(r => r.status === 'Discovery' || r.status === 'Demo').length;
-  const demosAgendadas = apDeals.filter(r => r.status === 'Demo').length;
+
+  // Pipeline metrics from Autopilot
+  const apDeals = (_pipeData || []).filter(r => (r.estrategia||'').toLowerCase().includes('autopilot') || (r.notes||'').toLowerCase().includes('autopilot') || (r.notes||'').toLowerCase().includes('michael') || (r.notes||'').toLowerCase().includes('pam'));
+  const inDiscovery = apDeals.filter(r => r.status === 'Discovery' || r.status === 'Demo').length;
+  const demos = apDeals.filter(r => r.status === 'Demo').length;
+  const coolOff = (_pipeData||[]).filter(r => r.status === 'Cool Off').length;
+  const calificado = (_pipeData||[]).filter(r => r.status === 'Calificado').length;
+
+  // Agent events metrics (from last 30 events loaded)
+  const events = window._apLastRawEvents || [];
+  const nurturingSent = events.filter(e => e.type === 'nurturing_sent').length;
+  const emailsSent = events.filter(e => e.type === 'email_sent').length;
+  const calendlySent = events.filter(e => e.type === 'calendly_sent').length;
   const totalAgents = AP_AGENTS.length;
-  // Funnel estimate
-  const funnelStates = window._apFunnelCounts || {};
-  const empresasProcesadas = funnelStates['empresas_procesadas'] || funnelStates['enriched'] || '—';
-  const contactosEncontrados = funnelStates['contacts_found'] || funnelStates['contacted'] || '—';
-  const emailsEnviados = funnelStates['emails_sent'] || funnelStates['email_sent'] || '—';
+
   el.innerHTML = `
-    <!-- Métricas del Pipeline Autopilot -->
     <div style="margin-bottom:14px">
       <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Pipeline Autopilot</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
         <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center">
           <div style="font-size:22px;font-weight:800;color:#7c3aed">${apDeals.length}</div>
-          <div style="font-size:10px;font-weight:700;color:var(--muted);margin-top:2px">Leads</div>
+          <div style="font-size:10px;color:var(--muted)">Leads en Pipeline</div>
         </div>
         <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center">
-          <div style="font-size:22px;font-weight:800;color:#3b6ef8">${inDiscoveryDemo}</div>
-          <div style="font-size:10px;font-weight:700;color:var(--muted);margin-top:2px">En Disc/Demo</div>
+          <div style="font-size:22px;font-weight:800;color:#2563eb">${inDiscovery}</div>
+          <div style="font-size:10px;color:var(--muted)">Discovery/Demo</div>
         </div>
         <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center">
-          <div style="font-size:22px;font-weight:800;color:#16a34a">${demosAgendadas}</div>
-          <div style="font-size:10px;font-weight:700;color:var(--muted);margin-top:2px">Demos</div>
+          <div style="font-size:22px;font-weight:800;color:#16a34a">${demos}</div>
+          <div style="font-size:10px;color:var(--muted)">Demos agendadas</div>
         </div>
       </div>
     </div>
-    <!-- Cola de Trabajo -->
-    <div style="margin-bottom:14px;padding:10px 12px;background:#faf5ff;border:1px solid #e9d5ff;border-radius:10px">
-      <div style="font-size:11px;font-weight:700;color:#6d28d9;margin-bottom:6px">📥 Cola de Trabajo</div>
-      <div style="font-size:12px;color:var(--muted)">Cola por procesar: <span style="color:var(--text);font-weight:700">cargando…</span></div>
-      <div style="font-size:11px;color:var(--muted);margin-top:4px">Jim: empresas estado=nuevo → Hunter.io</div>
-      <div style="font-size:11px;color:var(--muted)">Dwight: contactos pendientes → Gemini</div>
+
+    <!-- Pam metrics -->
+    <div style="margin-bottom:14px;padding:12px;background:linear-gradient(135deg,#f5f3ff,#ede9fe);border-radius:10px;border:1px solid #ddd6fe">
+      <div style="font-size:11px;font-weight:700;color:#7c3aed;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">💌 Pam — Nurturing & Reactivación</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <div style="text-align:center;background:white;border-radius:8px;padding:8px">
+          <div style="font-size:20px;font-weight:800;color:#7c3aed">${coolOff}</div>
+          <div style="font-size:10px;color:var(--muted)">Cool Off pendientes</div>
+        </div>
+        <div style="text-align:center;background:white;border-radius:8px;padding:8px">
+          <div style="font-size:20px;font-weight:800;color:#d97706">${calificado}</div>
+          <div style="font-size:10px;color:var(--muted)">Calificados a nutrir</div>
+        </div>
+        <div style="text-align:center;background:white;border-radius:8px;padding:8px">
+          <div style="font-size:20px;font-weight:800;color:#16a34a">${nurturingSent}</div>
+          <div style="font-size:10px;color:var(--muted)">Enviados (sesión)</div>
+        </div>
+      </div>
     </div>
-    <!-- Tasa estimada de conversión -->
+
+    <!-- Actividad reciente agentes -->
     <div style="margin-bottom:14px">
-      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Tasa Estimada de Conversión</div>
-      <div style="display:flex;flex-direction:column;gap:4px">
-        <div style="display:flex;align-items:center;gap:8px;font-size:11px">
-          <span style="background:#ede9fe;color:#6d28d9;padding:2px 8px;border-radius:6px;font-weight:700;min-width:28px;text-align:center">${typeof empresasProcesadas==='number'?empresasProcesadas:'N/A'}</span>
-          <span style="color:var(--muted)">Empresas procesadas</span>
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Actividad reciente</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:20px;font-weight:800;color:#dc2626">${emailsSent}</div>
+          <div style="font-size:10px;color:var(--muted)">Emails (Michael)</div>
         </div>
-        <div style="padding-left:14px;color:#94a3b8;font-size:10px">↓</div>
-        <div style="display:flex;align-items:center;gap:8px;font-size:11px">
-          <span style="background:#dbeafe;color:#1d4ed8;padding:2px 8px;border-radius:6px;font-weight:700;min-width:28px;text-align:center">${typeof contactosEncontrados==='number'?contactosEncontrados:'N/A'}</span>
-          <span style="color:var(--muted)">Contactos encontrados</span>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:20px;font-weight:800;color:#0f766e">${calendlySent}</div>
+          <div style="font-size:10px;color:var(--muted)">Calendly (Pepper)</div>
         </div>
-        <div style="padding-left:14px;color:#94a3b8;font-size:10px">↓</div>
-        <div style="display:flex;align-items:center;gap:8px;font-size:11px">
-          <span style="background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:6px;font-weight:700;min-width:28px;text-align:center">${typeof emailsEnviados==='number'?emailsEnviados:'N/A'}</span>
-          <span style="color:var(--muted)">Emails enviados</span>
-        </div>
-        <div style="padding-left:14px;color:#94a3b8;font-size:10px">↓</div>
-        <div style="display:flex;align-items:center;gap:8px;font-size:11px">
-          <span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:6px;font-weight:700;min-width:28px;text-align:center">${demosAgendadas}</span>
-          <span style="color:var(--muted)">Demos agendadas</span>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:20px;font-weight:800;color:#64748b">${totalAgents}</div>
+          <div style="font-size:10px;color:var(--muted)">Agentes activos</div>
         </div>
       </div>
     </div>
-    <!-- Infraestructura -->
-    <div style="padding:10px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;font-size:11px;color:#15803d">
-      <div style="font-weight:700;margin-bottom:4px">🏗 Infraestructura Preparada</div>
-      <div style="margin-bottom:2px">Sistema preparado para nuevos agentes</div>
-      <div style="margin-bottom:2px">Añade nuevos agentes al array <code>AP_AGENTS</code></div>
-      <div style="font-weight:700;margin-top:6px;color:#166534">${totalAgents} agentes activos</div>
-    </div>
-  `;
+
+    <!-- Infrastructure ready -->
+    <div style="padding:10px 12px;background:var(--card2);border:1px solid var(--border);border-radius:8px;font-size:11px;color:var(--muted)">
+      <span style="color:#16a34a;font-weight:700">✓</span> Infraestructura lista para escalar — agrega nuevos agentes en el array <code>AP_AGENTS</code>
+    </div>`;
 }
+
 
 function _updateSystemBadge() {
   const cfg = _apConfig || {};
@@ -3017,6 +3025,7 @@ async function loadAgentEvents() {
   try {
     const rows = await sbFetch('GET', 'agent_events?select=id,type,payload,created_at&order=created_at.desc&limit=50');
     window._apLastEvents = {};
+    window._apLastRawEvents = Array.isArray(rows) ? rows : [];
     if (Array.isArray(rows)) {
       rows.forEach(e => {
         const agent = AP_EVENT_AGENT_MAP[e.type];
