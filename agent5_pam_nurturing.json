@@ -1,0 +1,644 @@
+{
+  "name": "Agent 5 - Pam (Nurturing & Reactivation)",
+  "nodes": [
+    {
+      "id": "a1b2c3d4",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * 1,3,5"
+            }
+          ]
+        },
+        "timezone": "America/Mexico_City"
+      }
+    },
+    {
+      "id": "e5f6a7b8",
+      "name": "HTTP Request - Get Pipeline Deals",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300],
+      "parameters": {
+        "method": "GET",
+        "url": "https://xjrgqborwhvyqgrczetq.supabase.co/rest/v1/pipeline",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdxYm9yd2h2eXFncmN6ZXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODc5ODksImV4cCI6MjA5MDQ2Mzk4OX0.DWOoshMXxmQk0deq2jEnOOAFpr_pyE9aWenvu_GPzLs"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdxYm9yd2h2eXFncmN6ZXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODc5ODksImV4cCI6MjA5MDQ2Mzk4OX0.DWOoshMXxmQk0deq2jEnOOAFpr_pyE9aWenvu_GPzLs"
+            }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "select",
+              "value": "id,opportunity_name,status,owner,mrr,acv,next_touchpoint,notes,size,estrategia,probability"
+            },
+            {
+              "name": "status",
+              "value": "in.(Cool Off,Calificado)"
+            },
+            {
+              "name": "order",
+              "value": "next_touchpoint.asc"
+            },
+            {
+              "name": "limit",
+              "value": "20"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "c9d0e1f2",
+      "name": "Code - Filter and Prepare",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const items = $input.all();\nconst deals = Array.isArray(items[0].json) ? items[0].json : [];\nconst today = new Date().toISOString().slice(0,10);\nconst filtered = deals.filter(d => {\n  if (!d.opportunity_name) return false;\n  const nt = d.next_touchpoint;\n  return !nt || nt <= today;\n});\nreturn filtered.map(d => ({ json: {\n  deal_id: String(d.id || ''),\n  empresa: String(d.opportunity_name || ''),\n  status: String(d.status || ''),\n  owner: String(d.owner || ''),\n  mrr: Number(d.mrr || 0),\n  acv: Number(d.acv || 0),\n  next_touchpoint: String(d.next_touchpoint || ''),\n  notes: String(d.notes || ''),\n  size: String(d.size || ''),\n  estrategia: String(d.estrategia || ''),\n}}));"
+      }
+    },
+    {
+      "id": "a3b4c5d6",
+      "name": "SplitInBatches",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [900, 300],
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      }
+    },
+    {
+      "id": "e7f8a9b0",
+      "name": "Google Sheets - Read Contactos",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [1120, 300],
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "1xq8IMuFZoMO3YkdTneirIPQ6VqvaAxKRN8H24BhN_AE",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Contactos",
+          "mode": "name"
+        },
+        "options": {
+          "returnFirstMatch": false
+        },
+        "limit": 1000
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "google-sheets-credential",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "id": "c1d2e3f4",
+      "name": "Code - Match Contact to Deal",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1340, 300],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const items = $input.all();\nconst contacts = items.map(i => i.json);\nlet dealData = {};\ntry {\n  const batchItems = $('SplitInBatches').all();\n  dealData = (batchItems && batchItems[0]) ? batchItems[0].json : {};\n} catch(e) {}\n\nconst empresa = (dealData.empresa || '').toLowerCase().trim();\nconst matches = contacts.filter(c => {\n  const cEmp = (c.empresa || '').toLowerCase().trim();\n  return cEmp && empresa && (cEmp.includes(empresa.split(' ')[0]) || empresa.includes(cEmp.split(' ')[0]));\n}).filter(c => c.email && String(c.email).includes('@'));\n\n// Prefer decision makers\nconst dm = matches.find(c => c.tipo_contacto === 'decision_maker');\nconst best = dm || matches[0];\n\nif (!best) {\n  return [{ json: { _no_contact: true, empresa: dealData.empresa, status: dealData.status } }];\n}\n\nconst emailRaw = String(best.email || '');\nconst email = emailRaw.replace(/\\[([^\\]]+)\\]\\([^)]+\\)/, '$1').trim();\n\nreturn [{ json: {\n  deal_id: String(dealData.deal_id || ''),\n  empresa: String(dealData.empresa || ''),\n  status: String(dealData.status || ''),\n  owner: String(dealData.owner || ''),\n  mrr: Number(dealData.mrr || 0),\n  acv: Number(dealData.acv || 0),\n  notes: String(dealData.notes || ''),\n  contact_name: String(best.nombre || ''),\n  contact_cargo: String(best.cargo || ''),\n  contact_email: email,\n  pain_point: String(best.pain_point || ''),\n  contexto: String(best.contexto_email || ''),\n  tipo: String(best.tipo_contacto || 'otro'),\n}}];"
+      }
+    },
+    {
+      "id": "a5b6c7d8",
+      "name": "IF - Contact Found",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1560, 300],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "condition-contact-found",
+              "leftValue": "={{ $json._no_contact }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "e9f0a1b2",
+      "name": "IF - Classify Stage",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1780, 180],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "condition-cool-off",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "Cool Off",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "c3d4e5f6",
+      "name": "Claude - Cool Off Reactivation",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2000, 60],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "TU_ANTHROPIC_KEY"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "jsonBody": "={{ JSON.stringify({\n  model: \"claude-haiku-4-5-20251001\",\n  max_tokens: 300,\n  system: \"Eres Abraham López, Director de Growth de Birdie (birdie.mx), plataforma de AI para comercio exterior en México. Redacta un email de REACTIVACIÓN cálido y profesional para un prospecto que está en Cool Off. El objetivo es reabrir la conversación sin presionar. Menciona que han pasado un tiempo y que tienes algo nuevo que compartir. Máximo 100 palabras. Sin markdown. Firma como Abraham López | Birdie. Formato exacto: [SUBJECT: asunto aquí]\\n\\ncuerpo del email aquí\",\n  messages: [{ role: \"user\", content: \"Reactiva este prospecto:\\nEmpresa: \" + $json.empresa + \"\\nContacto: \" + $json.contact_name + \" (\" + $json.contact_cargo + \")\\nÚltimo touchpoint: \" + ($json.notes || 'hace tiempo') + \"\\nACV potencial: $\" + $json.acv }]\n}) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "a7b8c9d0",
+      "name": "Claude - Calificado Nurturing",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2000, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "TU_ANTHROPIC_KEY"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "jsonBody": "={{ JSON.stringify({\n  model: \"claude-haiku-4-5-20251001\",\n  max_tokens: 300,\n  system: \"Eres Abraham López, Director de Growth de Birdie (birdie.mx). Redacta un email de NURTURING educativo para un lead calificado que no ha avanzado. Comparte una insight relevante sobre comercio exterior o aduanas en México. CTA suave: propón una llamada de 15 minutos para conocer su situación actual. Incluye el link de Calendly: https://calendly.com/birdiemx/birdie-meeting-abraham. Máximo 100 palabras. Sin markdown. Firma como Abraham López | Birdie. Formato exacto: [SUBJECT: asunto aquí]\\n\\ncuerpo del email aquí\",\n  messages: [{ role: \"user\", content: \"Nurturing para lead calificado:\\nEmpresa: \" + $json.empresa + \"\\nContacto: \" + $json.contact_name + \" (\" + $json.contact_cargo + \")\\nPain point: \" + ($json.pain_point || 'optimización de importaciones') + \"\\nContexto: \" + ($json.contexto || '') + \"\\nACV potencial: $\" + $json.acv }]\n}) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "e1f2a3b4",
+      "name": "Merge - Claude Responses",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [2220, 180],
+      "parameters": {
+        "mode": "append"
+      }
+    },
+    {
+      "id": "c5d6e7f8",
+      "name": "Code - Parse Claude Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2440, 180],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const items = $input.all();\nconst resp = items[0].json;\nlet batchData = {};\ntry { batchData = $('SplitInBatches').all()[0].json || {}; } catch(e) {}\nlet contactData = {};\ntry { contactData = $('Code - Match Contact to Deal').all()[0].json || {}; } catch(e) {}\n\nconst text = resp?.content?.[0]?.text || '';\nconst subjectMatch = text.match(/\\[SUBJECT:\\s*(.+?)\\]/);\nconst subject = subjectMatch ? subjectMatch[1].trim() : 'Birdie - Seguimiento';\nconst body = text.replace(/\\[SUBJECT:[^\\]]+\\]\\n?/, '').trim();\n\nreturn [{ json: {\n  deal_id: String(contactData.deal_id || batchData.deal_id || ''),\n  empresa: String(contactData.empresa || batchData.empresa || ''),\n  status: String(contactData.status || batchData.status || ''),\n  contact_email: String(contactData.contact_email || ''),\n  contact_name: String(contactData.contact_name || ''),\n  email_subject: subject,\n  email_body: body,\n  acv: Number(contactData.acv || 0),\n}}];"
+      }
+    },
+    {
+      "id": "a9b0c1d2",
+      "name": "Gmail - Send Nurturing Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [2660, 180],
+      "parameters": {
+        "operation": "send",
+        "sendTo": "={{ $json.contact_email }}",
+        "subject": "={{ $json.email_subject }}",
+        "emailType": "text",
+        "message": "={{ $json.email_body }}",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "gmail-credential",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "id": "e3f4a5b6",
+      "name": "HTTP Request - Update Pipeline Notes",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2880, 60],
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://xjrgqborwhvyqgrczetq.supabase.co/rest/v1/pipeline?id=eq.{{ $json.deal_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdxYm9yd2h2eXFncmN6ZXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODc5ODksImV4cCI6MjA5MDQ2Mzk4OX0.DWOoshMXxmQk0deq2jEnOOAFpr_pyE9aWenvu_GPzLs"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdxYm9yd2h2eXFncmN6ZXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODc5ODksImV4cCI6MjA5MDQ2Mzk4OX0.DWOoshMXxmQk0deq2jEnOOAFpr_pyE9aWenvu_GPzLs"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "jsonBody": "={{ JSON.stringify({ notes: ($json.status === 'Cool Off' ? 'Pam reactivó: ' : 'Pam nurturing: ') + new Date().toISOString().slice(0,10) + ' → ' + $json.contact_email, next_touchpoint: new Date(Date.now() + 14*86400000).toISOString().slice(0,10) }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "c7d8e9f0",
+      "name": "HTTP Request - Log to agent_events",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2880, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "https://xjrgqborwhvyqgrczetq.supabase.co/rest/v1/agent_events",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdxYm9yd2h2eXFncmN6ZXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODc5ODksImV4cCI6MjA5MDQ2Mzk4OX0.DWOoshMXxmQk0deq2jEnOOAFpr_pyE9aWenvu_GPzLs"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdxYm9yd2h2eXFncmN6ZXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODc5ODksImV4cCI6MjA5MDQ2Mzk4OX0.DWOoshMXxmQk0deq2jEnOOAFpr_pyE9aWenvu_GPzLs"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "jsonBody": "={{ JSON.stringify({ type: 'nurturing_sent', payload: { empresa: $json.empresa, status: $json.status, email: $json.contact_email, subject: $json.email_subject } }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "b1c2d3e4",
+      "name": "Wait - Rate Limit",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [3100, 180],
+      "parameters": {
+        "amount": 60,
+        "unit": "seconds"
+      },
+      "webhookId": "pam-wait-webhook"
+    },
+    {
+      "id": "f5a6b7c8",
+      "name": "Wait - No Contact Skip",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1780, 480],
+      "parameters": {
+        "amount": 1,
+        "unit": "seconds"
+      },
+      "webhookId": "pam-skip-webhook"
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request - Get Pipeline Deals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request - Get Pipeline Deals": {
+      "main": [
+        [
+          {
+            "node": "Code - Filter and Prepare",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Filter and Prepare": {
+      "main": [
+        [
+          {
+            "node": "SplitInBatches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SplitInBatches": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets - Read Contactos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets - Read Contactos": {
+      "main": [
+        [
+          {
+            "node": "Code - Match Contact to Deal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Match Contact to Deal": {
+      "main": [
+        [
+          {
+            "node": "IF - Contact Found",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Contact Found": {
+      "main": [
+        [
+          {
+            "node": "IF - Classify Stage",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait - No Contact Skip",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Classify Stage": {
+      "main": [
+        [
+          {
+            "node": "Claude - Cool Off Reactivation",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Claude - Calificado Nurturing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude - Cool Off Reactivation": {
+      "main": [
+        [
+          {
+            "node": "Merge - Claude Responses",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude - Calificado Nurturing": {
+      "main": [
+        [
+          {
+            "node": "Merge - Claude Responses",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge - Claude Responses": {
+      "main": [
+        [
+          {
+            "node": "Code - Parse Claude Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Parse Claude Response": {
+      "main": [
+        [
+          {
+            "node": "Gmail - Send Nurturing Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail - Send Nurturing Email": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request - Update Pipeline Notes",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP Request - Log to agent_events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request - Update Pipeline Notes": {
+      "main": [
+        [
+          {
+            "node": "Wait - Rate Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request - Log to agent_events": {
+      "main": [
+        [
+          {
+            "node": "Wait - Rate Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait - Rate Limit": {
+      "main": [
+        [
+          {
+            "node": "SplitInBatches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait - No Contact Skip": {
+      "main": [
+        [
+          {
+            "node": "SplitInBatches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Mexico_City"
+  },
+  "staticData": null,
+  "tags": [
+    "birdie",
+    "nurturing",
+    "reactivation",
+    "pam"
+  ],
+  "pinData": {},
+  "versionId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+}
