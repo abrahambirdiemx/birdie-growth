@@ -1791,7 +1791,7 @@
       <option>Luis Dario Davila</option>
     </select>
     <select class="crm-select" id="crm-f-status" onchange="crmRender()">
-      <option value="">Todos los status</option>
+      <option value="">Todas las etapas</option>
       <option>Calificado</option>
       <option>Weekly Hunt</option>
       <option>Active Lead</option>
@@ -1949,8 +1949,9 @@
           </select>
         </div>
         <div class="crm-field">
-          <label>Status</label>
+          <label>Etapa Pipeline</label>
           <select id="cf-status">
+            <option value="">— Sin deal activo —</option>
             <option>Calificado</option>
             <option>Weekly Hunt</option>
             <option>Active Lead</option>
@@ -1964,6 +1965,7 @@
             <option>Cool Off</option>
             <option>Churn</option>
           </select>
+          <div style="font-size:10px;color:var(--muted);margin-top:3px">Si seleccionas una etapa, se creará/actualizará el deal en Pipeline</div>
         </div>
         <div class="crm-field">
           <label>Industria</label>
@@ -4066,7 +4068,9 @@ function crmRender() {
 
   let filtered = data.filter(r => {
     if (owner  && r.r  !== owner)  return false;
-    if (status && r.st !== status) return false;
+    // Filter by pipeline stage (from linked deal) or CRM st
+    const stageToCheck = pipeByName[(r.n||'').toLowerCase().trim()]?.status || r.st || '';
+    if (status && stageToCheck !== status) return false;
     if (ind    && r.ind !== ind)   return false;
     if (canal  && r.e  !== canal)  return false;
     // Sin Contacto filter: no contact name AND no email
@@ -4092,10 +4096,11 @@ function crmRender() {
   _crmFiltered = filtered;
 
   // Stats
-  const PIPELINE_ST = new Set(['Calificado','Discovery','Demo','Propuesta','Close 2 close','Cerrado','Piloto']);
-  const leads      = data.filter(r => r.st === 'Lead').length;
-  const inPipe     = data.filter(r => PIPELINE_ST.has(r.st)).length;
-  const clients    = data.filter(r => r.st === 'Client' || r.st === 'Cliente' || r.st === 'Cerrado').length;
+  const PIPELINE_ST = new Set(['Calificado','Weekly Hunt','Active Lead','Discovery','Demo','Propuesta','Close 2 close','Cerrado','Piloto','Cliente']);
+  const getStage = r => pipeByName[(r.n||'').toLowerCase().trim()]?.status || r.st || '';
+  const leads      = data.filter(r => !getStage(r) || getStage(r) === 'Calificado' || getStage(r) === 'Weekly Hunt').length;
+  const inPipe     = data.filter(r => PIPELINE_ST.has(getStage(r))).length;
+  const clients    = data.filter(r => getStage(r) === 'Cliente' || getStage(r) === 'Cerrado').length;
   const sinContact = data.filter(r => !r.c && !r.em).length;
   const linked     = data.filter(r => r.n && pipeByName[r.n.toLowerCase().trim()]).length;
   // Unified MRR: use pipeline MRR when available and higher
@@ -4130,7 +4135,9 @@ function crmRender() {
     tbody.innerHTML = page.map(r => {
       const crmMrr = parseMoney(r.mrr);
       const crmAcv = parseMoney(r.acv);
-      const badgeCls = ST_BADGE[r.st] || 'st-badge st-lead';
+      // Use pipeline stage if linked, otherwise CRM st
+      const pipeStageDisplay = pipeDeal ? pipeDeal.status : r.st;
+      const badgeCls = ST_BADGE[pipeStageDisplay] || 'st-badge st-lead';
       // Unified data from pipeline if linked
       const pipeDeal = pipeByName[(r.n||'').toLowerCase().trim()];
       const pipeMrr = pipeDeal ? (parseMoney(pipeDeal.mrr) || 0) : 0;
@@ -4153,8 +4160,7 @@ function crmRender() {
         </td>
         <td><span class="owner-chip">${(r.r||'—').split(' ')[0]}</span></td>
         <td>
-          <span class="${badgeCls}">${r.st||'Lead'}</span>
-          ${statusMismatch ? `<span title="Pipeline dice: ${expectedCrmSt}" style="margin-left:4px;font-size:10px;cursor:pointer;color:#f97316" onclick="event.stopPropagation();syncCrmStatus(${r.id},'${expectedCrmSt}')">⚠ Sincronizar</span>` : ''}
+          <span class="${badgeCls}">${pipeStageDisplay||'Sin etapa'}</span>
         </td>
         <td style="color:var(--muted)">${industry||'—'}</td>
         <td style="color:var(--muted)">${canal||'—'}</td>
@@ -4208,7 +4214,8 @@ function crmOpenEdit(id) {
   document.getElementById('crm-edit-id').value    = id;
   document.getElementById('cf-name').value        = rec.n    || '';
   document.getElementById('cf-owner').value       = rec.r    || '';
-  document.getElementById('cf-status').value      = rec.st   || 'Lead';
+  const linkedDeal = (_pipeData||[]).find(p => p.opportunity_name?.toLowerCase().trim() === (rec.n||'').toLowerCase().trim());
+  document.getElementById('cf-status').value = linkedDeal?.status || rec.st || '';
   document.getElementById('cf-industry').value    = rec.ind  || '';
   document.getElementById('cf-canal').value       = rec.e    || '';
   document.getElementById('cf-size').value        = rec.sz   || '';
@@ -4314,6 +4321,28 @@ async function crmSave() {
           estado:        'nuevo',
         }]).catch(()=>{});
       }
+    }
+    // If a pipeline stage is selected, create/update the deal in pipeline
+    const pipeStage = document.getElementById('cf-status')?.value;
+    if (companyId && pipeStage) {
+      const existingDeal = (_pipeData || []).find(p => 
+        p.opportunity_name?.toLowerCase().trim() === name.toLowerCase().trim()
+      );
+      if (existingDeal) {
+        // Update existing deal stage
+        await sbFetch('PATCH', `deals?id=eq.${existingDeal.id}`, { status: pipeStage }).catch(()=>{});
+      } else {
+        // Create new deal in pipeline
+        await sbFetch('POST', 'deals', [{
+          company_id: companyId,
+          opportunity_name: name,
+          status: pipeStage,
+          owner: owner || 'Abraham Lopez',
+          estrategia: document.getElementById('cf-canal')?.value || '',
+        }]).catch(()=>{});
+      }
+      // Refresh pipeline data silently
+      pipeLoad().catch(()=>{});
     }
     crmCloseModal();
     crmRender();
