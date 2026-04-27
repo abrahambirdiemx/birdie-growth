@@ -1664,6 +1664,7 @@
           <th class="col-date col-hide-lg" style="color:#ea580c">Propuesta</th>
           <th class="col-touch" onclick="pipeSort('next_touchpoint')">Próx. Touch ↕</th>
           <th class="col-date" style="color:#15803d;width:90px" onclick="pipeSort('cierre_date')">Cierre Mes ↕</th>
+      <th style="width:40px"></th>
           <th class="col-canal col-hide-md">Canal</th>
           <th style="width:60px" onclick="pipeSort('probability')">Prob% ↕</th>
           <th style="width:70px" class="col-hide-md">Días pipe</th>
@@ -3231,7 +3232,7 @@ function startAutoSync(intervalMs = 60000) {
       renderPlanSemanal();
       renderCerradosTab();
       // Silent CRM refresh
-      const crmData = await sbFetch('GET', 'companies?select=id,nombre,owner,industria,canal,tamaño,mrr,acv,notas,created_at,contacts(id,nombre,cargo,tipo_contacto,email,telefono,estado)&order=created_at.desc&limit=5000');
+      const crmData = await sbFetch('GET', 'companies?select=id,nombre,owner,industria,canal,mrr,acv,notas,created_at&order=created_at.desc&limit=5000');
       if (Array.isArray(crmData)) {
         _crmData = crmData.map(comp => {
           const primaryContact = comp.contacts?.find(c => c.tipo_contacto === 'decision_maker') || comp.contacts?.[0];
@@ -3514,6 +3515,7 @@ function pipeRender() {
           title="Probabilidad de cierre %">
       </td>
       <td class="col-hide-md"><span class="cell" style="color:${dias&&dias>120?'var(--orange)':dias&&dias>60?'var(--yellow)':'var(--muted)'};font-size:11px">${dias!=null?dias+'d':'—'}</span></td>
+      <td><button class="del-btn" onclick="event.stopPropagation();pipeDeleteDeal('${r.id}')" title="Eliminar deal">✕</button></td>
     </tr>`;
   }
 
@@ -3654,6 +3656,16 @@ function pipeInlineEdit(cell, id, field, currentVal) {
   };
   input.addEventListener('blur', commit);
   input.addEventListener('keydown', e=>{ if(e.key==='Enter'){e.preventDefault();commit();} if(e.key==='Escape') pipeRender(); });
+}
+
+async function pipeDeleteDeal(id) {
+  if (!confirm('¿Eliminar este deal del pipeline?')) return;
+  try {
+    await sbFetch('DELETE', `deals?id=eq.${id}`);
+    _pipeData = _pipeData.filter(r => r.id !== id);
+    pipeRender();
+    showToast('✅ Deal eliminado', 'ok');
+  } catch(e) { showToast('Error: ' + e.message, 'err'); }
 }
 
 async function pipeUpdateField(id, field, value) {
@@ -3940,8 +3952,21 @@ function crmSet(data) { _crmData = data; }
 // ── crmLoad: fetch all CRM records from Supabase, seed on first run
 async function crmLoad() {
   try {
-    const data = await sbFetch('GET', 'companies?select=id,nombre,owner,industria,canal,tamaño,mrr,acv,notas,created_at,contacts(id,nombre,cargo,tipo_contacto,email,telefono,estado)&order=created_at.desc&limit=5000');
-    _crmData = Array.isArray(data) ? data.map(comp => {
+    // Two separate queries to avoid ñ encoding issues and FK join complexity
+    const data = await sbFetch('GET', 'companies?select=id,nombre,owner,industria,canal,mrr,acv,notas,created_at&order=created_at.desc&limit=5000');
+    // Fetch contacts separately
+    const allContacts = await sbFetch('GET', 'contacts?select=id,company_id,nombre,cargo,tipo_contacto,email,telefono,estado&limit=10000').catch(()=>[]);
+    // Group contacts by company_id
+    const contactsByCompany = {};
+    (Array.isArray(allContacts) ? allContacts : []).forEach(c => {
+      if (!contactsByCompany[c.company_id]) contactsByCompany[c.company_id] = [];
+      contactsByCompany[c.company_id].push(c);
+    });
+    // Attach contacts to companies
+    const enrichedData = Array.isArray(data) ? data.map(comp => ({
+      ...comp, contacts: contactsByCompany[comp.id] || []
+    })) : [];
+    _crmData = Array.isArray(enrichedData) ? enrichedData.map(comp => {
       const primaryContact = comp.contacts?.find(c => c.tipo_contacto === 'decision_maker') || comp.contacts?.[0];
       return {
         id: comp.id,
@@ -3966,7 +3991,7 @@ async function crmLoad() {
     if (_crmData.length === 0 && typeof CRM_SEED !== 'undefined' && CRM_SEED.length > 0) {
       showToast('⏳ Importando CRM a Supabase (' + CRM_SEED.length + ' cuentas)…', 'ok');
       await crmSeedImport();
-      const fresh = await sbFetch('GET', 'companies?select=id,nombre,owner,industria,canal,tamaño,mrr,acv,notas,created_at,contacts(id,nombre,cargo,tipo_contacto,email,telefono,estado)&order=created_at.desc&limit=5000');
+      const fresh = await sbFetch('GET', 'companies?select=id,nombre,owner,industria,canal,mrr,acv,notas,created_at&order=created_at.desc&limit=5000');
       _crmData = Array.isArray(fresh) ? fresh.map(comp => {
         const primaryContact = comp.contacts?.find(c => c.tipo_contacto === 'decision_maker') || comp.contacts?.[0];
         return {
