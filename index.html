@@ -3980,84 +3980,59 @@ function crmSet(data) { _crmData = data; }
 // ── crmLoad: fetch all CRM records from Supabase, seed on first run
 async function crmLoad() {
   try {
-    // Two separate queries to avoid ñ encoding issues and FK join complexity
-    const data = await sbFetch('GET', 'companies?select=id,nombre,owner,industria,canal,mrr,acv,notas,created_at&order=created_at.desc&limit=5000');
-    // Fetch contacts separately
-    const allContacts = await sbFetch('GET', 'contacts?select=id,company_id,nombre,cargo,tipo_contacto,email,telefono,estado&limit=10000').catch(()=>[]);
+    // Step 1: Load companies (simple query, no special chars)
+    const companies = await sbFetch('GET', 'companies?select=id,nombre,owner,industria,canal,mrr,acv,notas,created_at&order=created_at.desc&limit=1000');
+    if (!Array.isArray(companies) || companies.length === 0) {
+      console.warn('crmLoad: no companies returned', companies);
+      // Fall back to seed if empty
+      if (typeof CRM_SEED !== 'undefined' && CRM_SEED.length > 0 && (!Array.isArray(companies) || companies.length === 0)) {
+        _crmData = CRM_SEED;
+        crmRender();
+      }
+      return;
+    }
+    // Step 2: Load contacts separately
+    const contacts = await sbFetch('GET', 'contacts?select=id,company_id,nombre,cargo,tipo_contacto,email,telefono&limit=5000').catch(()=>[]);
     // Group contacts by company_id
-    const contactsByCompany = {};
-    (Array.isArray(allContacts) ? allContacts : []).forEach(c => {
-      if (!contactsByCompany[c.company_id]) contactsByCompany[c.company_id] = [];
-      contactsByCompany[c.company_id].push(c);
+    const byCompany = {};
+    (Array.isArray(contacts) ? contacts : []).forEach(c => {
+      if (!byCompany[c.company_id]) byCompany[c.company_id] = [];
+      byCompany[c.company_id].push(c);
     });
-    // Attach contacts to companies
-    const enrichedData = Array.isArray(data) ? data.map(comp => ({
-      ...comp, contacts: contactsByCompany[comp.id] || []
-    })) : [];
-    _crmData = Array.isArray(enrichedData) ? enrichedData.map(comp => {
-      const primaryContact = comp.contacts?.find(c => c.tipo_contacto === 'decision_maker') || comp.contacts?.[0];
+    // Build _crmData
+    _crmData = companies.map(comp => {
+      const ctList = byCompany[comp.id] || [];
+      const primary = ctList.find(c => c.tipo_contacto === 'decision_maker') || ctList[0];
       return {
         id: comp.id,
         n: comp.nombre || '',
         r: comp.owner || '',
-        st: comp.status || 'Lead',
+        st: 'Calificado',
         ind: comp.industria || '',
         e: comp.canal || '',
-        sz: comp.tamaño || '',
-        c: primaryContact?.nombre || '',
-        p: primaryContact?.cargo || '',
-        em: primaryContact?.email || '',
-        tel: primaryContact?.telefono || '',
+        sz: '',
+        c: primary?.nombre || '',
+        p: primary?.cargo || '',
+        em: primary?.email || '',
+        tel: primary?.telefono || '',
         mrr: comp.mrr || 0,
         acv: comp.acv || 0,
         notes: comp.notas || '',
-        _contacts: comp.contacts || [],
+        _contacts: ctList,
         _company_id: comp.id,
       };
-    }) : [];
-    // First run: if empty, batch-import CRM_SEED
-    if (_crmData.length === 0 && typeof CRM_SEED !== 'undefined' && CRM_SEED.length > 0) {
-      showToast('⏳ Importando CRM a Supabase (' + CRM_SEED.length + ' cuentas)…', 'ok');
-      await crmSeedImport();
-      const fresh = await sbFetch('GET', 'companies?select=id,nombre,owner,industria,canal,mrr,acv,notas,created_at&order=created_at.desc&limit=5000');
-      _crmData = Array.isArray(fresh) ? fresh.map(comp => {
-        const primaryContact = comp.contacts?.find(c => c.tipo_contacto === 'decision_maker') || comp.contacts?.[0];
-        return {
-          id: comp.id,
-          n: comp.nombre || '',
-          r: comp.owner || '',
-          st: comp.status || 'Lead',
-          ind: comp.industria || '',
-          e: comp.canal || '',
-          sz: comp.tamaño || '',
-          c: primaryContact?.nombre || '',
-          p: primaryContact?.cargo || '',
-          em: primaryContact?.email || '',
-          tel: primaryContact?.telefono || '',
-          mrr: comp.mrr || 0,
-          acv: comp.acv || 0,
-          notes: comp.notas || '',
-          _contacts: comp.contacts || [],
-          _company_id: comp.id,
-        };
-      }) : [];
-      showToast('✅ CRM importado — ' + _crmData.length + ' cuentas', 'ok');
-    }
+    });
+    console.log('crmLoad: loaded', _crmData.length, 'companies');
     crmRender();
   } catch(e) {
-    // Only show offline warning for network errors, not JS errors
-    if (e instanceof TypeError || e.message?.includes('fetch') || e.message?.includes('network') || e.message?.includes('Failed')) {
-      showToast('⚠ CRM sin conexión — usando datos locales', 'err');
-    } else {
-      console.error('crmLoad error:', e);
-    }
+    console.error('crmLoad error:', e);
     try {
-      const stored = localStorage.getItem(CRM_KEY);
-      _crmData = stored ? JSON.parse(stored) : (typeof CRM_SEED !== 'undefined' ? CRM_SEED : []);
-    } catch { _crmData = typeof CRM_SEED !== 'undefined' ? CRM_SEED : []; }
-    try { crmRender(); } catch(e2) { console.error('crmRender fallback error:', e2); }
+      _crmData = typeof CRM_SEED !== 'undefined' ? CRM_SEED : [];
+      crmRender();
+    } catch(e2) {}
   }
 }
+
 
 // ── crmSeedImport: batch-upload CRM_SEED to Supabase companies table (200 records/batch)
 async function crmSeedImport() {
