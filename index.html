@@ -4163,11 +4163,11 @@ function crmRender() {
     tbody.innerHTML = page.map(r => {
       const crmMrr = parseMoney(r.mrr);
       const crmAcv = parseMoney(r.acv);
+      // Unified data from pipeline if linked — must declare BEFORE use
+      const pipeDeal = pipeByName[(r.n||'').toLowerCase().trim()];
       // Use pipeline stage if linked, otherwise CRM st
       const pipeStageDisplay = pipeDeal ? pipeDeal.status : r.st;
       const badgeCls = ST_BADGE[pipeStageDisplay] || 'st-badge st-lead';
-      // Unified data from pipeline if linked
-      const pipeDeal = pipeByName[(r.n||'').toLowerCase().trim()];
       const pipeMrr = pipeDeal ? (parseMoney(pipeDeal.mrr) || 0) : 0;
       const unifiedMrr = Math.max(crmMrr, pipeMrr);
       // Industry: CRM ind, fallback empty
