@@ -112,7 +112,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"claude-3-5-sonnet-20241022\",\n  \"max_tokens\": 1024,\n  \"system\": \"Eres Abraham López, Director de Growth de Birdie (birdie.mx), plataforma de AI para comercio exterior en México. Redacta un email de prospección FRÍO, profesional y directo para un tomador de decisiones importador. REGLAS: máximo 120 palabras, sin markdown, sin asteriscos. Menciona específicamente su empresa. Enfócate en ROI: reducción de tiempos en aduana, visibilidad de cargas, ahorro en costos. CTA: propón una llamada de 15 minutos. Firma como Abraham López | Birdie. Formato exacto: [SUBJECT: asunto aquí]\\n\\ncuerpo del email aquí\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Escribe un email de prospección para:\\nNombre: {{ $json.nombre }}\\nCargo: {{ $json.cargo }}\\nEmpresa: {{ $json.company?.nombre || '' }}\\nPain point: {{ $json.pain_point }}\\nContexto: {{ $json.contexto_email }}\"\n    }\n  ]\n}",
+        "jsonBody": "={\n  \"model\": \"claude-3-5-sonnet-20241022\",\n  \"max_tokens\": 1024,\n  \"system\": \"Eres Abraham López, Director de Growth de Birdie (trybirdie.ai), plataforma de AI para comercio exterior en México. Redacta un email de prospección FRÍO, profesional y directo para un tomador de decisiones importador. REGLAS: máximo 120 palabras, sin markdown, sin asteriscos. Menciona específicamente su empresa. Enfócate en ROI: reducción de tiempos en aduana, visibilidad de cargas, ahorro en costos. CTA: propón una llamada de 15 minutos. Firma como Abraham López | Birdie. Formato exacto: [SUBJECT: asunto aquí]\\n\\ncuerpo del email aquí\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Escribe un email de prospección para:\\nNombre: {{ $json.nombre }}\\nCargo: {{ $json.cargo }}\\nEmpresa: {{ $json.company?.nombre || '' }}\\nPain point: {{ $json.pain_point }}\\nContexto: {{ $json.contexto_email }}\"\n    }\n  ]\n}",
         "options": {
           "timeout": 60000
         }
@@ -148,7 +148,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"claude-3-5-sonnet-20241022\",\n  \"max_tokens\": 1024,\n  \"system\": \"Eres Abraham López, Director de Growth de Birdie (birdie.mx). Redacta un email corto y natural para un contacto interno de una empresa importadora (NO es el tomador de decisiones). Objetivo: conseguir que te conecte con quien decide sobre logística/importaciones. REGLAS: máximo 90 palabras, tono amigable y conversacional, NO menciones precio ni hagas pitch de ventas, pide explícitamente ser conectado con la persona que maneja importaciones/logística. Formato exacto: [SUBJECT: asunto aquí]\\n\\ncuerpo del email aquí\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Escribe un email para un referidor interno:\\nNombre: {{ $json.nombre }}\\nCargo: {{ $json.cargo }}\\nEmpresa: {{ $json.company?.nombre || '' }}\\nContexto: {{ $json.contexto_email }}\"\n    }\n  ]\n}",
+        "jsonBody": "={\n  \"model\": \"claude-3-5-sonnet-20241022\",\n  \"max_tokens\": 1024,\n  \"system\": \"Eres Abraham López, Director de Growth de Birdie (trybirdie.ai). Redacta un email corto y natural para un contacto interno de una empresa importadora (NO es el tomador de decisiones). Objetivo: conseguir que te conecte con quien decide sobre logística/importaciones. REGLAS: máximo 90 palabras, tono amigable y conversacional, NO menciones precio ni hagas pitch de ventas, pide explícitamente ser conectado con la persona que maneja importaciones/logística. Formato exacto: [SUBJECT: asunto aquí]\\n\\ncuerpo del email aquí\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Escribe un email para un referidor interno:\\nNombre: {{ $json.nombre }}\\nCargo: {{ $json.cargo }}\\nEmpresa: {{ $json.company?.nombre || '' }}\\nContexto: {{ $json.contexto_email }}\"\n    }\n  ]\n}",
         "options": {
           "timeout": 60000
         }
@@ -194,7 +194,7 @@
         "emailType": "text",
         "message": "={{ $json.email_generado }}",
         "options": {
-          "replyTo": "abraham@birdie.mx",
+          "replyTo": "abraham@trybirdie.ai",
           "appendAttribution": false
         }
       },
