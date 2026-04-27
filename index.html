@@ -866,16 +866,10 @@
     Iniciativas
   </button>
   <button class="tab-btn" onclick="switchTab('autopilot',this)" style="color:#7c3aed;font-weight:700">⚡ Autopilot</button>
-  <div class="tab-dropdown" id="tab-dropdown-objetivos">
-    <button class="tab-btn tab-dropdown-trigger" id="tab-btn-objetivos" onclick="toggleObjetivosDropdown(event)">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px;vertical-align:-2px"><rect x="2" y="3" width="7" height="11"/><rect x="15" y="3" width="7" height="11"/><rect x="2" y="17" width="7" height="4"/><rect x="15" y="17" width="7" height="4"/></svg>
-      Objetivos ▾
-    </button>
-    <div class="tab-dropdown-menu" id="tab-dropdown-menu-objetivos">
-      <button onclick="switchTabDropdown('cerrados',this)">🔓 Cerrados del Mes <span id="cerrado-tab-badge" style="background:#dcfce7;color:#15803d;border-radius:8px;padding:0 5px;font-size:10px;font-weight:700;margin-left:3px">—%</span></button>
-      <button onclick="switchTabDropdown('kpis',this)">📝 Registro de KPIs</button>
-      <button onclick="switchTabDropdown('metas',this)">🏹 Metas del Trimestre</button>
-    </div>
+  <div style="display:inline-flex;align-items:center;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:-1px">
+    <button class="tab-btn" onclick="switchTab('cerrados',this)" style="padding:14px 12px;font-size:12px;border-right:1px solid var(--border);border-radius:0">🔓 Cerrados</button>
+    <button class="tab-btn" onclick="switchTab('kpis',this)" style="padding:14px 12px;font-size:12px;border-right:1px solid var(--border);border-radius:0">📝 KPIs</button>
+    <button class="tab-btn" onclick="switchTab('metas',this)" style="padding:14px 12px;font-size:12px;border-radius:0">🏹 Metas</button>
   </div>
   <button class="tab-btn" onclick="switchTab('crm',this)">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px;vertical-align:-2px"><path d="M3 21h18"/><path d="M9 21V7l7-4v18"/><path d="M3 21V11l6-4"/><rect x="13" y="11" width="4" height="4"/></svg>
