@@ -1637,11 +1637,19 @@
   </div>
 
   <!-- Weekly new/updated banner -->
-  <div id="pipe-weekly-banner" style="display:flex;align-items:center;gap:12px;margin-bottom:12px;padding:10px 16px;background:var(--card2);border:1px solid var(--border);border-radius:10px">
+  <div id="pipe-weekly-banner" style="display:flex;align-items:center;gap:12px;margin-bottom:12px;padding:10px 16px;background:var(--card2);border:1px solid var(--border);border-radius:10px;flex-wrap:wrap">
     <span style="font-size:12px;font-weight:600;color:var(--muted)">Esta semana:</span>
-    <span id="pipe-weekly-new" style="padding:3px 10px;background:#dcfce7;color:#15803d;border-radius:8px;font-size:11px;font-weight:700">0 nuevos</span>
-    <span id="pipe-weekly-upd" style="padding:3px 10px;background:#dbeafe;color:#1d4ed8;border-radius:8px;font-size:11px;font-weight:700">0 actualizados</span>
-    <span style="font-size:10px;color:var(--muted);margin-left:auto">↻ Lunes 8:00am</span>
+    <span id="pipe-weekly-new" onclick="showWeeklyDetail('new')" style="padding:4px 12px;background:#dcfce7;color:#15803d;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;transition:opacity 0.15s" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">0 nuevos</span>
+    <span id="pipe-weekly-upd" onclick="showWeeklyDetail('upd')" style="padding:4px 12px;background:#dbeafe;color:#1d4ed8;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;transition:opacity 0.15s" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">0 actualizados</span>
+    <span id="pipe-weekly-since" style="font-size:10px;color:var(--muted);margin-left:auto">↻ Lunes 8:00am</span>
+  </div>
+  <!-- Weekly detail panel -->
+  <div id="pipe-weekly-detail" style="display:none;margin-bottom:12px;padding:14px 16px;background:var(--card2);border:1px solid var(--border);border-radius:10px;animation:fadeIn 0.15s">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div style="font-size:12px;font-weight:700;color:var(--text)" id="pipe-weekly-detail-title">Detalle</div>
+      <button onclick="document.getElementById('pipe-weekly-detail').style.display='none'" style="border:none;background:none;cursor:pointer;color:var(--muted);font-size:16px">✕</button>
+    </div>
+    <div id="pipe-weekly-detail-list" style="max-height:300px;overflow-y:auto"></div>
   </div>
 
   <!-- Grid -->
@@ -3490,19 +3498,58 @@ function pipeGoPage(p){const t=Math.ceil(_pipeFiltered.length/PIPE_PAGE)||1;pipe
 
 function renderPipeWeekly() {
   const wkStart = _getWeekStart();
-  let newCount = 0, updCount = 0;
+  const now = new Date();
+  // Update "since" label
+  const sinceEl = document.getElementById('pipe-weekly-since');
+  if (sinceEl) {
+    const wkDate = new Date(wkStart + 'T08:00:00');
+    const sinceStr = wkDate.toLocaleDateString('es-MX',{weekday:'short',day:'numeric',month:'short'});
+    sinceEl.textContent = '↻ desde ' + sinceStr + ' 8:00am';
+  }
+  let newDeals = [], updDeals = [];
   (_pipeData || []).forEach(r => {
     const creAt = r.created_at ? r.created_at.slice(0,10) : null;
     const updAt = r.updated_at ? r.updated_at.slice(0,10) : null;
     const isNew = creAt && creAt >= wkStart;
     const isUpd = !isNew && updAt && updAt >= wkStart;
-    if (isNew) newCount++;
-    else if (isUpd) updCount++;
+    if (isNew) newDeals.push(r);
+    else if (isUpd) updDeals.push(r);
   });
+  window._weeklyNewDeals = newDeals;
+  window._weeklyUpdDeals = updDeals;
   const newEl = document.getElementById('pipe-weekly-new');
   const updEl = document.getElementById('pipe-weekly-upd');
-  if (newEl) newEl.textContent = newCount + ' nuevo' + (newCount !== 1 ? 's' : '');
-  if (updEl) updEl.textContent = updCount + ' actualizado' + (updCount !== 1 ? 's' : '');
+  if (newEl) newEl.textContent = newDeals.length + ' nuevo' + (newDeals.length !== 1 ? 's' : '');
+  if (updEl) updEl.textContent = updDeals.length + ' actualizado' + (updDeals.length !== 1 ? 's' : '');
+}
+
+function showWeeklyDetail(type) {
+  const detail = document.getElementById('pipe-weekly-detail');
+  const title = document.getElementById('pipe-weekly-detail-title');
+  const list = document.getElementById('pipe-weekly-detail-list');
+  if (!detail) return;
+  const deals = type === 'new' ? (window._weeklyNewDeals || []) : (window._weeklyUpdDeals || []);
+  const label = type === 'new' ? 'Nuevos esta semana' : 'Actualizados esta semana';
+  const color = type === 'new' ? '#15803d' : '#1d4ed8';
+  if (title) title.textContent = label + ' (' + deals.length + ')';
+  if (list) {
+    if (!deals.length) {
+      list.innerHTML = '<div style="text-align:center;color:var(--muted);padding:16px;font-size:12px">Sin registros esta semana</div>';
+    } else {
+      list.innerHTML = deals.map(r => {
+        const acv = parseFloat(r.acv)||0;
+        const date = (r.created_at||r.updated_at||'').slice(0,10);
+        return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border2)">
+          <div style="flex:1">
+            <div style="font-size:12px;font-weight:600;color:var(--text)">${r.opportunity_name||'—'}</div>
+            <div style="font-size:11px;color:var(--muted)">${r.status||''} · ${r.owner||''} · ${date}</div>
+          </div>
+          <div style="font-size:11px;font-weight:700;color:${color}">${acv?'$'+acv.toLocaleString():''}</div>
+        </div>`;
+      }).join('');
+    }
+  }
+  detail.style.display = detail.style.display === 'none' ? 'block' : 'none';
 }
 
 // Returns cutoff date for weekly tracking (resets Mondays at 8:00am)
