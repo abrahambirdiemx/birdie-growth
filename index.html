@@ -4336,8 +4336,12 @@ async function crmSave() {
         notes: companyRec.notas, _contacts: [], _company_id: companyId };
       _crmData.unshift(newLocal);
     }
-    // Save up to 3 contacts to contacts table
+    // Save contacts: delete existing first (on edit), then insert fresh
     if (companyId && contactsToSave.length > 0) {
+      if (editId) {
+        // Delete old contacts before inserting updated ones
+        await sbFetch('DELETE', `contacts?company_id=eq.${companyId}`).catch(()=>{});
+      }
       for (const ct of contactsToSave) {
         await sbFetch('POST', 'contacts', [{
           company_id:    companyId,
@@ -4373,8 +4377,9 @@ async function crmSave() {
       pipeLoad().catch(()=>{});
     }
     crmCloseModal();
-    crmRender();
     showToast((editId ? '✅ Cuenta actualizada — ' : '✅ Cuenta registrada — ') + name, 'ok');
+    // Reload fresh from Supabase to ensure contacts are reflected correctly
+    await crmLoad();
   } catch(e) { showToast('Error guardando CRM: ' + e.message, 'err'); }
 }
 
