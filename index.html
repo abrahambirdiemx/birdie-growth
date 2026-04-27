@@ -1775,6 +1775,8 @@
     <div class="crm-stat"><div class="crm-stat-val" id="cs-pipeline" style="color:#7c3aed">—</div><div class="crm-stat-lbl">En Pipeline</div></div>
     <div class="crm-stat"><div class="crm-stat-val" id="cs-clients" style="color:#16a34a">—</div><div class="crm-stat-lbl">Clientes</div></div>
     <div class="crm-stat"><div class="crm-stat-val" id="cs-mrr" style="color:#16a34a">—</div><div class="crm-stat-lbl">MRR Registrado</div></div>
+    <div class="crm-stat" style="cursor:pointer" onclick="toggleSinContacto()"><div class="crm-stat-val" id="cs-nocontact" style="color:#f97316">—</div><div class="crm-stat-lbl">Sin Contacto</div></div>
+    <div class="crm-stat"><div class="crm-stat-val" id="cs-linked" style="color:#7c3aed">—</div><div class="crm-stat-lbl">Ligados Pipeline</div></div>
   </div>
 
   <!-- Toolbar -->
@@ -1826,6 +1828,7 @@
       <option>Referral</option>
       <option>Evento</option>
     </select>
+    <button id="btn-sin-contacto" class="btn btn-outline" onclick="toggleSinContacto()" style="white-space:nowrap;border-color:#f97316;color:#f97316">Sin Contacto</button>
     <button class="btn btn-primary" onclick="openModal('modalCRMNew')" style="white-space:nowrap">+ Nueva Cuenta</button>
     <button class="btn btn-outline" onclick="crmExportCSV()" style="white-space:nowrap">⬇ CSV</button>
   </div>
@@ -3400,7 +3403,17 @@ function pipeRender() {
       `<input type="date" class="cell-date-input" value="${val||''}" onchange="pipeUpdateField(${r.id},'${field}',this.value||null)" style="${color?'color:'+color:''}" title="${field}">`;
     // CRM match indicator
   const crmMatch = _crmData && _crmData.find(c => c.n && r.opportunity_name && c.n.toLowerCase().trim() === r.opportunity_name.toLowerCase().trim());
-  const crmBadge = crmMatch ? `<span title="Ligado a CRM: ${crmMatch.n}" style="margin-left:5px;font-size:10px;color:#3b6ef8;cursor:pointer" onclick="pipeOpenEdit(${r.id})">🏢</span>` : '';
+  // Status sync check
+  const expectedCrmSt = PIPE_TO_CRM_STATUS[r.status];
+  const crmStatusMismatch = crmMatch && expectedCrmSt && expectedCrmSt !== crmMatch.st;
+  const crmBadge = crmMatch 
+    ? `<span title="CRM: ${crmMatch.st}${crmStatusMismatch ? ' ⚠ Desincronizado (expected: '+expectedCrmSt+')' : ' ✓'}" style="margin-left:5px;font-size:10px;color:${crmStatusMismatch?'#f97316':'#3b6ef8'};cursor:pointer" onclick="switchTab('crm',document.querySelector('.tab-btn:last-of-type'))">🏢${crmStatusMismatch?'⚠':''}</span>` 
+    : '';
+  // Unified fields: use CRM data when pipeline field is empty
+  const displayCanal = r.estrategia || (crmMatch ? crmMatch.e : '') || '';
+  const displayIndustria = crmMatch ? crmMatch.ind : '';
+  const crmMrr = crmMatch ? parsePipeMoney(crmMatch.mrr) : 0;
+  const mrrMismatch = crmMatch && crmMrr && mrr && Math.abs(crmMrr - mrr) > 100;
   // Weekly badge (resets each week Mon 00:00)
   const _wkStart = _getWeekStart();
   const updAt = r.updated_at ? r.updated_at.slice(0,10) : null;
@@ -3435,7 +3448,7 @@ function pipeRender() {
       <td class="cell-date" style="white-space:nowrap">
         <input type="month" class="cell-date-input" value="${cierreMonth}" onchange="pipeSaveCierreMonth(${r.id},this.value)" style="color:#15803d;width:100px;max-width:100px" title="Cierre estimado mes">
       </td>
-      <td class="col-hide-md" style="max-width:110px;overflow:hidden;white-space:nowrap"><span class="cell" style="color:var(--muted);font-size:11px">${r.estrategia||'—'}</span></td>
+      <td class="col-hide-md" style="max-width:110px;overflow:hidden;white-space:nowrap"><span class="cell" style="color:var(--muted);font-size:11px" title="${displayIndustria ? 'Industria: '+displayIndustria : ''}">${displayCanal||'—'}${displayIndustria?'<span style="font-size:9px;color:#7c3aed;margin-left:3px">'+displayIndustria.slice(0,6)+'</span>':''}</span></td>
       <td>
         <input type="number" class="cell-date-input" value="${prob}" min="0" max="100"
           onchange="pipeUpdateField(${r.id},'probability',parseInt(this.value)||0)"
@@ -3830,10 +3843,38 @@ const ST_BADGE = {
   'Cerrado':     'st-badge st-cerrado',
   'Client':      'st-badge st-client',
   'Piloto':      'st-badge st-pilot',
+  'Cool Off':    'st-badge st-cool',
+  'Churn':       'st-badge st-churn',
+  'Cliente':     'st-badge st-client',
+};
+
+// Pipeline stage → expected CRM status alignment
+const PIPE_TO_CRM_STATUS = {
+  'Calificado':'Lead', 'Weekly Hunt':'Lead', 'Active Lead':'Lead', 'Active lead':'Lead',
+  'Discovery':'Discovery', 'Demo':'Demo', 'Propuesta':'Propuesta',
+  'Close 2 close':'Close 2 close', 'Cerrado':'Cerrado', 'Piloto':'Piloto',
+  'Cliente':'Client', 'Cool Off':'Lead', 'Churn':'Lead',
+};
+// CRM status → suggested Pipeline stage
+const CRM_TO_PIPE_STATUS = {
+  'Lead':'Calificado', 'Discovery':'Discovery', 'Demo':'Demo',
+  'Propuesta':'Propuesta', 'Close 2 close':'Close 2 close',
+  'Cerrado':'Cerrado', 'Client':'Cliente', 'Piloto':'Piloto',
 };
 
 // ── CRM: returns in-memory cache (loaded from Supabase via crmLoad)
 function crmGet() { return _crmData; }
+
+async function syncCrmStatus(crmId, newStatus) {
+  if (!confirm(`¿Actualizar status del CRM a "${newStatus}" para coincidir con el Pipeline?`)) return;
+  try {
+    await sbFetch('PATCH', `crm?id=eq.${crmId}`, { st: newStatus });
+    const idx = _crmData.findIndex(r => r.id === crmId);
+    if (idx >= 0) _crmData[idx].st = newStatus;
+    crmRender();
+    showToast('✅ Status CRM sincronizado: ' + newStatus, 'ok');
+  } catch(e) { showToast('Error: ' + e.message, 'err'); }
+}
 
 // crmSet: updates local cache only (individual saves go via sbFetch)
 function crmSet(data) { _crmData = data; }
@@ -3895,6 +3936,18 @@ function crmSort(key) {
   crmRender();
 }
 
+var _crmSinContacto = false;
+function toggleSinContacto() {
+  _crmSinContacto = !_crmSinContacto;
+  const btn = document.getElementById('btn-sin-contacto');
+  if (btn) {
+    btn.style.background = _crmSinContacto ? '#f97316' : '';
+    btn.style.color = _crmSinContacto ? 'white' : '#f97316';
+    btn.textContent = _crmSinContacto ? '✕ Sin Contacto' : 'Sin Contacto';
+  }
+  crmRender();
+}
+
 function crmRender() {
   const data = crmGet();
   const q      = (document.getElementById('crm-search')?.value || '').toLowerCase();
@@ -3903,11 +3956,19 @@ function crmRender() {
   const ind    = document.getElementById('crm-f-industry')?.value || '';
   const canal  = document.getElementById('crm-f-canal')?.value  || '';
 
+  // Build pipeline lookup by company name for unified data
+  const pipeByName = {};
+  (_pipeData || []).forEach(p => {
+    if (p.opportunity_name) pipeByName[p.opportunity_name.toLowerCase().trim()] = p;
+  });
+
   let filtered = data.filter(r => {
     if (owner  && r.r  !== owner)  return false;
     if (status && r.st !== status) return false;
     if (ind    && r.ind !== ind)   return false;
     if (canal  && r.e  !== canal)  return false;
+    // Sin Contacto filter: no contact name AND no email
+    if (_crmSinContacto && (r.c || r.em)) return false;
     if (q) {
       const hay = ((r.n||'')+(r.c||'')+(r.em||'')+(r.tel||'')).toLowerCase();
       if (!hay.includes(q)) return false;
@@ -3930,15 +3991,27 @@ function crmRender() {
 
   // Stats
   const PIPELINE_ST = new Set(['Calificado','Discovery','Demo','Propuesta','Close 2 close','Cerrado','Piloto']);
-  const leads    = data.filter(r => r.st === 'Lead').length;
-  const inPipe   = data.filter(r => PIPELINE_ST.has(r.st)).length;
-  const clients  = data.filter(r => r.st === 'Client').length;
-  const totalMRR = data.reduce((s, r) => s + parseMoney(r.mrr), 0);
-  document.getElementById('cs-total').textContent   = data.length.toLocaleString();
-  document.getElementById('cs-leads').textContent   = leads.toLocaleString();
-  document.getElementById('cs-pipeline').textContent= inPipe.toLocaleString();
-  document.getElementById('cs-clients').textContent = clients.toLocaleString();
-  document.getElementById('cs-mrr').textContent     = '$' + Math.round(totalMRR).toLocaleString();
+  const leads      = data.filter(r => r.st === 'Lead').length;
+  const inPipe     = data.filter(r => PIPELINE_ST.has(r.st)).length;
+  const clients    = data.filter(r => r.st === 'Client' || r.st === 'Cliente' || r.st === 'Cerrado').length;
+  const sinContact = data.filter(r => !r.c && !r.em).length;
+  const linked     = data.filter(r => r.n && pipeByName[r.n.toLowerCase().trim()]).length;
+  // Unified MRR: use pipeline MRR when available and higher
+  const totalMRR   = data.reduce((s, r) => {
+    const crmMrr = parseMoney(r.mrr);
+    const pipeDeal = pipeByName[r.n?.toLowerCase().trim()];
+    const pipeMrr = pipeDeal ? (parseMoney(pipeDeal.mrr) || 0) : 0;
+    return s + Math.max(crmMrr, pipeMrr);
+  }, 0);
+  document.getElementById('cs-total').textContent    = data.length.toLocaleString();
+  document.getElementById('cs-leads').textContent    = leads.toLocaleString();
+  document.getElementById('cs-pipeline').textContent = inPipe.toLocaleString();
+  document.getElementById('cs-clients').textContent  = clients.toLocaleString();
+  document.getElementById('cs-mrr').textContent      = '$' + Math.round(totalMRR).toLocaleString();
+  const noContactEl = document.getElementById('cs-nocontact');
+  if (noContactEl) noContactEl.textContent = sinContact.toLocaleString();
+  const linkedEl = document.getElementById('cs-linked');
+  if (linkedEl) linkedEl.textContent = linked.toLocaleString();
 
   // Pagination
   const total = filtered.length;
@@ -3953,18 +4026,46 @@ function crmRender() {
     tbody.innerHTML = '<tr><td colspan="9" class="no-data">Sin resultados para este filtro.</td></tr>';
   } else {
     tbody.innerHTML = page.map(r => {
-      const mrr = parseMoney(r.mrr);
-      const acv = parseMoney(r.acv);
+      const crmMrr = parseMoney(r.mrr);
+      const crmAcv = parseMoney(r.acv);
       const badgeCls = ST_BADGE[r.st] || 'st-badge st-lead';
-      return `<tr onclick="crmOpenEdit(${r.id})">
-        <td><span class="crm-name" title="${(r.n||'').replace(/"/g,'')}">${r.n||'—'}</span><span class="crm-sub">${r.ind||''}</span></td>
+      // Unified data from pipeline if linked
+      const pipeDeal = pipeByName[(r.n||'').toLowerCase().trim()];
+      const pipeMrr = pipeDeal ? (parseMoney(pipeDeal.mrr) || 0) : 0;
+      const unifiedMrr = Math.max(crmMrr, pipeMrr);
+      // Industry: CRM ind, fallback empty
+      const industry = r.ind || '';
+      // Canal: CRM e, fallback pipeline estrategia
+      const canal = r.e || (pipeDeal ? pipeDeal.estrategia : '') || '';
+      // Status sync check
+      const expectedCrmSt = pipeDeal ? PIPE_TO_CRM_STATUS[pipeDeal.status] : null;
+      const statusMismatch = expectedCrmSt && expectedCrmSt !== r.st;
+      const pipeStage = pipeDeal ? pipeDeal.status : null;
+      // Contact indicator
+      const hasContact = r.c || r.em;
+      return `<tr onclick="crmOpenEdit(${r.id})" style="${!hasContact ? 'background:#fff7ed' : ''}">
+        <td>
+          <span class="crm-name" title="${(r.n||'').replace(/"/g,'')}">${r.n||'—'}</span>
+          ${pipeStage ? `<span style="margin-left:4px;font-size:9px;padding:1px 5px;background:#ede9fe;color:#7c3aed;border-radius:4px" title="Pipeline: ${pipeStage}">🔗 ${pipeStage}</span>` : ''}
+          <span class="crm-sub">${industry}</span>
+        </td>
         <td><span class="owner-chip">${(r.r||'—').split(' ')[0]}</span></td>
-        <td><span class="${badgeCls}">${r.st||'Lead'}</span></td>
-        <td style="color:var(--muted)">${r.ind||'—'}</td>
-        <td style="color:var(--muted)">${r.e||'—'}</td>
-        <td><div style="font-size:11px;font-weight:600">${r.c||'—'}</div><div style="font-size:10px;color:var(--muted)">${r.em||''}</div></td>
-        <td style="font-weight:700;color:var(--green-text)">${mrr ? '$'+mrr.toLocaleString() : '—'}</td>
-        <td style="font-weight:700">${acv ? '$'+acv.toLocaleString() : '—'}</td>
+        <td>
+          <span class="${badgeCls}">${r.st||'Lead'}</span>
+          ${statusMismatch ? `<span title="Pipeline dice: ${expectedCrmSt}" style="margin-left:4px;font-size:10px;cursor:pointer;color:#f97316" onclick="event.stopPropagation();syncCrmStatus(${r.id},'${expectedCrmSt}')">⚠ Sincronizar</span>` : ''}
+        </td>
+        <td style="color:var(--muted)">${industry||'—'}</td>
+        <td style="color:var(--muted)">${canal||'—'}</td>
+        <td>
+          ${hasContact 
+            ? `<div style="font-size:11px;font-weight:600">${r.c||'—'}</div><div style="font-size:10px;color:var(--muted)">${r.em||''}</div>`
+            : `<span style="font-size:10px;color:#f97316;font-weight:600">⚠ Sin contacto</span>`}
+        </td>
+        <td style="font-weight:700;color:var(--green-text)">
+          ${unifiedMrr ? '$'+unifiedMrr.toLocaleString() : '—'}
+          ${pipeMrr && crmMrr && pipeMrr !== crmMrr ? `<span title="CRM: $${crmMrr.toLocaleString()} | Pipeline: $${pipeMrr.toLocaleString()}" style="font-size:9px;color:#f97316;margin-left:3px;cursor:help">⚠</span>` : ''}
+        </td>
+        <td style="font-weight:700">${crmAcv ? '$'+crmAcv.toLocaleString() : '—'}</td>
         <td><button class="del-btn" onclick="event.stopPropagation();crmDeleteId(${r.id})" title="Eliminar">✕</button></td>
       </tr>`;
     }).join('');
