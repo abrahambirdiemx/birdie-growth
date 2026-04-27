@@ -530,7 +530,8 @@
   .tab-dropdown-trigger { color:var(--muted); }
   .tab-dropdown-trigger.active-dropdown { color:var(--accent); border-bottom-color:var(--accent); }
   .tab-dropdown-menu { display:none; position:absolute; top:calc(100% + 2px); left:0; background:white; border:1px solid var(--border); border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,0.12); z-index:200; min-width:200px; padding:6px; }
-  .tab-dropdown:hover .tab-dropdown-menu { display:flex; flex-direction:column; }
+  .tab-dropdown:hover .tab-dropdown-menu,
+  .tab-dropdown-menu.open { display:flex; flex-direction:column; }
   .tab-dropdown-menu button { text-align:left; padding:9px 14px; border:none; background:none; cursor:pointer; font-size:12.5px; font-weight:600; color:var(--text); border-radius:7px; width:100%; }
   .tab-dropdown-menu button:hover { background:#f1f5f9; color:var(--accent); }
   /* ─── PLAN SEMANAL / COPILOT ─────────── */
@@ -840,10 +841,7 @@
     </div>
   </div>
   <div class="topbar-right">
-    <button class="btn btn-outline" onclick="openModal('modalNew')">✨ Nuevos registros <span class="badge-count" style="background:#3b6ef8;color:#fff">11</span></button>
-    <button class="btn btn-primary" onclick="openModal('modalUpdates')">🔄 Actualizaciones <span class="badge-count" style="background:rgba(255,255,255,0.25)">9</span></button>
     <button class="btn btn-green" id="syncBtn" onclick="pipeLoad()" title="Recargar datos de Supabase">🔄 Sync</button>
-    <div class="health-pill" id="health-pill">⚠ Health: 38/100</div>
     <span id="topbar-user" style="font-size:12px;color:var(--muted);margin-left:4px"></span>
     <button class="btn btn-outline" onclick="doLogout()" title="Cerrar sesión" style="font-size:11px;padding:4px 10px">🚪 Salir</button>
   </div>
@@ -851,20 +849,38 @@
 
 <!-- ── TABS ─────────────────────────────────── -->
 <div class="tab-nav">
-  <button class="tab-btn active" onclick="switchTab('pipeline',this)">📊 Dashboard</button>
-  <button class="tab-btn" onclick="switchTab('plan',this)">📋 Plan Semanal</button>
-  <button class="tab-btn" onclick="switchTab('deals',this)">🔥 Pipeline</button>
-  <button class="tab-btn" onclick="switchTab('iniciativas',this)">🚀 Iniciativas Clave</button>
+  <button class="tab-btn active" onclick="switchTab('pipeline',this)">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px;vertical-align:-2px"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    Dashboard
+  </button>
+  <button class="tab-btn" onclick="switchTab('plan',this)">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px;vertical-align:-2px"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="14" x2="8" y2="14" stroke-width="3" stroke-linecap="round"/><line x1="12" y1="14" x2="12" y2="14" stroke-width="3" stroke-linecap="round"/><line x1="16" y1="14" x2="16" y2="14" stroke-width="3" stroke-linecap="round"/></svg>
+    Plan Semanal
+  </button>
+  <button class="tab-btn" onclick="switchTab('deals',this)">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px;vertical-align:-2px"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>
+    Pipeline
+  </button>
+  <button class="tab-btn" onclick="switchTab('iniciativas',this)">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px;vertical-align:-2px"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+    Iniciativas
+  </button>
   <button class="tab-btn" onclick="switchTab('autopilot',this)" style="color:#7c3aed;font-weight:700">⚡ Autopilot</button>
   <div class="tab-dropdown" id="tab-dropdown-objetivos">
-    <button class="tab-btn tab-dropdown-trigger" id="tab-btn-objetivos">🎯 Objetivos ▾</button>
-    <div class="tab-dropdown-menu">
+    <button class="tab-btn tab-dropdown-trigger" id="tab-btn-objetivos" onclick="toggleObjetivosDropdown(event)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px;vertical-align:-2px"><rect x="2" y="3" width="7" height="11"/><rect x="15" y="3" width="7" height="11"/><rect x="2" y="17" width="7" height="4"/><rect x="15" y="17" width="7" height="4"/></svg>
+      Objetivos ▾
+    </button>
+    <div class="tab-dropdown-menu" id="tab-dropdown-menu-objetivos">
       <button onclick="switchTabDropdown('cerrados',this)">🔓 Cerrados del Mes <span id="cerrado-tab-badge" style="background:#dcfce7;color:#15803d;border-radius:8px;padding:0 5px;font-size:10px;font-weight:700;margin-left:3px">—%</span></button>
       <button onclick="switchTabDropdown('kpis',this)">📝 Registro de KPIs</button>
       <button onclick="switchTabDropdown('metas',this)">🏹 Metas del Trimestre</button>
     </div>
   </div>
-  <button class="tab-btn" onclick="switchTab('crm',this)">🏢 CRM</button>
+  <button class="tab-btn" onclick="switchTab('crm',this)">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px;vertical-align:-2px"><path d="M3 21h18"/><path d="M9 21V7l7-4v18"/><path d="M3 21V11l6-4"/><rect x="13" y="11" width="4" height="4"/></svg>
+    CRM
+  </button>
 </div>
 
 <!-- ══════════════════════════════════════
@@ -1049,10 +1065,6 @@
           <tr class="row-new"><td><strong>AXALTA</strong> <span class="tag-new">NUEVO</span></td><td><span class="stage-tag tag-discovery">🔭 Discovery</span></td><td><span class="owner-chip">Daniel</span></td><td><span class="acv-value">—</span></td><td>—</td><td>0d</td><td><span style="color:var(--muted)">Por agendar</span></td><td data-tip="Nuevo hoy, entró directo a Discovery">🆕</td></tr>
         </tbody>
       </table>
-    </div>
-    <div style="margin-top:10px;font-size:11px;color:var(--muted);padding:0 4px">
-      <span style="display:inline-flex;align-items:center;gap:4px;margin-right:12px"><span style="width:10px;height:10px;background:#f0fdf4;border:1px solid #16a34a;border-radius:2px;display:inline-block"></span> Nuevo cierre esta semana</span>
-      <span style="display:inline-flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:#eff6ff;border:1px solid #3b6ef8;border-radius:2px;display:inline-block"></span> Nuevo registro</span>
     </div>
   </div>
 
@@ -1624,6 +1636,14 @@
     <button class="btn btn-outline" id="groupByBtn" onclick="pipeToggleGroup()" title="Agrupar por etapa">☰ Agrupar</button>
   </div>
 
+  <!-- Weekly new/updated banner -->
+  <div id="pipe-weekly-banner" style="display:flex;align-items:center;gap:12px;margin-bottom:12px;padding:10px 16px;background:var(--card2);border:1px solid var(--border);border-radius:10px">
+    <span style="font-size:12px;font-weight:600;color:var(--muted)">Esta semana:</span>
+    <span id="pipe-weekly-new" style="padding:3px 10px;background:#dcfce7;color:#15803d;border-radius:8px;font-size:11px;font-weight:700">0 nuevos</span>
+    <span id="pipe-weekly-upd" style="padding:3px 10px;background:#dbeafe;color:#1d4ed8;border-radius:8px;font-size:11px;font-weight:700">0 actualizados</span>
+    <span style="font-size:10px;color:var(--muted);margin-left:auto">↻ Lunes 8:00am</span>
+  </div>
+
   <!-- Grid -->
   <div class="grid-wrap">
     <table class="grid-table" id="pipe-grid">
@@ -1873,13 +1893,10 @@
         </div>
       </div>
 
-      <!-- Configuration Checklist -->
+      <!-- Autopilot Analytics Panel -->
       <div class="card2" style="padding:18px">
-        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:14px">⚙️ Configuración n8n</div>
-        <div id="ap-checklist"><!-- Rendered by JS --></div>
-        <div style="margin-top:12px;padding:10px;background:#f0fdf4;border-radius:8px;border:1px solid #bbf7d0;font-size:11px;color:#15803d">
-          <strong>Instrucción:</strong> Abre n8n → cada workflow → busca el texto <code>TU_GOOGLE_SHEET_ID</code> y reemplaza por tu Sheet ID real.
-        </div>
+        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:14px">📈 Métricas Autopilot</div>
+        <div id="ap-analytics"><!-- Rendered by JS --></div>
       </div>
     </div>
 
@@ -2088,8 +2105,20 @@ function switchTab(id, btn) {
   if (id === 'plan')      renderPlanSemanal();
   if (id === 'autopilot') renderAutopilot();
 }
+// Objetivos dropdown — toggle on click
+function toggleObjetivosDropdown(e) {
+  e.stopPropagation();
+  const menu = document.getElementById('tab-dropdown-menu-objetivos');
+  if (!menu) return;
+  menu.classList.toggle('open');
+  // Close when clicking outside
+  const close = () => { menu.classList.remove('open'); document.removeEventListener('click', close); };
+  if (menu.classList.contains('open')) setTimeout(() => document.addEventListener('click', close), 10);
+}
 // Objetivos dropdown sub-tabs
 function switchTabDropdown(id, btn) {
+  const menu = document.getElementById('tab-dropdown-menu-objetivos');
+  if (menu) menu.classList.remove('open');
   switchTab(id, null);
   const trigger = document.getElementById('tab-btn-objetivos');
   if (trigger) trigger.classList.add('active-dropdown');
@@ -2524,53 +2553,173 @@ function kpiChatReset() {
 // ─── AUTOPILOT ───────────────────────────────────────────────────────────────
 var AP_CONFIG_KEY = 'birdie_autopilot_config_v1';
 
-// The Office character SVG avatars
+// The Office character SVG avatars (detailed)
 var AP_AGENT_AVATARS = {
   jim: `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+    <!-- Background -->
     <circle cx="30" cy="30" r="30" fill="#2563eb"/>
-    <circle cx="30" cy="22" r="10" fill="#fde68a"/>
-    <ellipse cx="30" cy="42" rx="14" ry="10" fill="#fde68a"/>
-    <rect x="23" y="30" width="14" height="8" fill="#1e40af" rx="2"/>
-    <rect x="28" y="30" width="4" height="10" fill="#93c5fd"/>
-    <circle cx="26" cy="21" r="1.5" fill="#1e3a5f"/>
-    <circle cx="34" cy="21" r="1.5" fill="#1e3a5f"/>
-    <path d="M26 26 Q30 29 34 26" stroke="#1e3a5f" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-    <text x="30" y="58" text-anchor="middle" fill="white" font-size="7" font-weight="bold" font-family="sans-serif">JIM</text>
+    <!-- Neck -->
+    <rect x="26" y="33" width="8" height="7" fill="#fcd9a0" rx="2"/>
+    <!-- Shirt / open collar -->
+    <path d="M14 60 Q14 44 22 40 L26 42 L30 48 L34 42 L38 40 Q46 44 46 60 Z" fill="#eff6ff"/>
+    <!-- Collar left -->
+    <path d="M26 40 L24 46 L30 44 Z" fill="white"/>
+    <!-- Collar right -->
+    <path d="M34 40 L36 46 L30 44 Z" fill="white"/>
+    <!-- Head shape -->
+    <ellipse cx="30" cy="23" rx="12" ry="13" fill="#fcd9a0"/>
+    <!-- Wavy brown hair -->
+    <path d="M18 20 Q18 8 30 8 Q42 8 42 20 Q42 14 38 12 Q34 10 30 10 Q26 10 22 12 Q18 14 18 20Z" fill="#7c5c32"/>
+    <!-- Hair waves on sides -->
+    <path d="M18 20 Q17 17 19 15" stroke="#7c5c32" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M42 20 Q43 17 41 15" stroke="#7c5c32" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <!-- Ears -->
+    <ellipse cx="18" cy="24" rx="2.5" ry="3" fill="#fcd9a0"/>
+    <ellipse cx="42" cy="24" rx="2.5" ry="3" fill="#fcd9a0"/>
+    <!-- Eyes (friendly, relaxed) -->
+    <ellipse cx="25.5" cy="22" rx="2.5" ry="2.2" fill="white"/>
+    <ellipse cx="34.5" cy="22" rx="2.5" ry="2.2" fill="white"/>
+    <circle cx="25.5" cy="22.5" r="1.4" fill="#4a3420"/>
+    <circle cx="34.5" cy="22.5" r="1.4" fill="#4a3420"/>
+    <!-- Pupils glint -->
+    <circle cx="26" cy="22" r="0.5" fill="white"/>
+    <circle cx="35" cy="22" r="0.5" fill="white"/>
+    <!-- Eyebrows -->
+    <path d="M22.5 19.5 Q25.5 18.5 28.5 19.5" stroke="#5c3d1e" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+    <path d="M31.5 19.5 Q34.5 18.5 37.5 19.5" stroke="#5c3d1e" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+    <!-- Nose -->
+    <path d="M29 26 Q30 28 31 26" stroke="#d4a76a" stroke-width="1" fill="none" stroke-linecap="round"/>
+    <!-- Signature Jim smirk (slightly asymmetric) -->
+    <path d="M24 30 Q28 33 36 31" stroke="#c0784a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    <!-- Label -->
+    <text x="30" y="58.5" text-anchor="middle" fill="white" font-size="7" font-weight="bold" font-family="sans-serif">JIM</text>
   </svg>`,
   dwight: `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+    <!-- Background -->
     <circle cx="30" cy="30" r="30" fill="#d97706"/>
-    <circle cx="30" cy="22" r="10" fill="#fde68a"/>
-    <ellipse cx="30" cy="42" rx="14" ry="10" fill="#fde68a"/>
-    <rect x="23" y="30" width="14" height="8" fill="#92400e" rx="2"/>
-    <rect x="28" y="30" width="4" height="10" fill="#fbbf24"/>
-    <circle cx="26" cy="21" r="1.5" fill="#1e3a5f"/>
-    <circle cx="34" cy="21" r="1.5" fill="#1e3a5f"/>
-    <rect x="24" y="19" width="5" height="1" fill="#4b5563" rx="0.5"/>
-    <rect x="31" y="19" width="5" height="1" fill="#4b5563" rx="0.5"/>
-    <path d="M27 26 Q30 25 33 26" stroke="#1e3a5f" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-    <text x="30" y="58" text-anchor="middle" fill="white" font-size="6" font-weight="bold" font-family="sans-serif">DWIGHT</text>
+    <!-- Neck -->
+    <rect x="26" y="33" width="8" height="7" fill="#fcd9a0" rx="2"/>
+    <!-- Mustard shirt body -->
+    <path d="M14 60 Q14 44 22 40 L26 42 L30 46 L34 42 L38 40 Q46 44 46 60 Z" fill="#ca8a04"/>
+    <!-- Tie -->
+    <path d="M30 42 L27.5 47 L30 57 L32.5 47 Z" fill="#92400e"/>
+    <path d="M27.5 42 L32.5 42 L31 46 L29 46 Z" fill="#78350f"/>
+    <!-- Head shape (slightly elongated) -->
+    <ellipse cx="30" cy="23" rx="11.5" ry="13.5" fill="#fcd9a0"/>
+    <!-- Dark combed-over hair -->
+    <path d="M18 21 Q18 7 30 7 Q42 7 42 21 Q40 10 30 9 Q22 9 18 21 Z" fill="#2d2416"/>
+    <!-- Comb-over detail -->
+    <path d="M18 21 Q22 12 35 10" stroke="#3d3220" stroke-width="1.5" fill="none"/>
+    <path d="M20 19 Q24 13 37 11" stroke="#3d3220" stroke-width="1" fill="none"/>
+    <!-- Ears -->
+    <ellipse cx="18.5" cy="24" rx="2.5" ry="3" fill="#fcd9a0"/>
+    <ellipse cx="41.5" cy="24" rx="2.5" ry="3" fill="#fcd9a0"/>
+    <!-- Rectangular glasses frames -->
+    <rect x="21" y="19.5" width="7.5" height="5" rx="1" fill="none" stroke="#2d2416" stroke-width="1.5"/>
+    <rect x="31.5" y="19.5" width="7.5" height="5" rx="1" fill="none" stroke="#2d2416" stroke-width="1.5"/>
+    <!-- Glasses bridge -->
+    <line x1="28.5" y1="22" x2="31.5" y2="22" stroke="#2d2416" stroke-width="1.2"/>
+    <!-- Glasses side arms -->
+    <line x1="21" y1="22" x2="18.5" y2="22.5" stroke="#2d2416" stroke-width="1.2"/>
+    <line x1="39" y1="22" x2="41.5" y2="22.5" stroke="#2d2416" stroke-width="1.2"/>
+    <!-- Eyes (behind glasses, stern) -->
+    <circle cx="24.8" cy="22" r="1.3" fill="#2d2416"/>
+    <circle cx="35.3" cy="22" r="1.3" fill="#2d2416"/>
+    <circle cx="25.2" cy="21.7" r="0.4" fill="white"/>
+    <circle cx="35.7" cy="21.7" r="0.4" fill="white"/>
+    <!-- Eyebrows (stern, flat) -->
+    <line x1="21.5" y1="18.8" x2="28.5" y2="18.8" stroke="#2d2416" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="31.5" y1="18.8" x2="38.5" y2="18.8" stroke="#2d2416" stroke-width="1.5" stroke-linecap="round"/>
+    <!-- Nose (prominent) -->
+    <path d="M29 26.5 Q30 29 31 26.5" stroke="#c8956a" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+    <!-- Stern straight mouth -->
+    <line x1="25" y1="31" x2="35" y2="31" stroke="#b07040" stroke-width="1.5" stroke-linecap="round"/>
+    <!-- Label -->
+    <text x="30" y="58.5" text-anchor="middle" fill="white" font-size="6" font-weight="bold" font-family="sans-serif">DWIGHT</text>
   </svg>`,
   michael: `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+    <!-- Background with clock hint -->
     <circle cx="30" cy="30" r="30" fill="#dc2626"/>
-    <circle cx="30" cy="22" r="10" fill="#fde68a"/>
-    <ellipse cx="30" cy="42" rx="14" ry="10" fill="#fde68a"/>
-    <rect x="23" y="30" width="14" height="8" fill="#7f1d1d" rx="2"/>
-    <rect x="28" y="30" width="4" height="10" fill="#fca5a5"/>
-    <circle cx="26" cy="21" r="1.5" fill="#1e3a5f"/>
-    <circle cx="34" cy="21" r="1.5" fill="#1e3a5f"/>
-    <path d="M25 26 Q30 31 35 26" stroke="#1e3a5f" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-    <text x="30" y="58" text-anchor="middle" fill="white" font-size="5.5" font-weight="bold" font-family="sans-serif">MICHAEL</text>
+    <!-- Clock shape behind (subtle) -->
+    <circle cx="50" cy="10" r="8" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
+    <line x1="50" y1="10" x2="50" y2="5.5" stroke="rgba(255,255,255,0.25)" stroke-width="1.2"/>
+    <line x1="50" y1="10" x2="53.5" y2="11" stroke="rgba(255,255,255,0.25)" stroke-width="1.2"/>
+    <!-- Neck -->
+    <rect x="26" y="33" width="8" height="7" fill="#fcd9a0" rx="2"/>
+    <!-- Formal dark suit jacket -->
+    <path d="M14 60 Q14 44 22 40 L26 42 L30 45 L34 42 L38 40 Q46 44 46 60 Z" fill="#1e293b"/>
+    <!-- White shirt visible -->
+    <path d="M26 42 L30 45 L34 42 L33 46 L30 50 L27 46 Z" fill="#f1f5f9"/>
+    <!-- Colorful tie (striped) -->
+    <path d="M30 44 L27.5 50 L30 58 L32.5 50 Z" fill="#7c3aed"/>
+    <line x1="28" y1="47" x2="32" y2="47" stroke="#3b6ef8" stroke-width="1"/>
+    <line x1="27.8" y1="50" x2="32.2" y2="50" stroke="#dc2626" stroke-width="1"/>
+    <!-- Head (slightly rounder) -->
+    <ellipse cx="30" cy="22.5" rx="12" ry="13" fill="#fcd9a0"/>
+    <!-- Short dark hair combed back -->
+    <path d="M18 20 Q18 8 30 7 Q42 8 42 20 Q38 8 30 9 Q22 9 18 20 Z" fill="#1c1008"/>
+    <!-- Hair texture -->
+    <path d="M20 18 Q25 11 35 10 Q38 10 41 14" stroke="#2d1f0a" stroke-width="1.2" fill="none"/>
+    <path d="M21 20 Q26 13 36 12" stroke="#2d1f0a" stroke-width="0.8" fill="none"/>
+    <!-- Ears -->
+    <ellipse cx="18" cy="24" rx="2.5" ry="3" fill="#fcd9a0"/>
+    <ellipse cx="42" cy="24" rx="2.5" ry="3" fill="#fcd9a0"/>
+    <!-- Eyes (wide, friendly) -->
+    <ellipse cx="25" cy="22" rx="2.8" ry="2.5" fill="white"/>
+    <ellipse cx="35" cy="22" rx="2.8" ry="2.5" fill="white"/>
+    <circle cx="25" cy="22.5" r="1.5" fill="#3d2b0d"/>
+    <circle cx="35" cy="22.5" r="1.5" fill="#3d2b0d"/>
+    <circle cx="25.5" cy="22" r="0.5" fill="white"/>
+    <circle cx="35.5" cy="22" r="0.5" fill="white"/>
+    <!-- Eyebrows (slightly raised, eager) -->
+    <path d="M22 19 Q25 17.5 28 19" stroke="#1c1008" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+    <path d="M32 19 Q35 17.5 38 19" stroke="#1c1008" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+    <!-- Nose (round) -->
+    <ellipse cx="30" cy="27" rx="2" ry="1.5" fill="#e8b077" opacity="0.6"/>
+    <!-- Big friendly smile -->
+    <path d="M23 31 Q30 37 37 31" stroke="#b07040" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+    <!-- Teeth hint -->
+    <path d="M24.5 31.5 Q30 35.5 35.5 31.5" stroke="white" stroke-width="1.2" fill="none" opacity="0.7"/>
+    <!-- Label -->
+    <text x="30" y="58.5" text-anchor="middle" fill="white" font-size="5.5" font-weight="bold" font-family="sans-serif">MICHAEL</text>
   </svg>`,
   pepper: `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+    <!-- Background -->
     <circle cx="30" cy="30" r="30" fill="#0f766e"/>
-    <circle cx="30" cy="22" r="10" fill="#fde68a"/>
-    <ellipse cx="30" cy="42" rx="14" ry="10" fill="#fde68a"/>
-    <rect x="23" y="30" width="14" height="8" fill="#134e4a" rx="2"/>
-    <path d="M20 18 Q30 10 40 18" stroke="#b45309" stroke-width="2.5" fill="none"/>
-    <circle cx="26" cy="21" r="1.5" fill="#1e3a5f"/>
-    <circle cx="34" cy="21" r="1.5" fill="#1e3a5f"/>
-    <path d="M26 26 Q30 29 34 26" stroke="#1e3a5f" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-    <text x="30" y="58" text-anchor="middle" fill="white" font-size="6" font-weight="bold" font-family="sans-serif">PEPPER</text>
+    <!-- Neck -->
+    <rect x="26" y="33" width="8" height="7" fill="#fcd9a0" rx="2"/>
+    <!-- Blazer/shirt body -->
+    <path d="M14 60 Q14 44 22 40 L26 42 L30 46 L34 42 L38 40 Q46 44 46 60 Z" fill="#134e4a"/>
+    <!-- White blouse visible -->
+    <path d="M26 42 L30 46 L34 42 L33 47 L30 50 L27 47 Z" fill="#f8fafc"/>
+    <!-- Head (slightly narrower) -->
+    <ellipse cx="30" cy="22.5" rx="11.5" ry="13" fill="#fcd9a0"/>
+    <!-- Long hair with wave -->
+    <path d="M18 20 Q18 7 30 7 Q42 7 42 20 Q43 32 40 38 Q36 42 34 40 Q42 28 42 20 Q38 8 30 9 Q22 9 18 20 Z" fill="#b45309"/>
+    <!-- Hair on left side -->
+    <path d="M18 20 Q17 30 18 38 Q21 44 22 40 Q18 30 18 20 Z" fill="#b45309"/>
+    <!-- Hair wave texture -->
+    <path d="M18 22 Q16 28 17 34 Q18 38 20 40" stroke="#92400e" stroke-width="1" fill="none"/>
+    <path d="M42 22 Q44 28 43 34 Q42 38 40 40" stroke="#92400e" stroke-width="1" fill="none"/>
+    <!-- Ears -->
+    <ellipse cx="18.5" cy="24" rx="2" ry="2.5" fill="#fcd9a0"/>
+    <ellipse cx="41.5" cy="24" rx="2" ry="2.5" fill="#fcd9a0"/>
+    <!-- Eyes (confident) -->
+    <ellipse cx="25.5" cy="22" rx="2.5" ry="2.2" fill="white"/>
+    <ellipse cx="34.5" cy="22" rx="2.5" ry="2.2" fill="white"/>
+    <circle cx="25.5" cy="22.5" r="1.4" fill="#2d4a1e"/>
+    <circle cx="34.5" cy="22.5" r="1.4" fill="#2d4a1e"/>
+    <circle cx="26" cy="22" r="0.4" fill="white"/>
+    <circle cx="35" cy="22" r="0.4" fill="white"/>
+    <!-- Eyebrows (arched, expressive) -->
+    <path d="M22.5 19.5 Q25.5 18 28.5 19.5" stroke="#7c3d0a" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+    <path d="M31.5 19.5 Q34.5 18 37.5 19.5" stroke="#7c3d0a" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+    <!-- Nose -->
+    <path d="M29 26.5 Q30 28.5 31 26.5" stroke="#c8956a" stroke-width="1" fill="none" stroke-linecap="round"/>
+    <!-- Confident smile -->
+    <path d="M25 30.5 Q30 34 35 30.5" stroke="#b07040" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    <!-- Label -->
+    <text x="30" y="58.5" text-anchor="middle" fill="white" font-size="6" font-weight="bold" font-family="sans-serif">PEPPER</text>
   </svg>`,
 };
 
@@ -2645,7 +2794,7 @@ function renderAutopilot() {
   _apConfig = _apLoadConfig();
   _renderAgentCards();
   _renderFunnel();
-  _renderChecklist();
+  _renderAutopilotAnalytics();
   loadAgentEvents();
   _updateSystemBadge();
 }
@@ -2699,21 +2848,7 @@ function _renderFunnel() {
 }
 
 function _renderChecklist() {
-  const el = document.getElementById('ap-checklist');
-  if (!el) return;
-  const cfg = _apConfig || {};
-  const checked = AP_CHECKLIST.filter(c => cfg[c.id]).length;
-  el.innerHTML = `<div style="font-size:11px;color:var(--muted);margin-bottom:10px">${checked}/${AP_CHECKLIST.length} completados</div>` +
-    AP_CHECKLIST.map(item => {
-      const isDone = !!cfg[item.id];
-      return `<div class="ap-check-row" onclick="apToggleCheck('${item.id}')">
-        <div class="ap-check-box ${isDone ? 'checked' : ''}">
-          ${isDone ? '✓' : ''}
-        </div>
-        <div class="ap-check-label">${item.label}</div>
-        <div class="ap-check-tag" title="${item.hint}">${item.tag}</div>
-      </div>`;
-    }).join('');
+  // kept for compatibility — no-op since checklist panel was replaced with analytics
 }
 
 function apToggleCheck(id) {
@@ -2721,8 +2856,81 @@ function apToggleCheck(id) {
   cfg[id] = !cfg[id];
   _apSaveConfig(cfg);
   _apConfig = cfg;
-  _renderChecklist();
   _updateSystemBadge();
+}
+
+function _renderAutopilotAnalytics() {
+  const el = document.getElementById('ap-analytics');
+  if (!el) return;
+  // Filter pipeline by Autopilot strategy
+  const apDeals = (_pipeData || []).filter(r => (r.estrategia || '').toLowerCase().includes('autopilot'));
+  const inDiscoveryDemo = apDeals.filter(r => r.status === 'Discovery' || r.status === 'Demo').length;
+  const demosAgendadas = apDeals.filter(r => r.status === 'Demo').length;
+  const totalAgents = AP_AGENTS.length;
+  // Funnel estimate
+  const funnelStates = window._apFunnelCounts || {};
+  const empresasProcesadas = funnelStates['empresas_procesadas'] || funnelStates['enriched'] || '—';
+  const contactosEncontrados = funnelStates['contacts_found'] || funnelStates['contacted'] || '—';
+  const emailsEnviados = funnelStates['emails_sent'] || funnelStates['email_sent'] || '—';
+  el.innerHTML = `
+    <!-- Métricas del Pipeline Autopilot -->
+    <div style="margin-bottom:14px">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Pipeline Autopilot</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:22px;font-weight:800;color:#7c3aed">${apDeals.length}</div>
+          <div style="font-size:10px;font-weight:700;color:var(--muted);margin-top:2px">Leads</div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:22px;font-weight:800;color:#3b6ef8">${inDiscoveryDemo}</div>
+          <div style="font-size:10px;font-weight:700;color:var(--muted);margin-top:2px">En Disc/Demo</div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:22px;font-weight:800;color:#16a34a">${demosAgendadas}</div>
+          <div style="font-size:10px;font-weight:700;color:var(--muted);margin-top:2px">Demos</div>
+        </div>
+      </div>
+    </div>
+    <!-- Cola de Trabajo -->
+    <div style="margin-bottom:14px;padding:10px 12px;background:#faf5ff;border:1px solid #e9d5ff;border-radius:10px">
+      <div style="font-size:11px;font-weight:700;color:#6d28d9;margin-bottom:6px">📥 Cola de Trabajo</div>
+      <div style="font-size:12px;color:var(--muted)">Cola por procesar: <span style="color:var(--text);font-weight:700">cargando…</span></div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">Jim: empresas estado=nuevo → Hunter.io</div>
+      <div style="font-size:11px;color:var(--muted)">Dwight: contactos pendientes → Gemini</div>
+    </div>
+    <!-- Tasa estimada de conversión -->
+    <div style="margin-bottom:14px">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Tasa Estimada de Conversión</div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <div style="display:flex;align-items:center;gap:8px;font-size:11px">
+          <span style="background:#ede9fe;color:#6d28d9;padding:2px 8px;border-radius:6px;font-weight:700;min-width:28px;text-align:center">${typeof empresasProcesadas==='number'?empresasProcesadas:'N/A'}</span>
+          <span style="color:var(--muted)">Empresas procesadas</span>
+        </div>
+        <div style="padding-left:14px;color:#94a3b8;font-size:10px">↓</div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:11px">
+          <span style="background:#dbeafe;color:#1d4ed8;padding:2px 8px;border-radius:6px;font-weight:700;min-width:28px;text-align:center">${typeof contactosEncontrados==='number'?contactosEncontrados:'N/A'}</span>
+          <span style="color:var(--muted)">Contactos encontrados</span>
+        </div>
+        <div style="padding-left:14px;color:#94a3b8;font-size:10px">↓</div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:11px">
+          <span style="background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:6px;font-weight:700;min-width:28px;text-align:center">${typeof emailsEnviados==='number'?emailsEnviados:'N/A'}</span>
+          <span style="color:var(--muted)">Emails enviados</span>
+        </div>
+        <div style="padding-left:14px;color:#94a3b8;font-size:10px">↓</div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:11px">
+          <span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:6px;font-weight:700;min-width:28px;text-align:center">${demosAgendadas}</span>
+          <span style="color:var(--muted)">Demos agendadas</span>
+        </div>
+      </div>
+    </div>
+    <!-- Infraestructura -->
+    <div style="padding:10px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;font-size:11px;color:#15803d">
+      <div style="font-weight:700;margin-bottom:4px">🏗 Infraestructura Preparada</div>
+      <div style="margin-bottom:2px">Sistema preparado para nuevos agentes</div>
+      <div style="margin-bottom:2px">Añade nuevos agentes al array <code>AP_AGENTS</code></div>
+      <div style="font-weight:700;margin-top:6px;color:#166534">${totalAgents} agentes activos</div>
+    </div>
+  `;
 }
 
 function _updateSystemBadge() {
@@ -3275,20 +3483,40 @@ function pipeRender() {
     pag.innerHTML=`<span>${start+1}–${Math.min(start+PIPE_PAGE,tot)} de <strong>${tot}</strong> deals</span>
       <div class="pipe-page-btns"><button class="pipe-page-btn" onclick="pipeGoPage(${pipePage-1})" ${pipePage<=1?'disabled':''}>‹</button>${btns}<button class="pipe-page-btn" onclick="pipeGoPage(${pipePage+1})" ${pipePage>=totP?'disabled':''}>›</button></div>`;
   }
+  renderPipeWeekly();
 }
 
 function pipeGoPage(p){const t=Math.ceil(_pipeFiltered.length/PIPE_PAGE)||1;pipePage=Math.max(1,Math.min(p,t));pipeRender();}
 
-// Returns cutoff date for weekly tracking (resets Fridays at 18:00)
+function renderPipeWeekly() {
+  const wkStart = _getWeekStart();
+  let newCount = 0, updCount = 0;
+  (_pipeData || []).forEach(r => {
+    const creAt = r.created_at ? r.created_at.slice(0,10) : null;
+    const updAt = r.updated_at ? r.updated_at.slice(0,10) : null;
+    const isNew = creAt && creAt >= wkStart;
+    const isUpd = !isNew && updAt && updAt >= wkStart;
+    if (isNew) newCount++;
+    else if (isUpd) updCount++;
+  });
+  const newEl = document.getElementById('pipe-weekly-new');
+  const updEl = document.getElementById('pipe-weekly-upd');
+  if (newEl) newEl.textContent = newCount + ' nuevo' + (newCount !== 1 ? 's' : '');
+  if (updEl) updEl.textContent = updCount + ' actualizado' + (updCount !== 1 ? 's' : '');
+}
+
+// Returns cutoff date for weekly tracking (resets Mondays at 8:00am)
 function _getWeekStart() {
   const now = new Date();
   const d = new Date(now);
-  const day = d.getDay(); // 0=Sun..5=Fri..6=Sat
-  const hour = d.getHours();
-  // Days since last Friday 18:00
-  const sinceF = (day===5&&hour>=18)?0:day===6?1:day===0?2:day+2;
-  d.setDate(d.getDate()-sinceF); d.setHours(18,0,0,0);
-  return d.toISOString().slice(0,10);
+  // Monday at 8am is the week start
+  const day = d.getDay(); // 0=Sun, 1=Mon...
+  const daysToMonday = day === 0 ? 6 : day - 1;
+  d.setDate(d.getDate() - daysToMonday);
+  d.setHours(8, 0, 0, 0);
+  // If we're before Monday 8am, go back one more week
+  if (d > now) d.setDate(d.getDate() - 7);
+  return d.toISOString().slice(0, 10);
 }
 
 // Inline edit for MRR / Implementación — ACV auto-calculated
@@ -5183,17 +5411,127 @@ function _renderCopilotLocal(deals, inits, seller) {
   const now = new Date();
   const todayStr = now.toISOString().slice(0,10);
   const in7Str = new Date(now.getTime()+7*86400000).toISOString().slice(0,10);
+  const ago7Str = new Date(now.getTime()-7*86400000).toISOString().slice(0,10);
+  const sellerFirst = seller.split(' ')[0];
+
+  // Core deal categorisation
   const closePriority = deals.filter(d=>d.status==='Close 2 close'||d.status==='Propuesta').sort((a,b)=>(parseFloat(b.acv)||0)-(parseFloat(a.acv)||0));
   const overdue = deals.filter(d=>d.next_touchpoint&&d.next_touchpoint<todayStr).sort((a,b)=>a.next_touchpoint.localeCompare(b.next_touchpoint));
   const thisWeek = deals.filter(d=>d.next_touchpoint&&d.next_touchpoint>=todayStr&&d.next_touchpoint<=in7Str);
+  const noTouch7 = deals.filter(d=>(!d.next_touchpoint||(d.next_touchpoint<ago7Str))&&d.status!=='Cerrado'&&d.status!=='Churn');
+
+  // ── Breakdown by seller (all pipeline data) ──────────────────────────────
+  const allDeals = _pipeData || [];
+  const bySellerMap = {};
+  allDeals.forEach(d => {
+    const own = d.owner || 'Sin asignar';
+    if (!bySellerMap[own]) bySellerMap[own] = { count:0, acv:0, closingCount:0, closingAcv:0, overdueCount:0 };
+    bySellerMap[own].count++;
+    bySellerMap[own].acv += parseFloat(d.acv)||0;
+    if (d.status==='Close 2 close'||d.status==='Propuesta') {
+      bySellerMap[own].closingCount++;
+      bySellerMap[own].closingAcv += parseFloat(d.acv)||0;
+    }
+    if (d.next_touchpoint && d.next_touchpoint < todayStr) bySellerMap[own].overdueCount++;
+  });
+
+  // ── Stage bottleneck detection ────────────────────────────────────────────
+  const stageCount = {};
+  allDeals.filter(d=>d.status&&d.status!=='Cerrado'&&d.status!=='Churn').forEach(d => {
+    stageCount[d.status] = (stageCount[d.status]||0)+1;
+  });
+  const bottlenecks = Object.entries(stageCount).filter(([s,c])=>c>=3).sort((a,b)=>b[1]-a[1]);
+
+  // ── Prioridades ───────────────────────────────────────────────────────────
   const prioridades = [
     ...closePriority.slice(0,3).map(d=>({deal:d.opportunity_name,accion:d.status==='Propuesta'?'Hacer seguimiento de la propuesta y confirmar timeline de decisión':'Cerrar deal esta semana — prepara contrato',motivo:`${d.status} · $${(parseFloat(d.acv)||0).toLocaleString()} ACV`,urgencia:'alta'})),
     ...thisWeek.filter(d=>!closePriority.find(c=>c.id===d.id)).slice(0,2).map(d=>({deal:d.opportunity_name,accion:`Ejecutar touchpoint programado (${d.next_touchpoint})`,motivo:d.status,urgencia:'media'})),
   ].slice(0,5);
-  const riesgos = overdue.slice(0,3).map(d=>({deal:d.opportunity_name,razon:`Touchpoint vencido: ${d.next_touchpoint}`,accion:'Contactar hoy y reagendar'}));
+
+  // ── Riesgos ───────────────────────────────────────────────────────────────
+  const riesgos = [
+    ...overdue.slice(0,3).map(d=>({deal:d.opportunity_name,razon:`Touchpoint vencido: ${d.next_touchpoint}`,accion:'Contactar hoy y reagendar'})),
+    ...noTouch7.filter(d=>!overdue.find(o=>o.id===d.id)).slice(0,2).map(d=>({deal:d.opportunity_name,razon:'Sin touchpoint registrado hace +7 días',accion:'Agendar seguimiento urgente'})),
+  ].slice(0,4);
+
   const iniciativas = inits.slice(0,3).map(i=>({titulo:i.title||'(sin título)',accion:i.notes||'Avanzar en esta semana'}));
-  const resumen = `${seller.split(' ')[0]}, tienes ${deals.length} deals activos. ${closePriority.length} en etapa de cierre. ${overdue.length} con touchpoint vencido que necesitan atención inmediata.`;
-  _renderCopilotPlan({prioridades, riesgos, iniciativas, resumen, foco_semana: closePriority[0]?`Cerrar ${closePriority[0].opportunity_name} — deal de mayor ACV en etapa avanzada`:''}, seller);
+
+  // ── Growth recommendations ────────────────────────────────────────────────
+  const propuestaAcv = closePriority.filter(d=>d.status==='Propuesta').reduce((s,d)=>s+(parseFloat(d.acv)||0),0);
+  const sellerInfo = bySellerMap[seller] || {};
+  const hector = bySellerMap['Héctor Nícola'] || {};
+  const growthRecs = [];
+  if (propuestaAcv > 0) growthRecs.push(`Si ${sellerFirst} cierra todos sus deals en Propuesta, generaría $${Math.round(propuestaAcv).toLocaleString()} ACV adicional`);
+  if (hector.overdueCount > 0) growthRecs.push(`Héctor tiene ${hector.overdueCount} deal${hector.overdueCount!==1?'s':''} sin touchpoint hace más de 7 días`);
+  if (bottlenecks.length > 0) growthRecs.push(`Cuello de botella en "${bottlenecks[0][0]}": ${bottlenecks[0][1]} deals estancados — revisar blockers`);
+
+  const resumen = `${sellerFirst}, tienes ${deals.length} deals activos · ${closePriority.length} en etapa de cierre · ${overdue.length} con touchpoint vencido.`;
+  const foco_semana = closePriority[0] ? `Cerrar ${closePriority[0].opportunity_name} — deal de mayor ACV en etapa avanzada` : '';
+
+  // ── Render plan (extended) ────────────────────────────────────────────────
+  const urgColor = { alta:'#dc2626', media:'#d97706', baja:'#16a34a' };
+  const el = document.getElementById('copilot-output');
+  if (!el) return;
+
+  // Build seller breakdown HTML
+  const sellerRowsHtml = Object.entries(bySellerMap).sort((a,b)=>b[1].acv-a[1].acv).map(([name, s]) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">
+      <div style="width:80px;font-size:11px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name.split(' ')[0]}</div>
+      <div style="flex:1;background:var(--bg2);border-radius:4px;height:8px;overflow:hidden">
+        <div style="height:100%;background:#3b6ef8;border-radius:4px;width:${Math.min(100,Math.round((s.acv/(bySellerMap[Object.keys(bySellerMap).sort((a,b)=>bySellerMap[b].acv-bySellerMap[a].acv)[0]].acv||1))*100))}%"></div>
+      </div>
+      <div style="width:50px;font-size:11px;font-weight:700;color:#3b6ef8;text-align:right">$${s.acv>=1000?Math.round(s.acv/1000)+'K':Math.round(s.acv)}</div>
+      <div style="width:24px;font-size:10px;color:var(--muted);text-align:right">${s.count}d</div>
+      ${s.overdueCount>0?`<div style="font-size:10px;color:#dc2626;font-weight:700">${s.overdueCount}⚠</div>`:''}
+    </div>`).join('');
+
+  const growthHtml = growthRecs.length ? `
+    <div class="copilot-section-title" style="margin-top:14px">💡 Recomendaciones de Crecimiento</div>
+    ${growthRecs.map(r=>`<div style="font-size:12px;padding:7px 10px;background:#fefce8;border-left:3px solid #d97706;border-radius:4px;margin-bottom:6px;color:#78350f;line-height:1.5">${r}</div>`).join('')}` : '';
+
+  el.innerHTML = `<div class="copilot-plan">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div style="font-size:14px;font-weight:800;color:var(--text)">🤖 Copilot — Análisis de Ventas</div>
+      <span style="font-size:11px;color:#7c3aed;font-weight:600">${new Date().toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'})}</span>
+    </div>
+    ${foco_semana?`<div class="copilot-foco"><span style="font-size:18px">🎯</span><div><strong>Foco de la semana:</strong><br>${foco_semana}</div></div>`:''}
+    ${resumen?`<div class="copilot-resumen">${resumen}</div>`:''}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div>
+        <div class="copilot-section-title">⚡ Prioridades</div>
+        ${prioridades.map(p=>`<div class="copilot-priority-card ${p.urgencia||'media'}">
+          <div class="copilot-priority-deal">${p.deal}</div>
+          <div class="copilot-priority-action">→ ${p.accion}</div>
+          <div class="copilot-priority-motivo" style="color:${urgColor[p.urgencia]||'#64748b'}">${p.urgencia?.toUpperCase()||''} · ${p.motivo}</div>
+        </div>`).join('')||'<div style="font-size:12px;color:var(--muted)">Sin prioridades identificadas</div>'}
+        <div class="copilot-section-title" style="margin-top:14px">👥 Breakdown por Vendedor</div>
+        <div style="border:1px solid var(--border);border-radius:10px;padding:10px;background:var(--card)">
+          ${sellerRowsHtml||'<div style="font-size:12px;color:var(--muted)">Sin datos</div>'}
+        </div>
+        ${growthHtml}
+      </div>
+      <div>
+        <div class="copilot-section-title">⚠️ En Riesgo</div>
+        ${riesgos.map(r=>`<div class="copilot-risk-item">
+          <span style="font-size:16px">⚠️</span>
+          <div><div style="font-size:12px;font-weight:700">${r.deal}</div>
+          <div style="font-size:11px;color:var(--muted)">${r.razon}</div>
+          <div style="font-size:11px;color:#dc2626">→ ${r.accion}</div></div>
+        </div>`).join('')||'<div style="font-size:12px;color:var(--muted)">Sin riesgos detectados ✅</div>'}
+        ${bottlenecks.length?`<div class="copilot-section-title" style="margin-top:14px">🚧 Cuellos de Botella</div>
+        ${bottlenecks.slice(0,4).map(([stage,count])=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:var(--card2);border:1px solid var(--border);border-radius:8px;margin-bottom:5px">
+          <span style="font-size:12px;font-weight:600">${stage}</span>
+          <span style="font-size:12px;font-weight:700;color:#d97706">${count} deals</span>
+        </div>`).join('')}`:''}
+        ${iniciativas.length?`<div class="copilot-section-title" style="margin-top:14px">🚀 Iniciativas</div>
+        ${iniciativas.map(i=>`<div class="copilot-init-item">
+          <span style="font-size:14px">🚀</span>
+          <div><div style="font-size:12px;font-weight:700">${i.titulo}</div>
+          <div style="font-size:11px;color:var(--muted)">→ ${i.accion}</div></div>
+        </div>`).join('')}`:''}
+      </div>
+    </div>
+  </div>`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
