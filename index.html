@@ -4386,10 +4386,10 @@ async function crmSave() {
 async function crmDeleteId(id) {
   if (!confirm('¿Eliminar esta cuenta del CRM?')) return;
   try {
+    await sbFetch('DELETE', `contacts?company_id=eq.${id}`).catch(()=>{});
     await sbFetch('DELETE', `companies?id=eq.${id}`);
-    _crmData = _crmData.filter(r => r.id !== id);
-    crmRender();
     showToast('Cuenta eliminada', '');
+    await crmLoad();
   } catch(e) { showToast('Error eliminando: ' + e.message, 'err'); }
 }
 
@@ -4398,11 +4398,11 @@ async function crmDeleteCurrent() {
   if (!id) return;
   if (!confirm('¿Eliminar esta cuenta del CRM?')) return;
   try {
+    await sbFetch('DELETE', `contacts?company_id=eq.${id}`).catch(()=>{});
     await sbFetch('DELETE', `companies?id=eq.${id}`);
-    _crmData = _crmData.filter(r => r.id !== id);
     crmCloseModal();
-    crmRender();
     showToast('Cuenta eliminada', '');
+    await crmLoad();
   } catch(e) { showToast('Error eliminando: ' + e.message, 'err'); }
 }
 
