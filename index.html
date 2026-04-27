@@ -3195,15 +3195,44 @@ function startAutoSync(intervalMs = 60000) {
   if (_autoSyncTimer) clearInterval(_autoSyncTimer);
   _autoSyncTimer = setInterval(async () => {
     try {
-      const data = await sbFetch('GET','pipeline?select=id,opportunity_name,status,mrr,acv,implementaciones,owner,cierre_date,probability,ingreso_lead,discovery_date,demo_date,proposal_date,next_touchpoint,estrategia,size,notes,created_at,updated_at&order=created_at.desc&limit=2000');
-      _pipeData = Array.isArray(data) ? data : [];
+      const data = await sbFetch('GET','deals?select=id,opportunity_name,status,mrr,acv,implementaciones,owner,cierre_date,probability,ingreso_lead,discovery_date,demo_date,proposal_date,next_touchpoint,estrategia,size,notes,created_at,updated_at,company:companies(id,nombre,web,industria,canal,tamaño)&order=created_at.desc&limit=2000');
+      _pipeData = Array.isArray(data) ? data.map(d => ({
+        ...d,
+        opportunity_name: d.opportunity_name || d.company?.nombre || '',
+        estrategia: d.estrategia || d.company?.canal || '',
+        size: d.size || d.company?.tamaño || '',
+        _industria: d.company?.industria || '',
+        _company_id: d.company?.id || '',
+      })) : [];
       pipeRender();
       renderDashboard(parseSupabaseData(_pipeData));
       renderPlanSemanal();
       renderCerradosTab();
       // Silent CRM refresh
-      const crmData = await sbFetch('GET', 'crm?select=id,n,r,st,ind,e,sz,c,p,em,tel,mrr,acv,notes,created_at&order=created_at.desc&limit=5000');
-      if (Array.isArray(crmData)) { _crmData = crmData; }
+      const crmData = await sbFetch('GET', 'companies?select=id,nombre,owner,industria,canal,tamaño,mrr,acv,notas,created_at,contacts(id,nombre,cargo,tipo_contacto,email,telefono,estado)&order=created_at.desc&limit=5000');
+      if (Array.isArray(crmData)) {
+        _crmData = crmData.map(comp => {
+          const primaryContact = comp.contacts?.find(c => c.tipo_contacto === 'decision_maker') || comp.contacts?.[0];
+          return {
+            id: comp.id,
+            n: comp.nombre || '',
+            r: comp.owner || '',
+            st: comp.status || 'Lead',
+            ind: comp.industria || '',
+            e: comp.canal || '',
+            sz: comp.tamaño || '',
+            c: primaryContact?.nombre || '',
+            p: primaryContact?.cargo || '',
+            em: primaryContact?.email || '',
+            tel: primaryContact?.telefono || '',
+            mrr: comp.mrr || 0,
+            acv: comp.acv || 0,
+            notes: comp.notas || '',
+            _contacts: comp.contacts || [],
+            _company_id: comp.id,
+          };
+        });
+      }
       // Silent KPI logs refresh
       const kpiData = await sbFetch('GET', 'kpi_logs?select=id,date,seller,type,company,canal,acv,mrr,impl,notes,created_at&order=created_at.desc&limit=2000');
       if (Array.isArray(kpiData)) { _kpiLogs = kpiData; }
@@ -3289,8 +3318,15 @@ async function pipeLoad() {
   const btn = document.getElementById('syncBtn');
   if (btn) { btn.classList.add('syncing'); btn.textContent='⏳ Sync'; }
   try {
-    const data = await sbFetch('GET','pipeline?select=id,opportunity_name,status,mrr,acv,implementaciones,owner,cierre_date,probability,ingreso_lead,discovery_date,demo_date,proposal_date,next_touchpoint,estrategia,size,notes,created_at,updated_at&order=created_at.desc&limit=2000');
-    _pipeData = Array.isArray(data) ? data : [];
+    const data = await sbFetch('GET','deals?select=id,opportunity_name,status,mrr,acv,implementaciones,owner,cierre_date,probability,ingreso_lead,discovery_date,demo_date,proposal_date,next_touchpoint,estrategia,size,notes,created_at,updated_at,company:companies(id,nombre,web,industria,canal,tamaño)&order=created_at.desc&limit=2000');
+    _pipeData = Array.isArray(data) ? data.map(d => ({
+      ...d,
+      opportunity_name: d.opportunity_name || d.company?.nombre || '',
+      estrategia: d.estrategia || d.company?.canal || '',
+      size: d.size || d.company?.tamaño || '',
+      _industria: d.company?.industria || '',
+      _company_id: d.company?.id || '',
+    })) : [];
     const _syncTime = new Date().toLocaleTimeString('es-MX', {hour:'2-digit', minute:'2-digit'});
     window._lastSyncLabel = _syncTime;
     pipeRender();
@@ -3608,7 +3644,7 @@ async function pipeUpdateField(id, field, value) {
   // Async fire-and-forget with silent retry on schema cache errors
   (async () => {
     try {
-      await sbFetch('PATCH',`pipeline?id=eq.${id}`,{[field]: (value===''||value===undefined)?null:value, updated_at:new Date().toISOString()});
+      await sbFetch('PATCH',`deals?id=eq.${id}`,{[field]: (value===''||value===undefined)?null:value, updated_at:new Date().toISOString()});
     } catch(e) {
       // If column doesn't exist in schema cache, skip silently for 'probability'
       if (e.message && (e.message.includes('schema cache') || e.message.includes('Could not find'))) {
@@ -3788,11 +3824,11 @@ async function pipeSave() {
   };
   try {
     if (editId) {
-      await sbFetch('PATCH',`pipeline?id=eq.${editId}`,rec);
+      await sbFetch('PATCH',`deals?id=eq.${editId}`,rec);
       const idx=_pipeData.findIndex(r=>r.id===editId);
       if(idx>=0) _pipeData[idx]={..._pipeData[idx],...rec};
     } else {
-      const created = await sbFetch('POST','pipeline',[rec]);
+      const created = await sbFetch('POST','deals',[rec]);
       if (Array.isArray(created)&&created.length) _pipeData.unshift(created[0]);
     }
     closeModal('modalPipeDeal');
@@ -3807,7 +3843,7 @@ async function pipeDeleteCurrent() {
   if(!id) return;
   if(!confirm('¿Eliminar este deal del pipeline?')) return;
   try {
-    await sbFetch('DELETE',`pipeline?id=eq.${id}`);
+    await sbFetch('DELETE',`deals?id=eq.${id}`);
     _pipeData=_pipeData.filter(r=>r.id!==id);
     closeModal('modalPipeDeal');
     pipeRender();
@@ -3868,7 +3904,7 @@ function crmGet() { return _crmData; }
 async function syncCrmStatus(crmId, newStatus) {
   if (!confirm(`¿Actualizar status del CRM a "${newStatus}" para coincidir con el Pipeline?`)) return;
   try {
-    await sbFetch('PATCH', `crm?id=eq.${crmId}`, { st: newStatus });
+    await sbFetch('PATCH', `companies?id=eq.${crmId}`, { st: newStatus });
     const idx = _crmData.findIndex(r => r.id === crmId);
     if (idx >= 0) _crmData[idx].st = newStatus;
     crmRender();
@@ -3882,14 +3918,54 @@ function crmSet(data) { _crmData = data; }
 // ── crmLoad: fetch all CRM records from Supabase, seed on first run
 async function crmLoad() {
   try {
-    const data = await sbFetch('GET', 'crm?select=id,n,r,st,ind,e,sz,c,p,em,tel,mrr,acv,notes,created_at&order=created_at.desc&limit=5000');
-    _crmData = Array.isArray(data) ? data : [];
+    const data = await sbFetch('GET', 'companies?select=id,nombre,owner,industria,canal,tamaño,mrr,acv,notas,created_at,contacts(id,nombre,cargo,tipo_contacto,email,telefono,estado)&order=created_at.desc&limit=5000');
+    _crmData = Array.isArray(data) ? data.map(comp => {
+      const primaryContact = comp.contacts?.find(c => c.tipo_contacto === 'decision_maker') || comp.contacts?.[0];
+      return {
+        id: comp.id,
+        n: comp.nombre || '',
+        r: comp.owner || '',
+        st: comp.status || 'Lead',
+        ind: comp.industria || '',
+        e: comp.canal || '',
+        sz: comp.tamaño || '',
+        c: primaryContact?.nombre || '',
+        p: primaryContact?.cargo || '',
+        em: primaryContact?.email || '',
+        tel: primaryContact?.telefono || '',
+        mrr: comp.mrr || 0,
+        acv: comp.acv || 0,
+        notes: comp.notas || '',
+        _contacts: comp.contacts || [],
+        _company_id: comp.id,
+      };
+    }) : [];
     // First run: if empty, batch-import CRM_SEED
     if (_crmData.length === 0 && typeof CRM_SEED !== 'undefined' && CRM_SEED.length > 0) {
       showToast('⏳ Importando CRM a Supabase (' + CRM_SEED.length + ' cuentas)…', 'ok');
       await crmSeedImport();
-      const fresh = await sbFetch('GET', 'crm?select=id,n,r,st,ind,e,sz,c,p,em,tel,mrr,acv,notes,created_at&order=created_at.desc&limit=5000');
-      _crmData = Array.isArray(fresh) ? fresh : [];
+      const fresh = await sbFetch('GET', 'companies?select=id,nombre,owner,industria,canal,tamaño,mrr,acv,notas,created_at,contacts(id,nombre,cargo,tipo_contacto,email,telefono,estado)&order=created_at.desc&limit=5000');
+      _crmData = Array.isArray(fresh) ? fresh.map(comp => {
+        const primaryContact = comp.contacts?.find(c => c.tipo_contacto === 'decision_maker') || comp.contacts?.[0];
+        return {
+          id: comp.id,
+          n: comp.nombre || '',
+          r: comp.owner || '',
+          st: comp.status || 'Lead',
+          ind: comp.industria || '',
+          e: comp.canal || '',
+          sz: comp.tamaño || '',
+          c: primaryContact?.nombre || '',
+          p: primaryContact?.cargo || '',
+          em: primaryContact?.email || '',
+          tel: primaryContact?.telefono || '',
+          mrr: comp.mrr || 0,
+          acv: comp.acv || 0,
+          notes: comp.notas || '',
+          _contacts: comp.contacts || [],
+          _company_id: comp.id,
+        };
+      }) : [];
       showToast('✅ CRM importado — ' + _crmData.length + ' cuentas', 'ok');
     }
     crmRender();
@@ -3908,15 +3984,21 @@ async function crmLoad() {
   }
 }
 
-// ── crmSeedImport: batch-upload CRM_SEED to Supabase (200 records/batch)
+// ── crmSeedImport: batch-upload CRM_SEED to Supabase companies table (200 records/batch)
 async function crmSeedImport() {
-  const KEYS = ['id','n','r','st','ind','e','sz','c','p','em','tel','mrr','acv','notes'];
   const BATCH = 200;
   for (let i = 0; i < CRM_SEED.length; i += BATCH) {
-    const batch = CRM_SEED.slice(i, i + BATCH).map(row => {
-      const obj = {}; KEYS.forEach(k => obj[k] = row[k] ?? null); return obj;
-    });
-    await sbFetch('POST', 'crm', batch);
+    const batch = CRM_SEED.slice(i, i + BATCH).map(row => ({
+      nombre: row.n ?? null,
+      owner:  row.r ?? null,
+      industria: row.ind ?? null,
+      canal:  row.e ?? null,
+      tamaño: row.sz ?? null,
+      mrr:    row.mrr ?? null,
+      acv:    row.acv ?? null,
+      notas:  row.notes ?? null,
+    }));
+    await sbFetch('POST', 'companies', batch);
   }
 }
 
@@ -4137,31 +4219,52 @@ async function crmSave() {
   const owner = document.getElementById('cf-owner').value;
   if (!name)  { showToast('⚠ Ingresa el nombre de la empresa','err'); return; }
   if (!owner) { showToast('⚠ Selecciona un responsable','err'); return; }
-  const editId = parseInt(document.getElementById('crm-edit-id').value) || 0;
-  const rec = {
-    id:    editId || crmNextId(),
-    n:     name,
-    r:     owner,
-    st:    document.getElementById('cf-status').value    || 'Lead',
-    ind:   document.getElementById('cf-industry').value || null,
-    e:     document.getElementById('cf-canal').value     || null,
-    sz:    document.getElementById('cf-size').value      || null,
-    c:     document.getElementById('cf-contact').value   || null,
-    p:     document.getElementById('cf-puesto').value    || null,
-    em:    document.getElementById('cf-email').value     || null,
-    tel:   document.getElementById('cf-phone').value     || null,
-    mrr:   document.getElementById('cf-mrr').value  ? '$'+document.getElementById('cf-mrr').value  : null,
-    acv:   document.getElementById('cf-acv').value  ? '$'+document.getElementById('cf-acv').value  : null,
-    notes: document.getElementById('cf-notes').value     || null,
+  const editId = document.getElementById('crm-edit-id').value || '';
+  const contactName  = document.getElementById('cf-contact').value || null;
+  const contactPuesto= document.getElementById('cf-puesto').value  || null;
+  const contactEmail = document.getElementById('cf-email').value   || null;
+  const contactTel   = document.getElementById('cf-phone').value   || null;
+  const companyRec = {
+    nombre:    name,
+    owner:     owner,
+    industria: document.getElementById('cf-industry').value || null,
+    canal:     document.getElementById('cf-canal').value    || null,
+    tamaño:    document.getElementById('cf-size').value     || null,
+    mrr:       parseFloat(document.getElementById('cf-mrr').value) || null,
+    acv:       parseFloat(document.getElementById('cf-acv').value) || null,
+    notas:     document.getElementById('cf-notes').value    || null,
   };
   try {
+    let companyId = editId;
     if (editId) {
-      await sbFetch('PATCH', `crm?id=eq.${editId}`, rec);
+      await sbFetch('PATCH', `companies?id=eq.${editId}`, companyRec);
       const idx = _crmData.findIndex(r => r.id === editId);
-      if (idx >= 0) _crmData[idx] = rec; else _crmData.push(rec);
+      const updated = { ...companyRec, id: editId, n: name, r: owner, st: _crmData[idx]?.st || 'Lead',
+        ind: companyRec.industria, e: companyRec.canal, sz: companyRec.tamaño,
+        c: contactName, p: contactPuesto, em: contactEmail, tel: contactTel,
+        notes: companyRec.notas, _company_id: editId };
+      if (idx >= 0) _crmData[idx] = updated; else _crmData.push(updated);
     } else {
-      await sbFetch('POST', 'crm', [rec]);
-      _crmData.unshift(rec);
+      const created = await sbFetch('POST', 'companies', [companyRec]);
+      companyId = (Array.isArray(created) && created[0]) ? created[0].id : null;
+      const newLocal = { ...companyRec, id: companyId, n: name, r: owner, st: 'Lead',
+        ind: companyRec.industria, e: companyRec.canal, sz: companyRec.tamaño,
+        c: contactName, p: contactPuesto, em: contactEmail, tel: contactTel,
+        notes: companyRec.notas, _contacts: [], _company_id: companyId };
+      _crmData.unshift(newLocal);
+    }
+    // Save contact to contacts table if contact info provided
+    if (companyId && (contactName || contactEmail)) {
+      const contactRec = {
+        company_id:    companyId,
+        nombre:        contactName,
+        cargo:         contactPuesto,
+        tipo_contacto: 'decision_maker',
+        email:         contactEmail,
+        telefono:      contactTel,
+        estado:        'nuevo',
+      };
+      await sbFetch('POST', 'contacts', [contactRec]).catch(()=>{});
     }
     crmCloseModal();
     crmRender();
@@ -4172,7 +4275,7 @@ async function crmSave() {
 async function crmDeleteId(id) {
   if (!confirm('¿Eliminar esta cuenta del CRM?')) return;
   try {
-    await sbFetch('DELETE', `crm?id=eq.${id}`);
+    await sbFetch('DELETE', `companies?id=eq.${id}`);
     _crmData = _crmData.filter(r => r.id !== id);
     crmRender();
     showToast('Cuenta eliminada', '');
@@ -4180,11 +4283,11 @@ async function crmDeleteId(id) {
 }
 
 async function crmDeleteCurrent() {
-  const id = parseInt(document.getElementById('crm-edit-id').value);
+  const id = document.getElementById('crm-edit-id').value;
   if (!id) return;
   if (!confirm('¿Eliminar esta cuenta del CRM?')) return;
   try {
-    await sbFetch('DELETE', `crm?id=eq.${id}`);
+    await sbFetch('DELETE', `companies?id=eq.${id}`);
     _crmData = _crmData.filter(r => r.id !== id);
     crmCloseModal();
     crmRender();

@@ -1,0 +1,438 @@
+{
+  "name": "Agent 1 - Jim Hunter Enrichment v4 (Supabase)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "30 7 * * *"
+            }
+          ]
+        }
+      },
+      "id": "a1v4-node-01",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://xjrgqborwhvyqgrczetq.supabase.co/rest/v1/companies?select=*&estado=eq.nuevo&order=created_at.asc&limit=20",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdxYm9yd2h2eXFncmN6ZXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODc5ODksImV4cCI6MjA5MDQ2Mzk4OX0.DWOoshMXxmQk0deq2jEnOOAFpr_pyE9aWenvu_GPzLs"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdxYm9yd2h2eXFncmN6ZXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODc5ODksImV4cCI6MjA5MDQ2Mzk4OX0.DWOoshMXxmQk0deq2jEnOOAFpr_pyE9aWenvu_GPzLs"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "a1v4-node-02",
+      "name": "Read Companies Supabase",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "a1v4-node-03",
+      "name": "SplitInBatches",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-has-web",
+              "leftValue": "={{ $json['web'] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "isNotEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a1v4-node-04",
+      "name": "IF - Has Web",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ (() => { let w = String($json['web'] || '').trim(); const md = w.match(/\\[([^\\]]+)\\]\\([^)]*\\)/); if (md) w = md[1]; return 'https://api.hunter.io/v2/domain-search?domain=' + w.replace(/^https?:\\/\\//i,'').replace(/^www\\./i,'').split('/')[0].toLowerCase().trim() + '&api_key=efee88633f610ce7b47f7f495da22b41bea2b685'; })() }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "a1v4-node-05",
+      "name": "HTTP Request Hunter",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 200]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const items = $input.all();\nconst input = items[0].json;\n\nlet companyData = {};\ntry {\n  const batchItems = $('SplitInBatches').all();\n  companyData = (batchItems && batchItems[0]) ? batchItems[0].json : {};\n} catch(e) { companyData = {}; }\n\nconst emails = (input.data && input.data.emails) ? input.data.emails : [];\nconst company_id = String(companyData.id || '');\nconst empresa_nombre = String(companyData.nombre || '');\nconst canal = String(companyData.canal || '');\n\nif (emails.length === 0) {\n  return [{ json: { _no_contacts: true, company_id, empresa_nombre } }];\n}\n\nconst DM_KW = ['director','vp ','gerente general','gerente de log','gerente de import','gerente de operac','gerente de supply','gerente de compras','jefe de log','jefe de import','jefe de operac','subdirector','ceo','coo','head of','managing'];\nconst REF_KW = ['coordinador','analista','especialista','supervisor','ejecutivo de import','ejecutivo de log'];\nconst DEPT = ['management','logistics','operations','supply','purchasing','imports','export'];\n\nconst scored = emails\n  .filter(e => e.value && String(e.value).includes('@'))\n  .map(e => {\n    const pos = String(e.position || '').toLowerCase();\n    const dept = String(e.department || '').toLowerCase();\n    let score = 0, tipo = 'otro';\n    if (DM_KW.some(k => pos.includes(k))) { score += 10; tipo = 'decision_maker'; }\n    else if (REF_KW.some(k => pos.includes(k))) { score += 5; tipo = 'referidor'; }\n    if (DEPT.some(k => dept.includes(k))) score += 3;\n    return {\n      email: String(e.value || ''),\n      nombre: String((e.first_name || '') + ' ' + (e.last_name || '')).trim(),\n      cargo: String(e.position || ''),\n      telefono: String(e.phone_number || ''),\n      linkedin: String(e.linkedin || ''),\n      confidence: Number(e.confidence || 0),\n      score, tipo\n    };\n  })\n  .sort((a, b) => b.score - a.score);\n\nconst dms = scored.filter(e => e.tipo === 'decision_maker').slice(0, 2);\nconst refs = scored.filter(e => e.tipo === 'referidor').slice(0, 3);\nconst selected = [...dms, ...refs];\n\nif (selected.length === 0) {\n  return [{ json: { _no_contacts: true, company_id, empresa_nombre } }];\n}\n\nreturn selected.map((e, i) => ({\n  json: {\n    company_id,\n    empresa: empresa_nombre,\n    nombre: e.nombre,\n    cargo: e.cargo,\n    tipo_contacto: e.tipo,\n    email: e.email,\n    telefono: e.telefono,\n    linkedin: e.linkedin,\n    estado: 'nuevo',\n    notas: 'Hunter: ' + e.confidence + '% | Canal: ' + canal\n  }\n}));"
+      },
+      "id": "a1v4-node-06",
+      "name": "Code - Score Contacts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1340, 200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-has-contacts",
+              "leftValue": "={{ $json._no_contacts }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a1v4-node-07",
+      "name": "IF - Has Contacts",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1560, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://xjrgqborwhvyqgrczetq.supabase.co/rest/v1/contacts",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdxYm9yd2h2eXFncmN6ZXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODc5ODksImV4cCI6MjA5MDQ2Mzk4OX0.DWOoshMXxmQk0deq2jEnOOAFpr_pyE9aWenvu_GPzLs"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdxYm9yd2h2eXFncmN6ZXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODc5ODksImV4cCI6MjA5MDQ2Mzk4OX0.DWOoshMXxmQk0deq2jEnOOAFpr_pyE9aWenvu_GPzLs"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "jsonBody": "={{ JSON.stringify({ company_id: $json.company_id, nombre: $json.nombre, cargo: $json.cargo, tipo_contacto: $json.tipo_contacto, email: $json.email, telefono: $json.telefono, linkedin: $json.linkedin, estado: 'nuevo', notas: $json.notas }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "a1v4-node-08",
+      "name": "POST Contacts Supabase",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1780, 100]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://xjrgqborwhvyqgrczetq.supabase.co/rest/v1/companies?id=eq.{{ $('SplitInBatches').all()[0].json.id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdxYm9yd2h2eXFncmN6ZXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODc5ODksImV4cCI6MjA5MDQ2Mzk4OX0.DWOoshMXxmQk0deq2jEnOOAFpr_pyE9aWenvu_GPzLs"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdxYm9yd2h2eXFncmN6ZXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODc5ODksImV4cCI6MjA5MDQ2Mzk4OX0.DWOoshMXxmQk0deq2jEnOOAFpr_pyE9aWenvu_GPzLs"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "jsonBody": "={{ JSON.stringify({ estado: 'enriquecido', updated_at: new Date().toISOString() }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "a1v4-node-09",
+      "name": "PATCH Company Estado Enriquecido",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2000, 100]
+    },
+    {
+      "parameters": {
+        "amount": 2,
+        "unit": "seconds"
+      },
+      "id": "a1v4-node-10",
+      "name": "Wait 2s",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [2220, 300],
+      "webhookId": "a1v4-wait-webhook"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://xjrgqborwhvyqgrczetq.supabase.co/rest/v1/companies?id=eq.{{ $('SplitInBatches').all()[0].json.id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdxYm9yd2h2eXFncmN6ZXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODc5ODksImV4cCI6MjA5MDQ2Mzk4OX0.DWOoshMXxmQk0deq2jEnOOAFpr_pyE9aWenvu_GPzLs"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdxYm9yd2h2eXFncmN6ZXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODc5ODksImV4cCI6MjA5MDQ2Mzk4OX0.DWOoshMXxmQk0deq2jEnOOAFpr_pyE9aWenvu_GPzLs"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "jsonBody": "={{ JSON.stringify({ estado: 'sin_web', updated_at: new Date().toISOString() }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "a1v4-node-11",
+      "name": "PATCH Company Sin Web",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 420]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Read Companies Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Companies Supabase": {
+      "main": [
+        [
+          {
+            "node": "SplitInBatches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SplitInBatches": {
+      "main": [
+        [
+          {
+            "node": "IF - Has Web",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "IF - Has Web": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request Hunter",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "PATCH Company Sin Web",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request Hunter": {
+      "main": [
+        [
+          {
+            "node": "Code - Score Contacts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Score Contacts": {
+      "main": [
+        [
+          {
+            "node": "IF - Has Contacts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Has Contacts": {
+      "main": [
+        [
+          {
+            "node": "POST Contacts Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait 2s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST Contacts Supabase": {
+      "main": [
+        [
+          {
+            "node": "PATCH Company Estado Enriquecido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PATCH Company Estado Enriquecido": {
+      "main": [
+        [
+          {
+            "node": "Wait 2s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PATCH Company Sin Web": {
+      "main": [
+        [
+          {
+            "node": "Wait 2s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 2s": {
+      "main": [
+        [
+          {
+            "node": "SplitInBatches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {}
+}

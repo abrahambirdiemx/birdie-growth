@@ -1,0 +1,249 @@
+{
+  "name": "Agent 2 - Dwight Gemini Research v3 (Supabase)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 */2 * * *"
+            }
+          ]
+        }
+      },
+      "id": "a2v3-node-01",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://xjrgqborwhvyqgrczetq.supabase.co/rest/v1/contacts?select=*,company:companies(nombre,canal)&estado=eq.nuevo&limit=20",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdxYm9yd2h2eXFncmN6ZXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODc5ODksImV4cCI6MjA5MDQ2Mzk4OX0.DWOoshMXxmQk0deq2jEnOOAFpr_pyE9aWenvu_GPzLs"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdxYm9yd2h2eXFncmN6ZXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODc5ODksImV4cCI6MjA5MDQ2Mzk4OX0.DWOoshMXxmQk0deq2jEnOOAFpr_pyE9aWenvu_GPzLs"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "a2v3-node-02",
+      "name": "Read Contacts Supabase",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "a2v3-node-03",
+      "name": "SplitInBatches",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleGeminiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [\n    {\n      \"parts\": [\n        {\n          \"text\": \"Eres un investigador de inteligencia comercial especializado en importadores mexicanos.\\nEmpresa: {{ $json.company?.nombre || $json.nombre }}\\nCanal: {{ $json.company?.canal || '' }}\\nCargo del contacto: {{ $json.cargo }}\\nTipo de contacto: {{ $json.tipo_contacto }}\\n\\nGenera EXACTAMENTE este JSON sin texto adicional:\\n{\\\"resumen\\\":\\\"2-3 oraciones sobre qué importa esta empresa y sus operaciones\\\",\\\"pain_point\\\":\\\"el problema aduanal o logístico más probable (ej: demoras, costos de almacenaje, clasificación arancelaria)\\\",\\\"contexto_email\\\":\\\"dato específico y concreto para personalizar el email (diferente según si es decision_maker o referidor)\\\"}\"\n        }\n      ]\n    }\n  ]\n}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "a2v3-node-04",
+      "name": "HTTP Request Gemini",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 300],
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "gemini-api-cred",
+          "name": "Gemini API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const items = $input.all();\nconst geminiResponse = items[0].json;\nlet batchData = {};\ntry {\n  const batchItems = $('SplitInBatches').all();\n  batchData = (batchItems && batchItems[0]) ? batchItems[0].json : {};\n} catch(e) {}\n\nconst raw = geminiResponse?.candidates?.[0]?.content?.parts?.[0]?.text || '';\nlet parsed = { resumen: '', pain_point: '', contexto_email: '' };\ntry {\n  const clean = raw.replace(/```json\\n?|\\n?```/g, '').trim();\n  parsed = JSON.parse(clean);\n} catch(e) {\n  parsed = { resumen: raw.slice(0, 200), pain_point: '', contexto_email: '' };\n}\n\nreturn [{\n  json: {\n    contact_id: String(batchData.id || ''),\n    empresa: String(batchData.company?.nombre || batchData.nombre || ''),\n    tipo_contacto: String(batchData.tipo_contacto || ''),\n    email: String(batchData.email || ''),\n    investigacion: String(parsed.resumen || ''),\n    pain_point: String(parsed.pain_point || ''),\n    contexto_email: String(parsed.contexto_email || ''),\n    estado: 'investigado'\n  }\n}];"
+      },
+      "id": "a2v3-node-05",
+      "name": "Code - Parse Gemini",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://xjrgqborwhvyqgrczetq.supabase.co/rest/v1/contacts?id=eq.{{ $json.contact_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdxYm9yd2h2eXFncmN6ZXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODc5ODksImV4cCI6MjA5MDQ2Mzk4OX0.DWOoshMXxmQk0deq2jEnOOAFpr_pyE9aWenvu_GPzLs"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdxYm9yd2h2eXFncmN6ZXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODc5ODksImV4cCI6MjA5MDQ2Mzk4OX0.DWOoshMXxmQk0deq2jEnOOAFpr_pyE9aWenvu_GPzLs"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "jsonBody": "={{ JSON.stringify({ investigacion: $json.investigacion, pain_point: $json.pain_point, contexto_email: $json.contexto_email, estado: 'investigado' }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "a2v3-node-06",
+      "name": "PATCH Contact Investigado",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1340, 300]
+    },
+    {
+      "parameters": {
+        "amount": 2,
+        "unit": "seconds"
+      },
+      "id": "a2v3-node-07",
+      "name": "Wait 2s",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1560, 300],
+      "webhookId": "a2v3-wait-webhook"
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Read Contacts Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Contacts Supabase": {
+      "main": [
+        [
+          {
+            "node": "SplitInBatches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SplitInBatches": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request Gemini",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "HTTP Request Gemini": {
+      "main": [
+        [
+          {
+            "node": "Code - Parse Gemini",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Parse Gemini": {
+      "main": [
+        [
+          {
+            "node": "PATCH Contact Investigado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PATCH Contact Investigado": {
+      "main": [
+        [
+          {
+            "node": "Wait 2s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 2s": {
+      "main": [
+        [
+          {
+            "node": "SplitInBatches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {}
+}
