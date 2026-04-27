@@ -1,0 +1,601 @@
+{
+  "name": "Agent 5 - Pam (Nurturing & Reactivation) v2",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * 1,3,5"
+            }
+          ]
+        }
+      },
+      "id": "node-schedule-trigger",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://xjrgqborwhvyqgrczetq.supabase.co/rest/v1/deals?select=id,opportunity_name,status,mrr,acv,owner,next_touchpoint,notes,estrategia,company_id,company:companies(nombre,industria,canal)&status=in.(Cool Off,Calificado)&order=next_touchpoint.asc&limit=20",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdxYm9yd2h2eXFncmN6ZXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODc5ODksImV4cCI6MjA5MDQ2Mzk4OX0.DWOoshMXxmQk0deq2jEnOOAFpr_pyE9aWenvu_GPzLs"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdxYm9yd2h2eXFncmN6ZXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODc5ODksImV4cCI6MjA5MDQ2Mzk4OX0.DWOoshMXxmQk0deq2jEnOOAFpr_pyE9aWenvu_GPzLs"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "node-get-deals",
+      "name": "HTTP Request - Get Deals",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const items = $input.all();\nconst deals = Array.isArray(items[0].json) ? items[0].json : [];\nconst today = new Date().toISOString().slice(0,10);\nconst filtered = deals.filter(d => {\n  if (!d.opportunity_name && !d.company?.nombre) return false;\n  const nt = d.next_touchpoint;\n  return !nt || nt <= today;\n});\nreturn filtered.map(d => ({ json: {\n  deal_id: String(d.id || ''),\n  company_id: String(d.company_id || ''),\n  empresa: String(d.opportunity_name || d.company?.nombre || ''),\n  status: String(d.status || ''),\n  owner: String(d.owner || 'Abraham Lopez'),\n  mrr: Number(d.mrr || 0),\n  acv: Number(d.acv || 0),\n  notes: String(d.notes || ''),\n  industria: String(d.company?.industria || ''),\n  canal: String(d.company?.canal || d.estrategia || ''),\n}}));"
+      },
+      "id": "node-filter-overdue",
+      "name": "Code - Filter Overdue",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "node-split-in-batches",
+      "name": "SplitInBatches",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://xjrgqborwhvyqgrczetq.supabase.co/rest/v1/contacts?select=id,nombre,cargo,tipo_contacto,email,telefono&company_id=eq.={{ $json.company_id }}&email=not.is.null&order=tipo_contacto.asc&limit=3",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdxYm9yd2h2eXFncmN6ZXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODc5ODksImV4cCI6MjA5MDQ2Mzk4OX0.DWOoshMXxmQk0deq2jEnOOAFpr_pyE9aWenvu_GPzLs"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdxYm9yd2h2eXFncmN6ZXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODc5ODksImV4cCI6MjA5MDQ2Mzk4OX0.DWOoshMXxmQk0deq2jEnOOAFpr_pyE9aWenvu_GPzLs"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "node-get-contacts",
+      "name": "HTTP Request - Get Contacts for Deal",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 220]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const items = $input.all();\nconst contacts = Array.isArray(items[0].json) ? items[0].json : [];\nlet dealData = {};\ntry { dealData = $('SplitInBatches').all()[0].json || {}; } catch(e) {}\n\n// Prefer decision_maker, then any contact with email\nconst dm = contacts.find(c => c.tipo_contacto === 'decision_maker' && c.email);\nconst best = dm || contacts.find(c => c.email);\n\nif (!best) {\n  return [{ json: { _no_contact: true, empresa: dealData.empresa, deal_id: dealData.deal_id } }];\n}\n\n// Clean markdown email format if needed\nconst emailRaw = String(best.email || '');\nconst email = emailRaw.replace(/\\[([^\\]]+)\\]\\([^)]+\\)/, '$1').trim();\n\nreturn [{ json: {\n  deal_id: String(dealData.deal_id || ''),\n  company_id: String(dealData.company_id || ''),\n  empresa: String(dealData.empresa || ''),\n  status: String(dealData.status || ''),\n  owner: String(dealData.owner || 'Abraham Lopez'),\n  mrr: Number(dealData.mrr || 0),\n  acv: Number(dealData.acv || 0),\n  industria: String(dealData.industria || ''),\n  canal: String(dealData.canal || ''),\n  notes: String(dealData.notes || ''),\n  contact_id: String(best.id || ''),\n  contact_name: String(best.nombre || ''),\n  contact_cargo: String(best.cargo || ''),\n  contact_email: email,\n  contact_phone: String(best.telefono || ''),\n}}];"
+      },
+      "id": "node-select-best-contact",
+      "name": "Code - Select Best Contact",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1340, 220]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "has-contact-condition",
+              "leftValue": "={{ $json._no_contact }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "node-if-has-contact",
+      "name": "IF - Has Contact",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1560, 220]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "stage-condition",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "Cool Off",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "node-if-stage",
+      "name": "IF - Stage",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1780, 140]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "TU_ANTHROPIC_KEY"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  model: \"claude-haiku-4-5-20251001\",\n  max_tokens: 300,\n  system: \"Eres Abraham López, Director de Growth de Birdie (birdie.mx), plataforma de AI para comercio exterior en México. Redacta un email de REACTIVACIÓN cálido y natural para un prospecto en Cool Off. El tono debe ser cercano, no de ventas. Menciona que ha pasado tiempo y que tienes algo nuevo relevante para su industria de comercio exterior. Máximo 90 palabras. Sin markdown ni asteriscos. Firma: Abraham López | Birdie | birdie.mx. Formato exacto: [SUBJECT: asunto]\\n\\ncuerpo\",\n  messages: [{ role: \"user\", content: \"Reactiva este prospecto:\\nEmpresa: \" + $json.empresa + \"\\nContacto: \" + $json.contact_name + \" - \" + $json.contact_cargo + \"\\nIndustria: \" + $json.industria + \"\\nContexto anterior: \" + $json.notes }]\n}) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "node-claude-cool-off",
+      "name": "HTTP Request - Claude Cool Off",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2000, 60]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "TU_ANTHROPIC_KEY"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  model: \"claude-haiku-4-5-20251001\",\n  max_tokens: 300,\n  system: \"Eres Abraham López, Director de Growth de Birdie (birdie.mx). Redacta un email de NURTURING educativo para un lead calificado que aún no ha avanzado. Comparte un insight accionable sobre cómo empresas importadoras en México están usando IA para reducir tiempos en aduana o mejorar visibilidad de cargas. CTA suave: ¿tiene 15 minutos esta semana para platicarlo? Máximo 90 palabras. Sin markdown. Firma: Abraham López | Birdie | birdie.mx. Formato: [SUBJECT: asunto]\\n\\ncuerpo\",\n  messages: [{ role: \"user\", content: \"Empresa: \" + $json.empresa + \"\\nContacto: \" + $json.contact_name + \" - \" + $json.contact_cargo + \"\\nIndustria: \" + $json.industria + \"\\nCanal origen: \" + $json.canal }]\n}) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "node-claude-calificado",
+      "name": "HTTP Request - Claude Calificado",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2000, 220]
+    },
+    {
+      "parameters": {
+        "mode": "append"
+      },
+      "id": "node-merge",
+      "name": "Merge",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [2220, 140]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const items = $input.all();\nconst resp = items[0].json;\nlet ctx = {};\ntry { ctx = $('Code - Select Best Contact').all()[0].json || {}; } catch(e) {}\n\nconst text = resp?.content?.[0]?.text || '';\nconst subjectMatch = text.match(/\\[SUBJECT:\\s*(.+?)\\]/);\nconst subject = subjectMatch ? subjectMatch[1].trim() : 'Seguimiento Birdie';\nconst body = text.replace(/\\[SUBJECT:[^\\]]+\\]\\n?/, '').trim();\n\nreturn [{ json: {\n  deal_id: String(ctx.deal_id || ''),\n  empresa: String(ctx.empresa || ''),\n  status: String(ctx.status || ''),\n  contact_email: String(ctx.contact_email || ''),\n  contact_name: String(ctx.contact_name || ''),\n  email_subject: subject,\n  email_body: body,\n}}];"
+      },
+      "id": "node-parse-claude",
+      "name": "Code - Parse Claude",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2440, 140]
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "toList": "={{ $json.contact_email }}",
+        "subject": "={{ $json.email_subject }}",
+        "message": "={{ $json.email_body }}",
+        "options": {}
+      },
+      "id": "node-gmail-send",
+      "name": "Gmail - Send",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [2660, 140],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "gmail-account-credential",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://xjrgqborwhvyqgrczetq.supabase.co/rest/v1/deals?id=eq.={{ $json.deal_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdxYm9yd2h2eXFncmN6ZXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODc5ODksImV4cCI6MjA5MDQ2Mzk4OX0.DWOoshMXxmQk0deq2jEnOOAFpr_pyE9aWenvu_GPzLs"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdxYm9yd2h2eXFncmN6ZXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODc5ODksImV4cCI6MjA5MDQ2Mzk4OX0.DWOoshMXxmQk0deq2jEnOOAFpr_pyE9aWenvu_GPzLs"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ notes: 'Pam ' + $json.status + ': ' + new Date().toISOString().slice(0,10) + ' → ' + $json.contact_email, next_touchpoint: new Date(Date.now() + 14*86400000).toISOString().slice(0,10) }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "node-update-deal",
+      "name": "HTTP Request - Update Deal",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2880, 60]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://xjrgqborwhvyqgrczetq.supabase.co/rest/v1/agent_events",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdxYm9yd2h2eXFncmN6ZXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODc5ODksImV4cCI6MjA5MDQ2Mzk4OX0.DWOoshMXxmQk0deq2jEnOOAFpr_pyE9aWenvu_GPzLs"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdxYm9yd2h2eXFncmN6ZXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODc5ODksImV4cCI6MjA5MDQ2Mzk4OX0.DWOoshMXxmQk0deq2jEnOOAFpr_pyE9aWenvu_GPzLs"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ type: 'nurturing_sent', payload: { empresa: $json.empresa, status: $json.status, email: $json.contact_email, subject: $json.email_subject } }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "node-log-event",
+      "name": "HTTP Request - Log Event",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2880, 220]
+    },
+    {
+      "parameters": {
+        "amount": 60,
+        "unit": "seconds"
+      },
+      "id": "node-wait",
+      "name": "Wait",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [3100, 140],
+      "webhookId": "pam-wait-webhook"
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request - Get Deals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request - Get Deals": {
+      "main": [
+        [
+          {
+            "node": "Code - Filter Overdue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Filter Overdue": {
+      "main": [
+        [
+          {
+            "node": "SplitInBatches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SplitInBatches": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request - Get Contacts for Deal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request - Get Contacts for Deal": {
+      "main": [
+        [
+          {
+            "node": "Code - Select Best Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Select Best Contact": {
+      "main": [
+        [
+          {
+            "node": "IF - Has Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Has Contact": {
+      "main": [
+        [
+          {
+            "node": "IF - Stage",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Stage": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request - Claude Cool Off",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Request - Claude Calificado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request - Claude Cool Off": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request - Claude Calificado": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Code - Parse Claude",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Parse Claude": {
+      "main": [
+        [
+          {
+            "node": "Gmail - Send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail - Send": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request - Update Deal",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP Request - Log Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request - Update Deal": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request - Log Event": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "SplitInBatches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "createdAt": "2026-04-26T00:00:00.000Z",
+      "updatedAt": "2026-04-26T00:00:00.000Z",
+      "id": "tag-agent5-pam",
+      "name": "agent5-pam"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2026-04-26T00:00:00.000Z",
+  "versionId": "v2"
+}
