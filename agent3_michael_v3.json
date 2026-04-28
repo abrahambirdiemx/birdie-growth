@@ -194,7 +194,7 @@
         "emailType": "text",
         "message": "={{ $json.email_generado }}",
         "options": {
-          "replyTo": "abraham@trybirdie.ai",
+          "replyTo": "abraham.lr@birdie.mx",
           "appendAttribution": false
         }
       },
