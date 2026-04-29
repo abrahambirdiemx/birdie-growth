@@ -2847,10 +2847,12 @@ function _apSaveConfig(cfg) {
 
 function renderAutopilot() {
   _apConfig = _apLoadConfig();
+  _jimMetrics = null; // refresh on each tab open
   _renderAgentCards();
   _renderFunnel();
   _renderAutopilotAnalytics();
   loadAgentEvents();
+  loadJimMetrics(); // async — updates panel when ready
   _updateSystemBadge();
 }
 
@@ -2914,6 +2916,35 @@ function apToggleCheck(id) {
   _updateSystemBadge();
 }
 
+// ── Jim metrics loader ──────────────────────────────────────────────────────
+var _jimMetrics = null;
+async function loadJimMetrics() {
+  try {
+    // Pull all contacts to compute discovery stats
+    const data = await sbFetch('GET','contacts?select=id,company_id,tipo_contacto,estado,created_at&limit=5000');
+    if (!Array.isArray(data)) return;
+    const today = new Date().toISOString().slice(0,10);
+    const thisWeekStart = _getWeekStart ? _getWeekStart() : today;
+
+    const empresasConContactos = new Set(data.filter(c => c.company_id).map(c => c.company_id));
+    const totalContactos = data.length;
+    const dms = data.filter(c => c.tipo_contacto === 'decision_maker').length;
+    const refs = data.filter(c => c.tipo_contacto === 'referidor').length;
+    const hoy = data.filter(c => (c.created_at||'').slice(0,10) === today).length;
+    const semana = data.filter(c => (c.created_at||'').slice(0,10) >= thisWeekStart).length;
+    const avgPorEmpresa = empresasConContactos.size > 0 ? (totalContactos / empresasConContactos.size).toFixed(1) : 0;
+
+    // Discovery rate: companies in pipeline vs companies with contacts
+    const totalCompanies = (_crmData||[]).length || empresasConContactos.size;
+    const discoveryRate = totalCompanies > 0
+      ? Math.round((empresasConContactos.size / totalCompanies) * 100)
+      : 0;
+
+    _jimMetrics = { totalContactos, empresasConContactos: empresasConContactos.size, dms, refs, hoy, semana, avgPorEmpresa, discoveryRate };
+    _renderAutopilotAnalytics();
+  } catch(e) { console.warn('Jim metrics error:', e); }
+}
+
 function _renderAutopilotAnalytics() {
   const el = document.getElementById('ap-analytics');
   if (!el) return;
@@ -2932,7 +2963,47 @@ function _renderAutopilotAnalytics() {
   const calendlySent = events.filter(e => e.type === 'calendly_sent').length;
   const totalAgents = AP_AGENTS.length;
 
-  el.innerHTML = `
+  // Jim metrics
+  const jm = _jimMetrics;
+  const jimBlock = jm ? `
+    <div style="margin-bottom:14px;padding:12px;background:linear-gradient(135deg,#fdf4ff,#fae8ff);border-radius:10px;border:1px solid #e9d5ff">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-size:11px;font-weight:700;color:#7c3aed;text-transform:uppercase;letter-spacing:.5px">🔍 Jim — Prospecting & Discovery</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div style="font-size:20px;font-weight:900;color:${jm.discoveryRate>=70?'#16a34a':jm.discoveryRate>=50?'#d97706':'#dc2626'}">${jm.discoveryRate}%</div>
+          <div style="font-size:10px;color:var(--muted);line-height:1.3">Lead<br>Found</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
+        <div style="text-align:center;background:white;border-radius:8px;padding:8px">
+          <div style="font-size:18px;font-weight:800;color:#7c3aed">${jm.totalContactos}</div>
+          <div style="font-size:9px;color:var(--muted)">Contactos total</div>
+        </div>
+        <div style="text-align:center;background:white;border-radius:8px;padding:8px">
+          <div style="font-size:18px;font-weight:800;color:#5b21b6">${jm.empresasConContactos}</div>
+          <div style="font-size:9px;color:var(--muted)">Empresas cubiertas</div>
+        </div>
+        <div style="text-align:center;background:white;border-radius:8px;padding:8px">
+          <div style="font-size:18px;font-weight:800;color:#2563eb">${jm.dms}</div>
+          <div style="font-size:9px;color:var(--muted)">Decision Makers</div>
+        </div>
+        <div style="text-align:center;background:white;border-radius:8px;padding:8px">
+          <div style="font-size:18px;font-weight:800;color:#0f766e">${jm.semana}</div>
+          <div style="font-size:9px;color:var(--muted)">Esta semana</div>
+        </div>
+      </div>
+      <div style="margin-top:8px;display:flex;align-items:center;gap:8px">
+        <div style="flex:1;height:6px;background:#ede9fe;border-radius:3px;overflow:hidden">
+          <div style="height:100%;background:${jm.discoveryRate>=70?'#16a34a':jm.discoveryRate>=50?'#d97706':'#dc2626'};width:${Math.min(jm.discoveryRate,100)}%;border-radius:3px;transition:width 0.5s"></div>
+        </div>
+        <div style="font-size:10px;color:var(--muted);white-space:nowrap">${jm.avgPorEmpresa} contactos/empresa</div>
+      </div>
+    </div>` : `
+    <div style="margin-bottom:14px;padding:12px;background:var(--card2);border-radius:10px;border:1px solid var(--border);text-align:center">
+      <div style="font-size:11px;color:var(--muted)">🔍 Jim — Cargando métricas…</div>
+    </div>`;
+
+  el.innerHTML = jimBlock + `
     <div style="margin-bottom:14px">
       <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Pipeline Autopilot</div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
@@ -2993,6 +3064,8 @@ function _renderAutopilotAnalytics() {
     <div style="padding:10px 12px;background:var(--card2);border:1px solid var(--border);border-radius:8px;font-size:11px;color:var(--muted)">
       <span style="color:#16a34a;font-weight:700">✓</span> Infraestructura lista para escalar — agrega nuevos agentes en el array <code>AP_AGENTS</code>
     </div>`;
+  // Load Jim metrics async (renders block when ready)
+  if (!_jimMetrics) loadJimMetrics();
 }
 
 
