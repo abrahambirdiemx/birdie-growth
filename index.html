@@ -3249,7 +3249,7 @@ function startAutoSync(intervalMs = 60000) {
   if (_autoSyncTimer) clearInterval(_autoSyncTimer);
   _autoSyncTimer = setInterval(async () => {
     try {
-      const data = await sbFetch('GET','deals?select=id,opportunity_name,status,mrr,acv,implementaciones,owner,cierre_date,probability,ingreso_lead,discovery_date,demo_date,proposal_date,next_touchpoint,estrategia,size,notes,created_at,updated_at,company:companies(id,nombre,web,industria,canal,tamaño)&order=created_at.desc&limit=2000');
+      const data = await sbFetch('GET','deals?select=id,opportunity_name,status,mrr,acv,implementaciones,piloto,product_interest,feedback,owner,cierre_date,probability,ingreso_lead,discovery_date,demo_date,proposal_date,next_touchpoint,estrategia,size,notes,created_at,updated_at,company:companies(id,nombre,web,industria,canal,tamaño)&order=created_at.desc&limit=2000');
       _pipeData = Array.isArray(data) ? data.map(d => ({
         ...d,
         opportunity_name: d.opportunity_name || d.company?.nombre || '',
@@ -3372,7 +3372,7 @@ async function pipeLoad() {
   const btn = document.getElementById('syncBtn');
   if (btn) { btn.classList.add('syncing'); btn.textContent='⏳ Sync'; }
   try {
-    const data = await sbFetch('GET','deals?select=id,opportunity_name,status,mrr,acv,implementaciones,owner,cierre_date,probability,ingreso_lead,discovery_date,demo_date,proposal_date,next_touchpoint,estrategia,size,notes,created_at,updated_at,company:companies(id,nombre,web,industria,canal,tamaño)&order=created_at.desc&limit=2000');
+    const data = await sbFetch('GET','deals?select=id,opportunity_name,status,mrr,acv,implementaciones,piloto,product_interest,feedback,owner,cierre_date,probability,ingreso_lead,discovery_date,demo_date,proposal_date,next_touchpoint,estrategia,size,notes,created_at,updated_at,company:companies(id,nombre,web,industria,canal,tamaño)&order=created_at.desc&limit=2000');
     _pipeData = Array.isArray(data) ? data.map(d => ({
       ...d,
       opportunity_name: d.opportunity_name || d.company?.nombre || '',
@@ -3490,7 +3490,7 @@ function pipeRender() {
     const cierreLabel = cierreMonth ? fmtMonth(cierreMonth) : '—';
     // inline date cell helper: always shows input, empty if null
     const dInline = (val, field, color) =>
-      `<input type="date" class="cell-date-input" value="${val||''}" onchange="pipeUpdateField(${r.id},'${field}',this.value||null)" style="${color?'color:'+color:''}" title="${field}">`;
+      `<input type="date" class="cell-date-input" value="${val||''}" onchange="pipeUpdateField('${r.id}','${field}',this.value||null)" style="${color?'color:'+color:''}" title="${field}">`;
     // CRM match indicator
   const crmMatch = _crmData && _crmData.find(c => c.n && r.opportunity_name && c.n.toLowerCase().trim() === r.opportunity_name.toLowerCase().trim());
   // Status sync check
@@ -3516,32 +3516,32 @@ function pipeRender() {
       <td><span class="cell cell-name" title="Clic para editar" style="cursor:pointer" onclick="pipeOpenEdit('${r.id}')">${r.opportunity_name||'—'}</span>${crmBadge}${weekBadge}</td>
       <td><span class="cell" style="font-size:11px;color:#64748b">${r.size||'—'}</span></td>
       <td class="cell-select">
-        <select onchange="pipeUpdateField(${r.id},'owner',this.value)">
+        <select onchange="pipeUpdateField('${r.id}','owner',this.value)">
           <option ${r.owner==='Abraham Lopez'?'selected':''}>Abraham Lopez</option>
           <option ${r.owner==='Héctor Nícola'?'selected':''}>Héctor Nícola</option>
           <option ${r.owner==='Daniel Luna'?'selected':''}>Daniel Luna</option>
         </select>
       </td>
       <td class="cell-select">
-        <select style="color:${col};font-weight:700" onchange="pipeStatusChange(${r.id},this.value,this)">
+        <select style="color:${col};font-weight:700" onchange="pipeStatusChange('${r.id}',this.value,this)">
           ${STAGE_ORDER_LIST.map(s=>`<option value="${s}" ${r.status===s?'selected':''}>${s}</option>`).join('')}
         </select>
       </td>
-      <td title="Clic para editar MRR" onclick="pipeInlineEdit(this,${r.id},'mrr',${mrr||0})"><span class="cell cell-money cell-editable">${mrr?'$'+mrr.toLocaleString():'<span style=\'color:#cbd5e1\'>—</span>'}</span></td>
+      <td title="Clic para editar MRR" onclick="pipeInlineEdit(this,'${r.id}','mrr',${mrr||0})"><span class="cell cell-money cell-editable">${mrr?'$'+mrr.toLocaleString():'<span style=\'color:#cbd5e1\'>—</span>'}</span></td>
       <td><span class="cell cell-money acv" style="color:#16a34a;font-weight:700">${acv?'$'+acv.toLocaleString():'<span style=\'color:#cbd5e1\'>auto</span>'}</span></td>
-      <td class="col-hide-md" title="Clic para editar Implementación" onclick="pipeInlineEdit(this,${r.id},'implementaciones',${impl||0})"><span class="cell cell-money cell-editable" style="color:#7c3aed">${impl?'$'+impl.toLocaleString():'<span style=\'color:#cbd5e1\'>—</span>'}</span></td>
+      <td class="col-hide-md" title="Clic para editar Implementación" onclick="pipeInlineEdit(this,'${r.id}','implementaciones',${impl||0})"><span class="cell cell-money cell-editable" style="color:#7c3aed">${impl?'$'+impl.toLocaleString():'<span style=\'color:#cbd5e1\'>—</span>'}</span></td>
       <td class="cell-date col-hide-md">${dInline(r.ingreso_lead,'ingreso_lead','')}</td>
       <td class="cell-date col-hide-lg">${dInline(r.discovery_date,'discovery_date','#7c3aed')}</td>
       <td class="cell-date col-hide-lg">${dInline(r.demo_date,'demo_date','#5b21b6')}</td>
       <td class="cell-date col-hide-lg">${dInline(r.proposal_date,'proposal_date','#ea580c')}</td>
-      <td class="cell-date"><input type="date" class="cell-date-input" value="${nextT||''}" onchange="pipeUpdateField(${r.id},'next_touchpoint',this.value||null)" style="${nextStyle}" title="Próx. touchpoint"></td>
+      <td class="cell-date"><input type="date" class="cell-date-input" value="${nextT||''}" onchange="pipeUpdateField('${r.id}','next_touchpoint',this.value||null)" style="${nextStyle}" title="Próx. touchpoint"></td>
       <td class="cell-date" style="white-space:nowrap">
-        <input type="month" class="cell-date-input" value="${cierreMonth}" onchange="pipeSaveCierreMonth(${r.id},this.value)" style="color:#15803d;width:100px;max-width:100px" title="Cierre estimado mes">
+        <input type="month" class="cell-date-input" value="${cierreMonth}" onchange="pipeSaveCierreMonth('${r.id}',this.value)" style="color:#15803d;width:100px;max-width:100px" title="Cierre estimado mes">
       </td>
       <td class="col-hide-md" style="max-width:110px;overflow:hidden;white-space:nowrap"><span class="cell" style="color:var(--muted);font-size:11px" title="${displayIndustria ? 'Industria: '+displayIndustria : ''}">${displayCanal||'—'}${displayIndustria?'<span style="font-size:9px;color:#7c3aed;margin-left:3px">'+displayIndustria.slice(0,6)+'</span>':''}</span></td>
       <td>
         <input type="number" class="cell-date-input" value="${prob}" min="0" max="100"
-          onchange="pipeUpdateField(${r.id},'probability',parseInt(this.value)||0)"
+          onchange="pipeUpdateField('${r.id}','probability',parseInt(this.value)||0)"
           style="width:46px;text-align:center;font-size:12px;color:${prob>=70?'#16a34a':prob>=40?'#d97706':'#64748b'};font-weight:700"
           title="Probabilidad de cierre %">
       </td>
@@ -3904,7 +3904,7 @@ async function pipeSave() {
 }
 
 async function pipeDeleteCurrent() {
-  const id=parseInt(document.getElementById('pipe-edit-id').value);
+  const id=document.getElementById('pipe-edit-id').value;
   if(!id) return;
   if(!confirm('¿Eliminar este deal del pipeline?')) return;
   try {
