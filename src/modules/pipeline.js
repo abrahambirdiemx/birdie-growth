@@ -311,35 +311,34 @@ function crmDealSearch() {
   const res = document.getElementById('crm-deal-results');
   if (!q || q.length < 2) { res.style.display='none'; return; }
   const crm = crmGet();
-  const matches = crm.filter(r=>(r.n||'').toLowerCase().includes(q)).slice(0,8);
+  const matches = crm.filter(r=>(r.nombre||'').toLowerCase().includes(q)).slice(0,8);
   if (!matches.length) { res.style.display='none'; return; }
   res.style.display='block';
   res.innerHTML = matches.map(r=>`
-    <div onclick="crmDealSelect(${r.id})" style="padding:10px 14px;cursor:pointer;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:10px" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
+    <div onclick="crmDealSelect('${String(r.id).replace(/'/g,"\\'")}'')" style="padding:10px 14px;cursor:pointer;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:10px" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
       <span style="font-size:18px">🏢</span>
       <div>
-        <div style="font-weight:600;color:#0f172a;font-size:13px">${r.n}</div>
-        <div style="font-size:11px;color:#64748b">${r.e||''}${r.sz?' · '+r.sz:''}${r.r?' · '+r.r:''}</div>
+        <div style="font-weight:600;color:#0f172a;font-size:13px">${r.nombre}</div>
+        <div style="font-size:11px;color:#64748b">${r.canal||''}${r.tamaño?' · '+r.tamaño:''}${r.owner?' · '+r.owner:''}</div>
       </div>
     </div>`).join('');
 }
 
 function crmDealSelect(crmId) {
   const crm = crmGet();
-  const rec = crm.find(r=>r.id===crmId);
+  const rec = crm.find(r=>String(r.id)===String(crmId));
   if (!rec) return;
   const setVal = (id, val) => { const e=document.getElementById(id); if(e&&val) e.value=val; };
-  setVal('pf-name',    rec.n);
-  setVal('pf-canal-f', rec.e);
-  setVal('pf-size-f',  rec.sz);
+  setVal('pf-name',    rec.nombre);
+  setVal('pf-canal-f', rec.canal);
+  setVal('pf-size-f',  rec.tamaño);
   // Try to match owner
-  const ownerMap = {'Abraham Lopez':'Abraham Lopez','Héctor Nícola':'Héctor Nícola','Daniel Luna':'Daniel Luna'};
   const ownerEl = document.getElementById('pf-owner-f');
-  if (ownerEl && rec.r && ownerMap[rec.r]) ownerEl.value = ownerMap[rec.r];
+  if (ownerEl && rec.owner) ownerEl.value = rec.owner;
   // Hide search
   document.getElementById('crm-deal-results').style.display='none';
-  document.getElementById('crm-deal-search').value=rec.n;
-  showToast('✅ Datos de '+rec.n+' cargados desde CRM','ok');
+  document.getElementById('crm-deal-search').value = rec.nombre;
+  showToast('✅ Datos de '+rec.nombre+' cargados desde CRM','ok');
 }
 
 function pipeNewDeal() {

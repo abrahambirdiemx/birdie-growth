@@ -1020,15 +1020,20 @@
 <div class="modal-overlay" id="modalCRMNew">
   <div class="modal crm-modal">
     <div class="modal-header">
-      <h3 id="crm-modal-title">🏢 Nueva Cuenta</h3>
+      <h3 id="crm-modal-title">🏢 Nueva Empresa</h3>
       <button class="modal-close" onclick="crmCloseModal()">✕</button>
     </div>
     <div class="modal-body">
       <input type="hidden" id="crm-edit-id">
+      <input type="hidden" id="crm-contact-id">
       <div class="crm-form-grid">
         <div class="crm-field full">
           <label>Empresa / Nombre *</label>
           <input type="text" id="cf-name" placeholder="Nombre de la empresa">
+        </div>
+        <div class="crm-field full">
+          <label>Sitio web</label>
+          <input type="text" id="cf-web" placeholder="empresa.com.mx">
         </div>
         <div class="crm-field">
           <label>Responsable *</label>

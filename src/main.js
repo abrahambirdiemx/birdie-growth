@@ -188,7 +188,7 @@ function startAutoSync(ms = 120_000) {
     try {
       const [pipe, crm, kpi] = await Promise.all([
         sbFetch('GET', `pipeline?select=*&order=created_at.desc&limit=2000`),
-        sbFetch('GET', `crm?select=id,n,r,st,ind,e,sz,c,p,em,tel,mrr,acv,notes,created_at&order=created_at.desc&limit=5000`),
+        sbFetch('GET', `companies?select=id,nombre,owner,estado,industria,canal,tamaño,mrr,acv,notas,fuente,web,created_at,contacts(id,nombre,cargo,email,telefono,estado)&order=created_at.desc&limit=5000`),
         sbFetch('GET', `kpi_logs?select=id,date,seller,type,company,canal,acv,mrr,impl,notes,created_at&order=created_at.desc&limit=2000`),
       ]);
       // Update module-scoped caches via proper setters (window.* doesn't reach module scope)
