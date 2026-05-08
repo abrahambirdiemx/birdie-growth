@@ -15,6 +15,10 @@ const PIPE_PAGE  = 75;
 let _dateEventDealId  = null;
 let _dateEventField   = null;
 
+// Pending churn state
+let _churnPendingId       = null;
+let _churnPendingSelectEl = null;
+
 // Callback registered by main.js to update the dashboard after pipe changes
 let _onPipeChange = null;
 export function setPipeChangeCb(fn) { _onPipeChange = fn; }
@@ -136,6 +140,7 @@ function pipeRender() {
         <select style="color:${col};font-weight:700" onchange="pipeStatusChange(${r.id},this.value,this)">
           ${STAGE_ORDER_LIST.map(s=>`<option value="${s}" ${r.status===s?'selected':''}>${s}</option>`).join('')}
         </select>
+        ${r.status==='Churn'&&r.churn_reason ? `<div style="font-size:10px;color:var(--red);margin-top:2px;opacity:.8">${r.churn_reason}</div>` : ''}
       </td>
       <td><span class="cell cell-money">${mrr?'$'+mrr.toLocaleString():''}</span></td>
       <td><span class="cell cell-money acv">${acv?'$'+acv.toLocaleString():''}</span></td>
@@ -230,6 +235,18 @@ async function pipeUpdateField(id, field, value) {
 }
 
 async function pipeStatusChange(id, newStatus, selectEl) {
+  // If marking as Churn, show reason modal BEFORE saving
+  if (newStatus === 'Churn') {
+    const rec = _pipeData.find(r=>r.id===id);
+    _churnPendingId       = id;
+    _churnPendingSelectEl = selectEl;
+    document.getElementById('churn-deal-name').textContent =
+      '🏢 ' + (rec?.opportunity_name || '—');
+    document.getElementById('churn-reason-select').value = rec?.churn_reason || '';
+    openModal('modalChurnReason');
+    return; // wait for user to confirm in modal
+  }
+
   await pipeUpdateField(id, 'status', newStatus);
   selectEl.style.color = STAGE_COLORS[newStatus]||'#64748b';
   // Check if this stage requires a date
@@ -238,6 +255,47 @@ async function pipeStatusChange(id, newStatus, selectEl) {
     const rec = _pipeData.find(r=>r.id===id);
     if (rec && !rec[field]) promptDateEvent(id, field, DATE_LABELS[field]||newStatus);
   }
+}
+
+async function saveChurnReason() {
+  const reason = document.getElementById('churn-reason-select').value;
+  if (!reason) { showToast('⚠ Selecciona una razón de freno', 'err'); return; }
+  if (!_churnPendingId) return;
+
+  // Save status + reason together
+  const idx = _pipeData.findIndex(r=>r.id===_churnPendingId);
+  if (idx>=0) {
+    _pipeData[idx].status       = 'Churn';
+    _pipeData[idx].churn_reason = reason;
+  }
+  await sbFetch('PATCH', `pipeline?id=eq.${_churnPendingId}`, {
+    status: 'Churn',
+    churn_reason: reason,
+    updated_at: new Date().toISOString(),
+  });
+  if (_churnPendingSelectEl) {
+    _churnPendingSelectEl.style.color = STAGE_COLORS['Churn']||'#dc2626';
+  }
+
+  closeModal('modalChurnReason');
+  pipeRender();
+  showToast('🚫 Deal marcado como Churn — ' + reason, '');
+  _churnPendingId       = null;
+  _churnPendingSelectEl = null;
+}
+
+function cancelChurnReason() {
+  // Revert the select back to the previous status
+  if (_churnPendingSelectEl && _churnPendingId) {
+    const rec = _pipeData.find(r=>r.id===_churnPendingId);
+    if (rec) {
+      _churnPendingSelectEl.value      = rec.status;
+      _churnPendingSelectEl.style.color = STAGE_COLORS[rec.status]||'#64748b';
+    }
+  }
+  closeModal('modalChurnReason');
+  _churnPendingId       = null;
+  _churnPendingSelectEl = null;
 }
 
 function promptDateEvent(dealId, field, label) {
@@ -286,6 +344,10 @@ function pipeOpenEdit(id) {
   setV('pf-prob-f',      r.probability ?? STAGE_PROB[r.status] ?? 50);
   setV('pf-product-f',   r.product_interest);
   setV('pf-feedback-f',  r.feedback);
+  setV('pf-churn-reason-f', r.churn_reason);
+  // Show churn reason field only when status is Churn
+  const churnField = document.getElementById('churn-reason-field');
+  if (churnField) churnField.style.display = r.status === 'Churn' ? '' : 'none';
   openModal('modalPipeDeal');
 }
 
@@ -381,6 +443,7 @@ async function pipeSave() {
     size:         document.getElementById('pf-size-f').value||null,
     product_interest:document.getElementById('pf-product-f').value||null,
     feedback:     document.getElementById('pf-feedback-f').value||null,
+    churn_reason: document.getElementById('pf-churn-reason-f')?.value||null,
     updated_at:   new Date().toISOString(),
   };
   try {
@@ -439,6 +502,7 @@ function pipeSetData(data) {
 }
 
 export { pipeLoad, pipeRender, pipeSetData, pipeUpdateField, pipeSave, pipeDeleteCurrent,
+         saveChurnReason, cancelChurnReason,
          pipeSort, pipeGoPage, pipeNewDeal, pipeOpenEdit, pipeToggleGroup,
          pipeToggleStageCollapse, pipeStatusChange, pipeSaveCierreMonth,
          promptDateEvent, saveDateEvent, pipeExport, crmDealSearch, crmDealSelect };

@@ -5,6 +5,7 @@ import { pipeLoad, pipeRender, pipeSetData, setPipeChangeCb,
          pipeUpdateField, pipeSave, pipeDeleteCurrent, pipeSort, pipeGoPage,
          pipeNewDeal, pipeOpenEdit, pipeToggleGroup, pipeToggleStageCollapse,
          pipeStatusChange, pipeSaveCierreMonth, promptDateEvent, saveDateEvent,
+         saveChurnReason, cancelChurnReason,
          pipeExport, crmDealSearch, crmDealSelect }      from './modules/pipeline.js';
 import { crmLoad, crmRender, crmSetData, crmSort, crmGoPage, crmOpenEdit,
          crmSave, crmDeleteCurrent, crmCloseModal, crmExportCSV } from './modules/crm.js';
@@ -59,6 +60,7 @@ Object.assign(window, {
   pipeUpdateField, pipeSave, pipeDeleteCurrent, pipeSort, pipeGoPage,
   pipeNewDeal, pipeOpenEdit, pipeToggleGroup, pipeToggleStageCollapse,
   pipeStatusChange, pipeSaveCierreMonth, promptDateEvent, saveDateEvent,
+  saveChurnReason, cancelChurnReason,
   pipeExport, crmDealSearch, crmDealSelect,
   // CRM
   crmLoad, crmRender, crmSort, crmGoPage, crmOpenEdit,

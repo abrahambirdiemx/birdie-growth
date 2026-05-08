@@ -842,6 +842,37 @@
 </div>
 
 <!-- Date Event Modal -->
+<!-- Churn Reason Modal -->
+<div class="modal-overlay" id="modalChurnReason">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-header">
+      <h3>🚫 Razón de freno</h3>
+      <button class="modal-close" onclick="cancelChurnReason()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px" id="churn-deal-name"></p>
+      <div class="form-field" style="margin-bottom:16px">
+        <label style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted2);display:block;margin-bottom:6px">¿Por qué se perdió este deal?</label>
+        <select id="churn-reason-select" style="width:100%;padding:10px 12px;border:1.5px solid var(--border2);border-radius:9px;font-size:14px;font-family:inherit;background:var(--surface2);color:var(--text);outline:none;appearance:auto">
+          <option value="">— Selecciona razón —</option>
+          <option value="Precio alto">Precio muy alto</option>
+          <option value="Sin presupuesto">Sin presupuesto</option>
+          <option value="Sin autorización">Sin autorización interna</option>
+          <option value="Ya tiene proveedor">Ya tiene proveedor</option>
+          <option value="No fit">No fit</option>
+          <option value="Sin respuesta">Sin respuesta / Ghosting</option>
+          <option value="Timing">Timing — no es el momento</option>
+          <option value="Otro">Otro</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+        <button class="btn btn-outline" onclick="cancelChurnReason()">Cancelar</button>
+        <button class="btn btn-primary" style="background:var(--red);border-color:var(--red)" onclick="saveChurnReason()">🚫 Confirmar Churn</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modalDateEvent">
   <div class="modal" style="max-width:440px">
     <div class="modal-header">
@@ -914,6 +945,20 @@
           <select id="pf-size-f"><option value="">—</option><option>0-100</option><option>101-500</option><option>501-1000</option><option>1000+</option></select></div>
         <div class="crm-field"><label>Producto de interés</label><input type="text" id="pf-product-f" placeholder="Birdie Platform, AI…"></div>
         <div class="crm-field full"><label>Feedback / Notas</label><textarea id="pf-feedback-f" rows="2" placeholder="Objeciones, próximo paso, contexto…"></textarea></div>
+        <div class="crm-field" id="churn-reason-field" style="display:none">
+          <label style="color:var(--red)">🚫 Razón de freno</label>
+          <select id="pf-churn-reason-f">
+            <option value="">— Sin registrar —</option>
+            <option value="Precio alto">Precio muy alto</option>
+            <option value="Sin presupuesto">Sin presupuesto</option>
+            <option value="Sin autorización">Sin autorización interna</option>
+            <option value="Ya tiene proveedor">Ya tiene proveedor</option>
+            <option value="No fit">No fit</option>
+            <option value="Sin respuesta">Sin respuesta / Ghosting</option>
+            <option value="Timing">Timing — no es el momento</option>
+            <option value="Otro">Otro</option>
+          </select>
+        </div>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
         <button class="btn btn-outline" id="pipe-delete-btn" onclick="pipeDeleteCurrent()" style="color:var(--red);border-color:#fecaca;display:none">🗑 Eliminar</button>
